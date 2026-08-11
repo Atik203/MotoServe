@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Car, Mail, Phone, Plus, Send, User } from "lucide-react";
-import demoData from "@/lib/demo-data";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchVehicles } from "@/store/slices/vehiclesSlice";
+import { fetchCustomers } from "@/store/slices/customersSlice";
+import { fetchEstimates, createEstimate } from "@/store/slices/estimatesSlice";
 import type { Customer, EstimateItem, JobCard, Vehicle } from "@/types";
 
 const card =
@@ -30,61 +34,97 @@ function toNumber(value: string): number {
 
 export default function SendEstimatePage() {
   const router = useRouter();
-  const [job, setJob] = useState<JobCard | null>(null);
-  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [items, setItems] = useState<LineItem[]>([]);
+  const dispatch = useAppDispatch();
+  const jobs = useAppSelector((s) => s.jobs.items);
+  const vehicles = useAppSelector((s) => s.vehicles.items);
+  const customers = useAppSelector((s) => s.customers.items);
+  const estimates = useAppSelector((s) => s.estimates.items);
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      const [jobs, vehicles, customers, estimates] = await Promise.all([
-        demoData.load("jobs"),
-        demoData.load("vehicles"),
-        demoData.load("customers"),
-        demoData.load("estimates"),
-      ]);
-      const active = jobs.find((j) => j.id === "JC-1045") ?? null;
-      setJob(active);
-      setVehicle(vehicles.find((v) => v.id === active?.vehicleId) ?? null);
-      setCustomer(customers.find((c) => c.id === active?.customerId) ?? null);
-      const estimate = estimates.find((e) => e.jobId === "JC-1045");
-      if (estimate) {
-        setItems(
-          estimate.items.map((item) => ({
-            id: item.id,
-            name: item.description,
-            sub: item.category === "labor" ? "Labor" : item.category === "parts" ? "Part" : "Service",
-            category: item.category,
-            qty: item.description.includes("x2") ? "2" : "1",
-            unit:
-              item.category === "labor"
-                ? "0"
-                : item.description.includes("x2")
-                  ? (item.amount / 2).toFixed(2)
-                  : item.amount.toFixed(2),
-            labor: item.category === "labor" ? item.amount.toFixed(2) : "0",
-          })),
-        );
-      }
-    })();
-  }, []);
+    dispatch(fetchJobs());
+    dispatch(fetchVehicles());
+    dispatch(fetchCustomers());
+    dispatch(fetchEstimates());
+  }, [dispatch]);
+
+  const job: JobCard | null = jobs.find((j) => j.id === "JC-1045") ?? jobs[0] ?? null;
+  const vehicle: Vehicle | null = vehicles.find((v) => v.id === job?.vehicleId) ?? null;
+  const customer: Customer | null = customers.find((c) => c.id === job?.customerId) ?? null;
+
+  const prefilled = useMemo<LineItem[] | null>(() => {
+    if (!job) return null;
+    const estimate = estimates.find((e) => e.jobId === job.id);
+    if (!estimate) return null;
+    return estimate.items.map((item) => ({
+      id: item.id,
+      name: item.description,
+      sub: item.category === "labor" ? "Labor" : item.category === "parts" ? "Part" : "Service",
+      category: item.category,
+      qty: item.description.includes("x2") ? "2" : "1",
+      unit:
+        item.category === "labor"
+          ? "0"
+          : item.description.includes("x2")
+            ? (item.amount / 2).toFixed(2)
+            : item.amount.toFixed(2),
+      labor: item.category === "labor" ? item.amount.toFixed(2) : "0",
+    }));
+  }, [job, estimates]);
+
+  const [items, setItems] = useState<LineItem[]>([]);
+  const [userEdited, setUserEdited] = useState(false);
+
+  const rows = (userEdited ? items : prefilled ?? items).map((it) => ({
+    ...it,
+    subtotal: toNumber(it.qty) * toNumber(it.unit) + toNumber(it.labor),
+  }));
 
   const updateItem = (id: string, patch: Partial<Omit<LineItem, "id">>) => {
+    setUserEdited(true);
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
   };
 
   const addLineItem = () => {
-    setItems((prev) => [
-      ...prev,
-      { id: `est-new-${prev.length + 1}`, name: "New Line Item", sub: "Part", category: "parts", qty: "1", unit: "0", labor: "0" },
+    const base = rows.map(({ id, name, sub, category, qty, unit, labor }) => ({ id, name, sub, category, qty, unit, labor }));
+    setUserEdited(true);
+    setItems([
+      ...base,
+      { id: `est-new-${base.length + 1}`, name: "New Line Item", sub: "Part", category: "parts", qty: "1", unit: "0", labor: "0" },
     ]);
   };
-
-  const rows = items.map((it) => ({ ...it, subtotal: toNumber(it.qty) * toNumber(it.unit) + toNumber(it.labor) }));
   const partsTotal = rows.filter((r) => r.category !== "labor").reduce((sum, r) => sum + r.subtotal, 0);
   const laborTotal = rows.filter((r) => r.category === "labor").reduce((sum, r) => sum + r.subtotal, 0);
   const tax = (partsTotal + laborTotal) * 0.085;
   const total = partsTotal + laborTotal + tax;
+
+  const sendEstimate = async () => {
+    if (!job || rows.length === 0) {
+      toast.error("Add at least one line item before sending");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await dispatch(
+        createEstimate({
+          jobId: job.id,
+          summary: message.trim() || "Estimate ready for review",
+          items: rows.map((r) => ({
+            description: r.name,
+            category: r.category,
+            amount: Number(r.subtotal.toFixed(2)),
+          })),
+        }),
+      ).unwrap();
+      toast.success("Estimate sent to customer");
+      router.push("/advisor");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send estimate");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background p-[32px]">
@@ -247,6 +287,8 @@ export default function SendEstimatePage() {
               <section className={`${card} flex-1`}>
                 <label className={fieldLabel}>Customer Message</label>
                 <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                   placeholder="Hi John, we've completed the inspection and here is the estimate..."
                   className="h-[96px] w-full resize-none rounded-[4px] border border-[#e5e7eb] bg-[#f8f9fa] px-[12px] py-[10px] text-[14px] text-[#111827] outline-none placeholder:text-[#9ca3af]"
                 />
@@ -278,14 +320,12 @@ export default function SendEstimatePage() {
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  toast.success("Estimate sent to customer");
-                  router.push("/advisor");
-                }}
-                className="flex w-full items-center justify-center gap-[8px] rounded-[8px] bg-primary px-[16px] py-[11px] text-[13px] font-semibold text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
+                onClick={() => void sendEstimate()}
+                disabled={submitting}
+                className="flex w-full items-center justify-center gap-[8px] rounded-[8px] bg-primary px-[16px] py-[11px] text-[13px] font-semibold text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] disabled:opacity-60"
               >
                 <Send className="size-[15px]" />
-                Send Estimate to Customer
+                {submitting ? "Sending..." : "Send Estimate to Customer"}
               </button>
               <button
                 type="button"

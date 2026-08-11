@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import {
   Calendar,
   Car,
@@ -20,7 +20,10 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchJobs } from "@/store/slices/jobsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
-import demoData from "@/lib/demo-data";
+import { fetchAppointments } from "@/store/slices/appointmentsSlice";
+import { fetchEstimates } from "@/store/slices/estimatesSlice";
+import { fetchThreads } from "@/store/slices/chatSlice";
+import { buildKpis } from "@/lib/kpis";
 import { cn } from "@/lib/utils";
 import {
   Table,
@@ -30,7 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Customer, JobStatus, KpiCard } from "@/types";
+import type { JobStatus } from "@/types";
 
 const kpiIcons: Record<string, typeof Calendar> = {
   calendar: Calendar,
@@ -89,15 +92,22 @@ export default function AdvisorDashboardPage() {
   const dispatch = useAppDispatch();
   const jobs = useAppSelector((s) => s.jobs.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
-  const [kpis, setKpis] = useState<KpiCard[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const appointments = useAppSelector((s) => s.appointments.items);
+  const estimates = useAppSelector((s) => s.estimates.items);
+  const threads = useAppSelector((s) => s.chat.threads);
 
   useEffect(() => {
     dispatch(fetchJobs());
     dispatch(fetchVehicles());
-    demoData.load("kpis").then((k) => setKpis(k.advisor ?? []));
-    demoData.load("customers").then(setCustomers);
+    dispatch(fetchAppointments());
+    dispatch(fetchEstimates());
+    dispatch(fetchThreads());
   }, [dispatch]);
+
+  const kpis = useMemo(
+    () => buildKpis("advisor", { jobs, vehicles, appointments, estimates, threads }),
+    [jobs, vehicles, appointments, estimates, threads],
+  );
 
   return (
     <div className="bg-background min-h-screen p-[32px]">
@@ -184,7 +194,7 @@ export default function AdvisorDashboardPage() {
                 <TableBody>
                   {jobs.map((job, i) => {
                     const vehicle = vehicles.find((v) => v.id === job.vehicleId);
-                    const customer = customers.find((c) => c.id === job.customerId);
+                    const customer = job.customer;
                     const pill = statusPills[job.status];
                     return (
                       <TableRow

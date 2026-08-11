@@ -2,12 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { ArrowUpRight, Bell, Calendar, Car, Check, ChevronRight, FileCheck, Gauge, MoreVertical, Wrench } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchKpis } from "@/store/slices/uiSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchJobs } from "@/store/slices/jobsSlice";
+import { buildKpis } from "@/lib/kpis";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
 
@@ -23,24 +23,26 @@ const kpiIcons: Record<string, typeof Calendar> = {
 
 export default function OwnerDashboardPage() {
   const dispatch = useAppDispatch();
-  const kpis = useAppSelector((s) => s.ui.kpis);
+  const user = useAppSelector((s) => s.auth.user);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const jobs = useAppSelector((s) => s.jobs.items);
 
   useEffect(() => {
-    dispatch(fetchKpis("owner"));
     dispatch(fetchVehicles());
     dispatch(fetchJobs());
   }, [dispatch]);
 
+  const kpis = useMemo(() => buildKpis("owner", { jobs, vehicles }), [jobs, vehicles]);
+
   const activeJob = jobs.find((j) => j.status !== "ready" && j.status !== "completed");
   const activeVehicle = vehicles[0];
+  const firstName = user?.name.split(" ")[0] ?? "John";
 
   return (
     <div className="bg-background min-h-screen p-[32px]">
       <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-[32px]">
         <div>
-          <h1 className="text-[36px] font-bold tracking-[-0.72px] text-foreground">Welcome back, John!</h1>
+          <h1 className="text-[36px] font-bold tracking-[-0.72px] text-foreground">Welcome back, {firstName}!</h1>
           <p className="text-[16px] text-[#414754]">Here is the latest overview of your fleet operations.</p>
         </div>
 
@@ -96,7 +98,7 @@ export default function OwnerDashboardPage() {
                       <p className="text-[11px] font-medium text-[#414754]">Service Advisor</p>
                       <p className="flex items-center justify-end gap-[4px] text-[12px] font-semibold tracking-[0.24px] text-foreground">
                         <Gauge className="size-[10.7px]" />
-                        Sarah Jenkins
+                        {activeJob.advisor?.name ?? "Sarah Jenkins"}
                       </p>
                     </div>
                   </div>

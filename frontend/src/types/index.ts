@@ -1,5 +1,7 @@
 export type ServiceCategory = "maintenance" | "repairs" | "inspections";
 
+export type UserRole = "admin" | "advisor" | "mechanic" | "owner";
+
 export interface Service {
   id: string;
   name: string;
@@ -108,6 +110,10 @@ export interface JobCard {
   notes: JobNote[];
   partsUsed: PartUsed[];
   photos: string[];
+  vehicle?: Vehicle;
+  customer?: { id: string; name: string };
+  advisor?: { id: string; name: string };
+  mechanic?: { id: string; name: string };
 }
 
 export interface Part {
@@ -187,6 +193,8 @@ export interface ChatThread {
   subject: string;
   unread: number;
   lastMessageAt: string;
+  owner?: { id: string; name: string; avatar: string | null };
+  advisor?: { id: string; name: string; avatar: string | null };
   messages: ChatMessage[];
 }
 
@@ -207,6 +215,24 @@ export interface KpiCard {
   delta: string;
   trend: "up" | "down" | "flat";
   icon: string;
+}
+
+export interface ReportsData {
+  totalRevenue: number;
+  activeJobs: number;
+  registeredCustomers: number;
+  activeEmployees: number;
+  revenueByMonth: { month: string; revenue: number }[];
+  jobsByStatus: { status: string; count: number }[];
+  workloadByMechanic: {
+    mechanic: string;
+    role: string;
+    active: number;
+    completed: number;
+    avgHoursPerJob?: number;
+  }[];
+  serviceDistribution: { name: string; pct: number }[];
+  activityLog: { id: string; user: string; action: string; time: string }[];
 }
 
 export interface Testimonial {

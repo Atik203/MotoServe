@@ -2,16 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CalendarDays, ChevronDown, Download, Search, Star, UserRound, Wrench } from "lucide-react";
-import demoData from "@/lib/demo-data";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchInvoices } from "@/store/slices/invoicesSlice";
+import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-type Invoice = Awaited<ReturnType<typeof demoData.load<"invoices">>>[number];
-type Vehicle = Awaited<ReturnType<typeof demoData.load<"vehicles">>>[number];
+import type { Invoice, Vehicle } from "@/types";
 
 interface HistoryEntry {
   id: string;
@@ -39,33 +39,34 @@ function Stars({ rating, size = "h-[19px] w-[20px]" }: { rating: number; size?: 
 }
 
 export default function ServiceHistoryPage() {
-  const [entries, setEntries] = useState<HistoryEntry[]>([]);
+  const dispatch = useAppDispatch();
+  const invoices = useAppSelector((s) => s.invoices.items);
+  const vehicles = useAppSelector((s) => s.vehicles.items);
   const [search, setSearch] = useState("");
   const [vehicleFilter, setVehicleFilter] = useState("All");
 
   useEffect(() => {
-    (async () => {
-      const [invoices, vehicles] = await Promise.all([demoData.load("invoices"), demoData.load("vehicles")]);
-      const pairs: [Invoice, Vehicle][] = [
-        [invoices.find((i) => i.jobId === "JC-1045")!, vehicles[0]],
-        [invoices.find((i) => i.id === "INV-2026-0142")!, vehicles[1]],
-      ].filter(([i, v]) => i && v) as [Invoice, Vehicle][];
+    dispatch(fetchInvoices());
+    dispatch(fetchVehicles());
+  }, [dispatch]);
 
-      setEntries(
-        pairs.map(([invoice, vehicle], idx) => ({
-          id: invoice.id,
-          vehicle,
-          invoice,
-          title: idx === 0 ? "Brake Pad Replacement & Rotor Resurfacing" : "Tire Rotation & Multi-Point Inspection",
-          advisor: idx === 0 ? "Sarah Jenkins" : "Sarah Jenkins",
-          date: new Date(invoice.issuedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-          rated: idx === 1,
-          rating: idx === 1 ? 4 : undefined,
-          ratedAt: idx === 1 ? "Aug 13, 2026" : undefined,
-        })),
-      );
-    })();
-  }, []);
+  const entries = useMemo<HistoryEntry[]>(() => {
+    return invoices.slice(0, 2).map((invoice, idx) => {
+      const vehicle = vehicles.find((v) => v.id === invoice.vehicleId) ?? vehicles[idx];
+      if (!vehicle) return null;
+      return {
+        id: invoice.id,
+        vehicle,
+        invoice,
+        title: (invoice.items[0] as { description?: string } | undefined)?.description ?? `Service ${invoice.id}`,
+        advisor: "Sarah Jenkins",
+        date: new Date(invoice.issuedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        rated: invoice.status === "paid",
+        rating: invoice.status === "paid" ? 4 : undefined,
+        ratedAt: invoice.payment?.paidAt ? new Date(invoice.payment.paidAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : undefined,
+      } as HistoryEntry;
+    }).filter((e): e is HistoryEntry => e !== null);
+  }, [invoices, vehicles]);
 
   const filtered = entries.filter((e) => {
     const matchSearch =

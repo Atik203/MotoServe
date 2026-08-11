@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
-import demoData from "@/lib/demo-data";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchServices, deleteService } from "@/store/slices/servicesSlice";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,14 +27,15 @@ const formatCategory = (category: Service["category"]) =>
   category.charAt(0).toUpperCase() + category.slice(1);
 
 export default function ServicesPage() {
-  const [services, setServices] = useState<Service[] | null>(null);
+  const dispatch = useAppDispatch();
+  const services = useAppSelector((s) => s.services.items);
   const [page, setPage] = useState(0);
 
   useEffect(() => {
-    demoData.load("services").then(setServices);
-  }, []);
+    if (services.length === 0) dispatch(fetchServices());
+  }, [dispatch, services.length]);
 
-  if (!services) {
+  if (services.length === 0) {
     return (
       <div className="bg-background min-h-screen p-[32px]">
         <p className="text-muted-foreground">Loading services...</p>
@@ -138,9 +140,13 @@ export default function ServicesPage() {
                       <button
                         type="button"
                         aria-label={`Delete ${service.name}`}
-                        onClick={() => {
-                          setServices((prev) => prev?.filter((s) => s.id !== service.id) ?? prev);
-                          toast.success("Service deleted (demo)");
+                        onClick={async () => {
+                          try {
+                            await dispatch(deleteService(service.id)).unwrap();
+                            toast.success("Service deleted");
+                          } catch (err) {
+                            toast.error(err instanceof Error ? err.message : "Failed to delete service");
+                          }
                         }}
                         className="rounded-[4px] p-[4px] text-muted-foreground transition-colors hover:bg-[rgba(244,67,54,0.1)] hover:text-[#f44336]"
                       >

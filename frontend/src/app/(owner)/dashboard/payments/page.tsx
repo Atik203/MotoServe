@@ -5,13 +5,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CalendarDays, CreditCard, Info, Landmark, ReceiptText, Wallet } from "lucide-react";
-import demoData from "@/lib/demo-data";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchInvoices, payInvoice } from "@/store/slices/invoicesSlice";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-type Invoice = Awaited<ReturnType<typeof demoData.load<"invoices">>>[number];
 
 const PAYMENT_METHODS = [
   { id: "card", label: "Credit Card (Dummy)", icon: CreditCard },
@@ -20,16 +19,32 @@ const PAYMENT_METHODS = [
 ];
 
 export default function PaymentInvoicePage() {
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const dispatch = useAppDispatch();
+  const invoices = useAppSelector((s) => s.invoices.items);
   const [method, setMethod] = useState("card");
+  const [paying, setPaying] = useState(false);
 
   useEffect(() => {
-    demoData.load("invoices").then((data) => setInvoice(data.find((i) => i.jobId === "JC-1045") ?? null));
-  }, []);
+    dispatch(fetchInvoices());
+  }, [dispatch]);
+
+  const invoice = invoices.find((i) => i.jobId === "JC-1045") ?? invoices[0] ?? null;
 
   if (!invoice) {
     return <div className="bg-background min-h-screen p-[32px] text-muted-foreground">Loading invoice...</div>;
   }
+
+  const handlePay = async () => {
+    setPaying(true);
+    try {
+      await dispatch(payInvoice({ id: invoice.id, method: method as "card" | "cash" | "mobile" })).unwrap();
+      toast.success("Payment successful — invoice marked as paid");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Payment failed");
+    } finally {
+      setPaying(false);
+    }
+  };
 
   return (
     <div className="bg-background min-h-screen p-[32px]">
@@ -177,11 +192,12 @@ export default function PaymentInvoicePage() {
                 </div>
               </div>
               <Button
-                onClick={() => toast.success("Payment successful (dummy gateway) — invoice ready to download")}
+                onClick={() => void handlePay()}
+                disabled={paying || invoice.status === "paid"}
                 className="gap-[8px] rounded-[4px] py-[12px] text-[16px] font-semibold"
               >
                 <CreditCard className="size-[18px]" />
-                Pay Now
+                {paying ? "Processing..." : invoice.status === "paid" ? "Paid" : "Pay Now"}
               </Button>
               <Link
                 href="#"

@@ -19,13 +19,15 @@ export function MechanicNotes({ jobId, notes, author }: MechanicNotesProps) {
   const dispatch = useAppDispatch();
   const [draft, setDraft] = useState("");
 
-  const saveNote = () => {
+  const saveNote = async () => {
     if (!draft.trim()) return;
-    const now = new Date();
-    const time = `Today, ${now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
-    dispatch(addJobNote({ id: jobId, note: { id: `note-${Date.now()}`, author, time, text: draft.trim() } }));
-    setDraft("");
-    toast.success("Note saved");
+    try {
+      await dispatch(addJobNote({ id: jobId, author, text: draft.trim() })).unwrap();
+      setDraft("");
+      toast.success("Note saved");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save note");
+    }
   };
 
   return (

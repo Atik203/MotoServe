@@ -17,7 +17,7 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchJobs } from "@/store/slices/jobsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
-import { fetchKpis } from "@/store/slices/uiSlice";
+import { buildKpis } from "@/lib/kpis";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,22 +55,23 @@ const quickActions: { label: string; icon: LucideIcon; href?: string }[] = [
 
 export default function MechanicDashboardPage() {
   const dispatch = useAppDispatch();
+  const user = useAppSelector((s) => s.auth.user);
 
   useEffect(() => {
     dispatch(fetchJobs());
     dispatch(fetchVehicles());
-    dispatch(fetchKpis("mechanic"));
   }, [dispatch]);
 
-  const kpis = useAppSelector((s) => s.ui.kpis);
   const jobs = useAppSelector((s) => s.jobs.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
 
   const vehicleById = useMemo(() => new Map(vehicles.map((v) => [v.id, v])), [vehicles]);
 
+  const mechanicId = user?.id ?? "emp-002";
+
   const assignedJobs = useMemo(
-    () => jobs.filter((j) => j.mechanicId === "emp-002" || j.id === "JC-1044"),
-    [jobs],
+    () => jobs.filter((j) => j.mechanicId === mechanicId || j.id === "JC-1044"),
+    [jobs, mechanicId],
   );
 
   const activeJob = useMemo(
@@ -78,7 +79,12 @@ export default function MechanicDashboardPage() {
     [assignedJobs],
   );
 
-  if (kpis.length === 0 || jobs.length === 0 || vehicles.length === 0) {
+  const kpiCards = useMemo(
+    () => buildKpis("mechanic", { jobs: assignedJobs, userId: mechanicId }),
+    [assignedJobs, mechanicId],
+  );
+
+  if (kpiCards.length === 0 || jobs.length === 0 || vehicles.length === 0) {
     return (
       <div className="bg-background min-h-screen p-[32px]">
         <p className="text-muted-foreground">Loading dashboard...</p>
@@ -103,7 +109,7 @@ export default function MechanicDashboardPage() {
         </div>
 
         <div className="grid grid-cols-4 gap-[24px]">
-          {kpis.map((kpi) => {
+          {kpiCards.map((kpi) => {
             const Icon = kpiIcon[kpi.icon] ?? ClipboardList;
             return (
               <div

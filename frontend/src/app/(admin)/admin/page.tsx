@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import {
   Calendar,
@@ -12,8 +12,10 @@ import {
   Users,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchKpis } from "@/store/slices/uiSlice";
-import demoData from "@/lib/demo-data";
+import { fetchReports } from "@/store/slices/reportsSlice";
+import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchInvoices } from "@/store/slices/invoicesSlice";
+import { buildKpis } from "@/lib/kpis";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -28,17 +30,20 @@ const kpiIcon: Record<string, typeof Users> = {
 
 export default function AdminDashboardPage() {
   const dispatch = useAppDispatch();
+  const reports = useAppSelector((s) => s.reports.data);
+  const jobs = useAppSelector((s) => s.jobs.items);
+  const invoices = useAppSelector((s) => s.invoices.items);
 
   useEffect(() => {
-    dispatch(fetchKpis("admin"));
+    dispatch(fetchReports());
+    dispatch(fetchJobs());
+    dispatch(fetchInvoices());
   }, [dispatch]);
 
-  const kpis = useAppSelector((s) => s.ui.kpis);
-
-  const [reports, setReports] = useState<Awaited<ReturnType<typeof demoData.load<"reports">>> | null>(null);
-  useEffect(() => {
-    demoData.load("reports").then(setReports);
-  }, []);
+  const kpis = useMemo(
+    () => buildKpis("admin", { reports, jobs, invoices }),
+    [reports, jobs, invoices],
+  );
 
   const chart = useMemo(() => {
     if (!reports) return null;

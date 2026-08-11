@@ -19,7 +19,8 @@ import {
   Users,
   Wrench,
 } from "lucide-react";
-import demoData from "@/lib/demo-data";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchEmployees } from "@/store/slices/employeesSlice";
 import type { Employee } from "@/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -64,14 +65,15 @@ function EmployeeAvatar({ employee }: { employee: Employee }) {
 }
 
 export default function EmployeeManagementPage() {
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const dispatch = useAppDispatch();
+  const employees = useAppSelector((s) => s.employees.items);
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    demoData.load("employees").then(setEmployees);
-  }, []);
+    if (employees.length === 0) dispatch(fetchEmployees());
+  }, [dispatch, employees.length]);
 
   const mechanics = employees.filter((e) => e.role === "mechanic");
   const advisors = employees.filter((e) => e.role === "advisor");

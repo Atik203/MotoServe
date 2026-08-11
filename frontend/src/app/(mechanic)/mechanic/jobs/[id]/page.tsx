@@ -28,9 +28,10 @@ const customers = new Map<string, string>([
 ]);
 const advisors = new Map<string, string>([["emp-001", "Sarah Jenkins"]]);
 
-const vehicleName = (id: JobCard["vehicleId"]) => vehicles.get(id) ?? id;
-const customerName = (id: JobCard["customerId"]) => customers.get(id) ?? id;
-const advisorName = (id: JobCard["advisorId"]) => advisors.get(id) ?? id;
+const vehicleName = (id: JobCard["vehicleId"], job?: JobCard) =>
+  job?.vehicle ? `${job.vehicle.make} ${job.vehicle.model}` : vehicles.get(id) ?? id;
+const customerName = (id: JobCard["customerId"], job?: JobCard) => job?.customer?.name ?? customers.get(id) ?? id;
+const advisorName = (id: JobCard["advisorId"], job?: JobCard) => job?.advisor?.name ?? advisors.get(id) ?? id;
 
 export default function RepairProgressPage() {
   const params = useParams<{ id: string }>();
@@ -55,10 +56,14 @@ export default function RepairProgressPage() {
   const currentIdx = STATUS_ORDER.indexOf(job.status);
   const nextStatus = STATUS_ORDER[Math.min(currentIdx + 1, STATUS_ORDER.length - 1)];
 
-  const advanceStage = () => {
+  const advanceStage = async () => {
     if (job.status === "completed") return;
-    dispatch(updateJobStatus({ id: job.id, status: nextStatus as never }));
-    toast.success(`Job moved to ${nextStatus}`);
+    try {
+      await dispatch(updateJobStatus({ id: job.id, status: nextStatus as never })).unwrap();
+      toast.success(`Job moved to ${nextStatus}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update status");
+    }
   };
 
   return (
@@ -71,10 +76,10 @@ export default function RepairProgressPage() {
 
         <section className="flex gap-[16px] rounded-[8px] border border-border bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
           {[
-            { label: "Vehicle", value: vehicleName(job.vehicleId) },
-            { label: "Customer", value: customerName(job.customerId) },
+            { label: "Vehicle", value: vehicleName(job.vehicleId, job) },
+            { label: "Customer", value: customerName(job.customerId, job) },
             { label: "Job Card", value: job.id, blue: true },
-            { label: "Advisor", value: advisorName(job.advisorId) },
+            { label: "Advisor", value: advisorName(job.advisorId, job) },
             { label: "Station", value: job.station ?? "Not assigned" },
           ].map((f) => (
             <div key={f.label} className="flex flex-1 flex-col gap-[4px]">
@@ -112,8 +117,10 @@ export default function RepairProgressPage() {
               </Button>
               <Button
                 onClick={() => {
-                  dispatch(updateJobStatus({ id: job.id, status: "completed" }));
-                  toast.success("Job marked as completed");
+                  dispatch(updateJobStatus({ id: job.id, status: "completed" }))
+                    .unwrap()
+                    .then(() => toast.success("Job marked as completed"))
+                    .catch((err: Error) => toast.error(err.message));
                 }}
                 disabled={job.status === "completed"}
                 className="rounded-[4px]"

@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { Clock, Download, Gauge, Users, Wrench } from "lucide-react";
-import demoData from "@/lib/demo-data";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchReports } from "@/store/slices/reportsSlice";
+import { fetchEmployees } from "@/store/slices/employeesSlice";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -17,19 +19,17 @@ import {
 const MAX_ACTIVE_JOBS = 5;
 const PEAK_HOURS = ["10:00 AM - 2:00 PM"];
 
-type Reports = Awaited<ReturnType<typeof demoData.load<"reports">>>;
-type Employees = Awaited<ReturnType<typeof demoData.load<"employees">>>;
-
 export default function WorkloadReportsPage() {
-  const [reports, setReports] = useState<Reports | null>(null);
-  const [employees, setEmployees] = useState<Employees | null>(null);
+  const dispatch = useAppDispatch();
+  const reports = useAppSelector((s) => s.reports.data);
+  const employees = useAppSelector((s) => s.employees.items);
 
   useEffect(() => {
-    demoData.load("reports").then(setReports);
-    demoData.load("employees").then(setEmployees);
-  }, []);
+    if (!reports) dispatch(fetchReports());
+    if (employees.length === 0) dispatch(fetchEmployees());
+  }, [dispatch, reports, employees.length]);
 
-  if (!reports || !employees) {
+  if (!reports || employees.length === 0) {
     return (
       <div className="bg-background min-h-screen p-[32px]">
         <p className="text-muted-foreground">Loading workload reports...</p>
@@ -110,7 +110,7 @@ export default function WorkloadReportsPage() {
                     </TableCell>
                     <TableCell className="px-[16px] py-[17px] text-center text-[14px] text-foreground">{m.completed}</TableCell>
                     <TableCell className="px-[16px] py-[17px] text-center text-[14px] text-foreground">
-                      {m.avgHoursPerJob}h
+                      {m.avgHoursPerJob ? `${m.avgHoursPerJob}h` : "—"}
                     </TableCell>
                     <TableCell className="px-[16px] py-[17px]">
                       <div className="flex items-center justify-end gap-[8px]">

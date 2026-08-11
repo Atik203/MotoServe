@@ -6,6 +6,11 @@ import vehiclesReducer from "./slices/vehiclesSlice";
 import jobsReducer from "./slices/jobsSlice";
 import appointmentsReducer from "./slices/appointmentsSlice";
 import chatReducer from "./slices/chatSlice";
+import customersReducer from "./slices/customersSlice";
+import employeesReducer from "./slices/employeesSlice";
+import estimatesReducer from "./slices/estimatesSlice";
+import invoicesReducer from "./slices/invoicesSlice";
+import reportsReducer from "./slices/reportsSlice";
 
 export const makeStore = () =>
   configureStore({
@@ -17,6 +22,11 @@ export const makeStore = () =>
       jobs: jobsReducer,
       appointments: appointmentsReducer,
       chat: chatReducer,
+      customers: customersReducer,
+      employees: employeesReducer,
+      estimates: estimatesReducer,
+      invoices: invoicesReducer,
+      reports: reportsReducer,
     },
   });
 

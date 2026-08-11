@@ -5,17 +5,17 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowRight, CalendarCheck, Eye, EyeOff, KeyRound, Lock, Mail, Package } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
-import { loginDemo, type DemoRole } from "@/store/slices/authSlice";
+import { loginUser } from "@/store/slices/authSlice";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const DEMO_ROLES: { role: DemoRole; label: string; href: string }[] = [
-  { role: "owner", label: "Owner", href: "/dashboard" },
-  { role: "advisor", label: "Advisor", href: "/advisor" },
-  { role: "mechanic", label: "Mechanic", href: "/mechanic" },
-  { role: "admin", label: "Admin", href: "/admin" },
+const DEMO_ROLES: { role: string; label: string; email: string; password: string; href: string }[] = [
+  { role: "owner", label: "Owner", email: "john.doe@example.com", password: "password123", href: "/dashboard" },
+  { role: "advisor", label: "Advisor", email: "sarah.jenkins@motorserve.com", password: "password123", href: "/advisor" },
+  { role: "mechanic", label: "Mechanic", email: "alex.turner@motorserve.com", password: "password123", href: "/mechanic" },
+  { role: "admin", label: "Admin", email: "admin@motorserve.com", password: "admin123", href: "/admin" },
 ];
 
 export default function LoginPage() {
@@ -23,12 +23,29 @@ export default function LoginPage() {
   const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const doLogin = async (emailValue: string, passwordValue: string) => {
+    setSubmitting(true);
+    try {
+      const res = await dispatch(loginUser({ email: emailValue, password: passwordValue })).unwrap();
+      toast.success(`Welcome back, ${res.name}`);
+      router.push(res.role === "owner" ? "/dashboard" : `/${res.role}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Login failed");
+      setSubmitting(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(loginDemo({ name: "John Doe", email: "john.doe@example.com", role: "owner" }));
-    toast.success("Logged in as John Doe (Owner)");
-    router.push("/dashboard");
+    if (!email.trim() || !password) {
+      toast.error("Please enter your email and password");
+      return;
+    }
+    void doLogin(email.trim(), password);
   };
 
   return (
@@ -95,7 +112,13 @@ export default function LoginPage() {
               <Label className="text-[12px] font-semibold tracking-[0.24px] text-foreground">Email Address</Label>
               <div className="relative">
                 <Mail className="absolute top-1/2 left-[16px] size-[16.7px] -translate-y-1/2 text-muted-foreground" />
-                <Input type="email" placeholder="name@workshop.com" className="h-[44px] rounded-[8px] border-[#e2e8f0] pl-[45px]" />
+                <Input
+                  type="email"
+                  placeholder="name@workshop.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-[44px] rounded-[8px] border-[#e2e8f0] pl-[45px]"
+                />
               </div>
             </div>
 
@@ -111,6 +134,8 @@ export default function LoginPage() {
                 <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="h-[44px] rounded-[8px] border-[#e2e8f0] px-[45px]"
                 />
                 <button
@@ -129,8 +154,8 @@ export default function LoginPage() {
               <span className="text-[14px] text-[#424753]">Remember Me</span>
             </label>
 
-            <Button type="submit" className="flex h-[44px] gap-[8px] rounded-[8px] shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
-              Login
+            <Button type="submit" disabled={submitting} className="flex h-[44px] gap-[8px] rounded-[8px] shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
+              {submitting ? "Logging in..." : "Login"}
               <ArrowRight className="size-[11.7px]" />
             </Button>
           </form>
@@ -153,12 +178,9 @@ export default function LoginPage() {
                 <button
                   key={d.role}
                   type="button"
-                  onClick={() => {
-                    dispatch(loginDemo({ name: d.label, email: `${d.role}@motorserve.com`, role: d.role }));
-                    toast.success(`Logged in as ${d.label}`);
-                    router.push(d.href);
-                  }}
-                  className="rounded-[6px] bg-primary-soft py-[6px] text-[11px] font-semibold text-primary transition-colors hover:bg-primary hover:text-white"
+                  disabled={submitting}
+                  onClick={() => void doLogin(d.email, d.password)}
+                  className="rounded-[6px] bg-primary-soft py-[6px] text-[11px] font-semibold text-primary transition-colors hover:bg-primary hover:text-white disabled:opacity-50"
                 >
                   {d.label}
                 </button>

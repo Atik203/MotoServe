@@ -187,6 +187,8 @@ model JobCard {
   priority       JobPriority @default(MEDIUM)
   status         JobStatus  @default(RECEIVED)
   issues         String
+  services       Json?
+  photos         Json?
   totalEstimate  Float?
 
   progress       JobProgress[]

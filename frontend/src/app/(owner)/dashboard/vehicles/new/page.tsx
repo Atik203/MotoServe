@@ -35,27 +35,29 @@ export default function RegisterVehiclePage() {
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.make.trim() || !form.model.trim() || !form.regNo.trim()) {
       toast.error("Please fill in brand, model and registration number");
       return;
     }
-    dispatch(
-      addVehicle({
-        id: `veh-${Date.now()}`,
-        ownerId: "cus-001",
-        make: form.make,
-        model: form.model,
-        year: Number(form.year) || 2024,
-        regNo: form.regNo,
-        fuelType: "gasoline",
-        mileage: Number(form.mileage) || 0,
-        image: "/images/cars/toyota-camry.png",
-      }),
-    );
-    toast.success("Vehicle registered successfully");
-    router.push("/dashboard");
+    try {
+      await dispatch(
+        addVehicle({
+          make: form.make.trim(),
+          model: form.model.trim(),
+          year: Number(form.year) || 2024,
+          regNo: form.regNo.trim(),
+          fuelType: "gasoline",
+          mileage: Number(form.mileage) || 0,
+          image: "/images/cars/toyota-camry.png",
+        }),
+      ).unwrap();
+      toast.success("Vehicle registered successfully");
+      router.push("/dashboard");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to register vehicle");
+    }
   };
 
   return (

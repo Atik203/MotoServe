@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Download, RefreshCw, Search, ShieldCheck, UserCheck, UserX, Users } from "lucide-react";
-import demoData from "@/lib/demo-data";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchCustomers, verifyCustomer } from "@/store/slices/customersSlice";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,56 +17,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-type Customer = Awaited<ReturnType<typeof demoData.load<"customers">>>[number];
-type Status = "pending" | "approved" | "rejected";
-
-const statusPill: Record<Status, string> = {
+const statusPill: Record<"pending" | "approved" | "rejected", string> = {
   pending: "bg-[rgba(255,193,7,0.1)] border-[rgba(255,193,7,0.2)] text-warning",
   approved: "bg-[rgba(76,175,80,0.1)] border-[rgba(76,175,80,0.2)] text-[#4caf50]",
   rejected: "bg-[rgba(244,67,54,0.1)] border-[rgba(244,67,54,0.2)] text-[#f44336]",
 };
 
-const EXTRA_ROWS: Customer[] = [
-  {
-    id: "cus-004",
-    name: "Marcus Johnson",
-    phone: "+1 (555) 019-2834",
-    email: "marcus.j@example.com",
-    nid: "NID-998812345",
-    drivingLicense: "DL-4412098",
-    status: "pending",
-    verifiedAt: null,
-  },
-  {
-    id: "cus-005",
-    name: "Emily Carter",
-    phone: "+1 (555) 771-9045",
-    email: "emily.c@example.com",
-    nid: "NID-553290111",
-    drivingLicense: "DL-8890123",
-    status: "approved",
-    verifiedAt: "2026-08-10T13:00:00Z",
-  },
-  {
-    id: "cus-006",
-    name: "Robert Kim",
-    phone: "+1 (555) 442-7761",
-    email: "robert.kim@example.com",
-    nid: "NID-774558812",
-    drivingLicense: "DL-2209876",
-    status: "rejected",
-    verifiedAt: null,
-  },
-];
-
 export default function VerificationPage() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const dispatch = useAppDispatch();
+  const customers = useAppSelector((s) => s.customers.items);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | Status>("all");
+  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
 
   useEffect(() => {
-    demoData.load("customers").then((data) => setCustomers([...EXTRA_ROWS, ...data]));
-  }, []);
+    dispatch(fetchCustomers());
+  }, [dispatch]);
 
   const counts = {
     pending: customers.filter((c) => c.status === "pending").length,
@@ -84,9 +50,13 @@ export default function VerificationPage() {
     return matchSearch && matchFilter;
   });
 
-  const setStatus = (id: string, status: Status) => {
-    setCustomers((prev) => prev.map((c) => (c.id === id ? { ...c, status, verifiedAt: status === "approved" ? new Date().toISOString() : null } : c)));
-    toast.success(status === "approved" ? "Account approved" : status === "rejected" ? "Account rejected" : "Status updated");
+  const setStatus = async (id: string, status: "approved" | "rejected") => {
+    try {
+      await dispatch(verifyCustomer({ id, decision: status })).unwrap();
+      toast.success(status === "approved" ? "Account approved" : "Account rejected");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Action failed");
+    }
   };
 
   const kpis = [
@@ -111,7 +81,7 @@ export default function VerificationPage() {
               <Download className="size-[12px]" />
               Export List
             </Button>
-            <Button variant="outline" size="sm" className="gap-[4px] rounded-[8px] px-[13px] py-[7px] text-[12px] font-semibold tracking-[0.24px]" onClick={() => setCustomers((prev) => [...prev])}>
+            <Button variant="outline" size="sm" className="gap-[4px] rounded-[8px] px-[13px] py-[7px] text-[12px] font-semibold tracking-[0.24px]" onClick={() => dispatch(fetchCustomers())}>
               <RefreshCw className="size-[12px]" />
               Refresh
             </Button>

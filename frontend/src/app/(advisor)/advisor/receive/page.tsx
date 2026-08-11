@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   CalendarDays,
   Camera,
@@ -12,7 +14,10 @@ import {
   Plus,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import demoData from "@/lib/demo-data";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchJobs, createJobCard } from "@/store/slices/jobsSlice";
+import { fetchVehicles } from "@/store/slices/vehiclesSlice";
+import { fetchCustomers } from "@/store/slices/customersSlice";
 import { cn } from "@/lib/utils";
 import type { Customer, JobCard, Vehicle } from "@/types";
 
@@ -29,25 +34,51 @@ const primaryBtn =
 const priorities = ["low", "medium", "high"] as const;
 
 export default function ReceiveVehiclePage() {
-  const [job, setJob] = useState<JobCard | null>(null);
-  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
-  const [customer, setCustomer] = useState<Customer | null>(null);
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const jobs = useAppSelector((s) => s.jobs.items);
+  const vehicles = useAppSelector((s) => s.vehicles.items);
+  const customers = useAppSelector((s) => s.customers.items);
   const [keysReceived, setKeysReceived] = useState(true);
   const [priority, setPriority] = useState<(typeof priorities)[number]>("medium");
+  const [problems, setProblems] = useState("Squeaking noise from front left wheel when turning.");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      const [jobs, vehicles, customers] = await Promise.all([
-        demoData.load("jobs"),
-        demoData.load("vehicles"),
-        demoData.load("customers"),
-      ]);
-      const active = jobs.find((j) => j.id === "JC-1045");
-      setJob(active ?? null);
-      setVehicle(vehicles.find((v) => v.id === active?.vehicleId) ?? null);
-      setCustomer(customers.find((c) => c.id === active?.customerId) ?? null);
-    })();
-  }, []);
+    dispatch(fetchJobs());
+    dispatch(fetchVehicles());
+    dispatch(fetchCustomers());
+  }, [dispatch]);
+
+  const job: JobCard | null = jobs.find((j) => j.id === "JC-1045") ?? jobs[0] ?? null;
+  const vehicle: Vehicle | null = vehicles.find((v) => v.id === job?.vehicleId) ?? null;
+  const customer: Customer | null = customers.find((c) => c.id === job?.customerId) ?? null;
+
+  const createCard = async () => {
+    if (!job) {
+      toast.error("No vehicle intake loaded — open a job card first");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await dispatch(
+        createJobCard({
+          vehicleId: job.vehicleId,
+          customerId: job.customerId,
+          advisorId: job.advisorId,
+          issues: problems.trim(),
+          priority,
+          station: "Main Bay / Station 04",
+        }),
+      ).unwrap();
+      toast.success("Job card created");
+      router.push("/advisor/job-cards");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create job card");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const initials =
     customer?.name
@@ -68,7 +99,7 @@ export default function ReceiveVehiclePage() {
             <button type="button" className={outlineBtn}>
               Save Draft
             </button>
-            <button type="button" className={primaryBtn}>
+            <button type="button" onClick={() => void createCard()} disabled={submitting} className={primaryBtn}>
               Create Job Card
             </button>
           </div>
@@ -260,7 +291,8 @@ export default function ReceiveVehiclePage() {
             <div className="flex flex-col gap-[6px]">
               <label className={fieldLabel}>Reported Problems</label>
               <textarea
-                defaultValue="Squeaking noise from front left wheel when turning."
+                value={problems}
+                onChange={(e) => setProblems(e.target.value)}
                 className={cn(inputBase, "min-h-[96px] resize-none")}
               />
             </div>
@@ -277,9 +309,9 @@ export default function ReceiveVehiclePage() {
               <button type="button" className={outlineBtn}>
                 Save Draft
               </button>
-              <button type="button" className={primaryBtn}>
+              <button type="button" onClick={() => void createCard()} disabled={submitting} className={primaryBtn}>
                 <Plus className="size-[13.5px]" />
-                Create Job Card
+                {submitting ? "Creating..." : "Create Job Card"}
               </button>
             </div>
           </section>

@@ -263,6 +263,8 @@ async function main() {
         priority: j.priority.toUpperCase() as never,
         status: j.status.toUpperCase() as never,
         issues: j.issues,
+        services: j.services,
+        photos: j.photos,
       },
       create: {
         id: j.id,
@@ -274,6 +276,8 @@ async function main() {
         priority: j.priority.toUpperCase() as never,
         status: j.status.toUpperCase() as never,
         issues: j.issues,
+        services: j.services,
+        photos: j.photos,
       },
     });
 

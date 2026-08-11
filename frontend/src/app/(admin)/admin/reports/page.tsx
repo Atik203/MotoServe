@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import {
   BadgeDollarSign,
@@ -13,7 +13,8 @@ import {
   Wallet,
   Wrench,
 } from "lucide-react";
-import demoData from "@/lib/demo-data";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchReports } from "@/store/slices/reportsSlice";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,11 +41,12 @@ const quickActions = [
 ];
 
 export default function AdminReportsPage() {
-  const [reports, setReports] = useState<Awaited<ReturnType<typeof demoData.load<"reports">>> | null>(null);
+  const dispatch = useAppDispatch();
+  const reports = useAppSelector((s) => s.reports.data);
 
   useEffect(() => {
-    demoData.load("reports").then(setReports);
-  }, []);
+    if (!reports) dispatch(fetchReports());
+  }, [dispatch, reports]);
 
   const chart = useMemo(() => {
     if (!reports) return null;

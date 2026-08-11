@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import demoData from "@/lib/demo-data";
+import { api } from "@/lib/api";
 import type { Appointment } from "@/types";
 
 interface AppointmentsState {
@@ -15,16 +15,20 @@ const initialState: AppointmentsState = {
 };
 
 export const fetchAppointments = createAsyncThunk("appointments/fetchAll", async () => {
-  return await demoData.load("appointments");
+  return await api.get<Appointment[]>("/appointments");
 });
+
+export const addAppointment = createAsyncThunk(
+  "appointments/create",
+  async (data: { vehicleId: string; serviceIds: string[]; date: string; time: string; notes?: string }) => {
+    return await api.post<Appointment>("/appointments", data);
+  },
+);
 
 const appointmentsSlice = createSlice({
   name: "appointments",
   initialState,
   reducers: {
-    addAppointment(state, action: PayloadAction<Appointment>) {
-      state.items.unshift(action.payload);
-    },
     updateAppointmentStatus(
       state,
       action: PayloadAction<{ id: string; status: Appointment["status"] }>,
@@ -45,9 +49,12 @@ const appointmentsSlice = createSlice({
       .addCase(fetchAppointments.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error.message ?? "Failed to load appointments";
+      })
+      .addCase(addAppointment.fulfilled, (state, action) => {
+        state.items.unshift(action.payload);
       });
   },
 });
 
-export const { addAppointment, updateAppointmentStatus } = appointmentsSlice.actions;
+export const { updateAppointmentStatus } = appointmentsSlice.actions;
 export default appointmentsSlice.reducer;

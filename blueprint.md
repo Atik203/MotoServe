@@ -139,7 +139,7 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 
 - **Phase 0** ✅ scaffold root docs + configs + frontend/backend shells
 - **Phase 1** ✅ frontend demo-data UI (all 35 screens, batches A–F, desktop-first)
-- **Phase 2** 🔨 backend: Prisma schema+seed ✅ → auth ✅ → REST endpoints ✅ (auth/services/vehicles/appointments/jobs/employees/estimates/invoices/chat/parts/ratings/reports) → frontend RTK Query swap → socket.io chat → PDF → reports
+- **Phase 2** 🔨 backend: Prisma schema+seed ✅ → auth ✅ → REST endpoints ✅ (auth/services/vehicles/appointments/jobs/employees/estimates/invoices/chat/parts/ratings/reports) → frontend RTK Query swap ✅ (all non-marketing pages on live API via `src/lib/api.ts`; `src/lib/kpis.ts` computes dashboards) → socket.io chat → PDF → reports
 
 ## API conventions (backend)
 

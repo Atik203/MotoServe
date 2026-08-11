@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Car, Check, Clock, Filter, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import demoData from "@/lib/demo-data";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchJobs, assignMechanic } from "@/store/slices/jobsSlice";
+import { fetchEmployees } from "@/store/slices/employeesSlice";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,8 +24,6 @@ const initials = (name: string) =>
     .slice(0, 2)
     .join("")
     .toUpperCase();
-
-const workloadOf = (m: Employee) => m.activeJobs ?? 0;
 
 const fillColorFor = (workload: number) => {
   if (workload >= 4) return "#ba1a1a";
@@ -43,20 +43,35 @@ const availabilityFor = (workload: number) => {
 
 export default function AssignMechanicPage() {
   const router = useRouter();
-  const [job, setJob] = useState<JobCard | null>(null);
-  const [mechanics, setMechanics] = useState<Employee[]>([]);
+  const dispatch = useAppDispatch();
+  const jobs = useAppSelector((s) => s.jobs.items);
+  const employees = useAppSelector((s) => s.employees.items);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    demoData.load("employees").then((data) => {
-      setMechanics(data.filter((e) => e.role === "mechanic"));
-    });
-    demoData.load("jobs").then((data) => {
-      setJob(data.find((j) => j.id === JOB_ID) ?? null);
-    });
-  }, []);
+    dispatch(fetchEmployees());
+    dispatch(fetchJobs());
+  }, [dispatch]);
+
+  const job: JobCard | null = jobs.find((j) => j.id === JOB_ID) ?? jobs[0] ?? null;
+
+  const mechanics = useMemo(
+    () => employees.filter((e) => e.role === "mechanic"),
+    [employees],
+  );
+
+  const workloadOf = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const j of jobs) {
+      if (j.mechanicId && j.status !== "completed" && j.status !== "ready") {
+        counts.set(j.mechanicId, (counts.get(j.mechanicId) ?? 0) + 1);
+      }
+    }
+    return (m: Employee) => counts.get(m.id) ?? 0;
+  }, [jobs]);
 
   const filteredMechanics = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -67,9 +82,20 @@ export default function AssignMechanicPage() {
 
   const selectedMechanic = mechanics.find((m) => m.id === selectedId) ?? null;
 
-  const handleConfirm = () => {
-    toast.success(`Assigned ${selectedMechanic?.name} to job ${job?.id ?? JOB_ID}`);
-    router.push("/advisor");
+  const handleConfirm = async () => {
+    if (!selectedMechanic || !job) return;
+    setSubmitting(true);
+    try {
+      await dispatch(
+        assignMechanic({ id: job.id, mechanicId: selectedMechanic.id, station: "Main Bay / Station 04" }),
+      ).unwrap();
+      toast.success(`Assigned ${selectedMechanic.name} to job ${job.id}`);
+      router.push("/advisor");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Assignment failed");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -277,11 +303,11 @@ export default function AssignMechanicPage() {
               </div>
               <Button
                 type="button"
-                onClick={handleConfirm}
-                disabled={!selectedMechanic}
+                onClick={() => void handleConfirm()}
+                disabled={!selectedMechanic || submitting}
                 className="h-[40px] rounded-[8px] text-[14px] font-semibold"
               >
-                Confirm Assignment
+                {submitting ? "Assigning..." : "Confirm Assignment"}
               </Button>
             </section>
           </div>

@@ -186,7 +186,7 @@ export async function sendMessage(req: Request, res: Response): Promise<void> {
     where: { id: threadId },
     data: { lastMessageAt: new Date() },
   });
-  res.status(201).json(message);
+  res.status(201).json({ ...message, sender: message.sender.toLowerCase() });
 }
 
 export async function payInvoice(req: Request, res: Response): Promise<void> {

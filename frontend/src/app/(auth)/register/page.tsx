@@ -14,6 +14,8 @@ import {
   KeyRound,
   Wrench,
 } from "lucide-react";
+import { useAppDispatch } from "@/store/hooks";
+import { registerUser } from "@/store/slices/authSlice";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -29,7 +31,40 @@ const BENEFITS = [
 
 export default function RegisterPage() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
+
+  const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.email.trim() || !form.password) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    if (form.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    if (form.password !== form.confirm) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await dispatch(
+        registerUser({ name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim() || undefined, password: form.password }),
+      ).unwrap();
+      toast.success("Account created — verification pending. You can log in once approved.");
+      router.push("/login");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Registration failed");
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-start bg-white">
@@ -65,22 +100,24 @@ export default function RegisterPage() {
 
           <form
             className="flex flex-col gap-[20px]"
-            onSubmit={(e) => {
-              e.preventDefault();
-              toast.success("Account created — verification pending");
-              router.push("/login");
-            }}
+            onSubmit={handleSubmit}
           >
             {[
-              { label: "Full Name", placeholder: "John Doe", type: "text" },
-              { label: "Email Address", placeholder: "john@example.com", type: "email" },
-              { label: "Phone Number", placeholder: "+1 (555) 000-0000", type: "tel" },
+              { label: "Full Name", placeholder: "John Doe", type: "text", key: "name" as const },
+              { label: "Email Address", placeholder: "john@example.com", type: "email", key: "email" as const },
+              { label: "Phone Number", placeholder: "+1 (555) 000-0000", type: "tel", key: "phone" as const },
             ].map((f) => (
               <div key={f.label} className="flex flex-col gap-[4px]">
                 <Label className="text-[12px] font-semibold tracking-[0.24px] text-foreground">
                   {f.label} <span className="text-[#ba1a1a]">*</span>
                 </Label>
-                <Input type={f.type} placeholder={f.placeholder} className="h-[40px] rounded-[12px] border-[#e2e8f0]" />
+                <Input
+                  type={f.type}
+                  placeholder={f.placeholder}
+                  value={form[f.key]}
+                  onChange={set(f.key)}
+                  className="h-[40px] rounded-[12px] border-[#e2e8f0]"
+                />
               </div>
             ))}
 
@@ -92,6 +129,8 @@ export default function RegisterPage() {
                 <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
+                  value={form.password}
+                  onChange={set("password")}
                   className="h-[40px] rounded-[12px] border-[#e2e8f0] pr-[41px]"
                 />
                 <button
@@ -115,7 +154,13 @@ export default function RegisterPage() {
               <Label className="text-[12px] font-semibold tracking-[0.24px] text-foreground">
                 Confirm Password <span className="text-[#ba1a1a]">*</span>
               </Label>
-              <Input type="password" placeholder="password" className="h-[40px] rounded-[12px] border-[#e2e8f0]" />
+              <Input
+                type="password"
+                placeholder="password"
+                value={form.confirm}
+                onChange={set("confirm")}
+                className="h-[40px] rounded-[12px] border-[#e2e8f0]"
+              />
               <div className="flex items-center">
                 <KeyRound className="mr-[6px] size-[13.3px] text-[#4caf50]" />
                 <span className="text-[11px] font-medium text-[#4caf50]">Passwords match</span>
@@ -130,8 +175,8 @@ export default function RegisterPage() {
               </span>
             </label>
 
-            <Button type="submit" className="h-[40px] rounded-[12px]">
-              Create Account
+            <Button type="submit" disabled={submitting} className="h-[40px] rounded-[12px]">
+              {submitting ? "Creating account..." : "Create Account"}
             </Button>
           </form>
 

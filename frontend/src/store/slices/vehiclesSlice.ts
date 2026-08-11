@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import demoData from "@/lib/demo-data";
+import { api } from "@/lib/api";
 import type { Vehicle } from "@/types";
 
 interface VehiclesState {
@@ -17,16 +17,20 @@ const initialState: VehiclesState = {
 };
 
 export const fetchVehicles = createAsyncThunk("vehicles/fetchAll", async () => {
-  return await demoData.load("vehicles");
+  return await api.get<Vehicle[]>("/vehicles");
 });
+
+export const addVehicle = createAsyncThunk(
+  "vehicles/create",
+  async (data: Omit<Vehicle, "id" | "ownerId"> & { ownerId?: string }) => {
+    return await api.post<Vehicle>("/vehicles", data);
+  },
+);
 
 const vehiclesSlice = createSlice({
   name: "vehicles",
   initialState,
   reducers: {
-    addVehicle(state, action: PayloadAction<Vehicle>) {
-      state.items.push(action.payload);
-    },
     selectVehicle(state, action: PayloadAction<string | null>) {
       state.selectedVehicleId = action.payload;
     },
@@ -43,9 +47,12 @@ const vehiclesSlice = createSlice({
       .addCase(fetchVehicles.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error.message ?? "Failed to load vehicles";
+      })
+      .addCase(addVehicle.fulfilled, (state, action) => {
+        state.items.push(action.payload);
       });
   },
 });
 
-export const { addVehicle, selectVehicle } = vehiclesSlice.actions;
+export const { selectVehicle } = vehiclesSlice.actions;
 export default vehiclesSlice.reducer;

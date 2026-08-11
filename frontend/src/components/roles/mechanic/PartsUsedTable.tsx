@@ -24,10 +24,15 @@ export function PartsUsedTable({ jobId, parts }: PartsUsedTableProps) {
   const dispatch = useAppDispatch();
   const total = parts.reduce((sum, p) => sum + p.subtotal, 0);
 
-  const addPart = () => {
-    const demo = { id: `prt-${Date.now()}`, name: "New Part", qty: 1, unitPrice: 0, supplier: "Napa", subtotal: 0 };
-    dispatch(addPartUsed({ id: jobId, part: demo }));
-    toast.info("Part added — update name, qty and price");
+  const addPart = async () => {
+    try {
+      await dispatch(
+        addPartUsed({ id: jobId, part: { name: "New Part", qty: 1, unitPrice: 0, supplier: "Napa" } }),
+      ).unwrap();
+      toast.info("Part added — update name, qty and price");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add part");
+    }
   };
 
   return (

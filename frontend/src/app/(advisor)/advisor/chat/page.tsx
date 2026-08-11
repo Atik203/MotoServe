@@ -10,8 +10,8 @@ import {
   setActiveThread,
 } from "@/store/slices/chatSlice";
 import { cn } from "@/lib/utils";
-import demoData from "@/lib/demo-data";
-import type { ChatMessage, ChatThread, Customer, JobCard } from "@/types";
+import { fetchJobs } from "@/store/slices/jobsSlice";
+import type { ChatThread } from "@/types";
 
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -45,15 +45,13 @@ export default function CommunicationCenterPage() {
   const dispatch = useAppDispatch();
   const threads = useAppSelector((s) => s.chat.threads);
   const activeThreadId = useAppSelector((s) => s.chat.activeThreadId);
+  const jobs = useAppSelector((s) => s.jobs.items);
   const [search, setSearch] = useState("");
   const [text, setText] = useState("");
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [jobs, setJobs] = useState<JobCard[]>([]);
 
   useEffect(() => {
     dispatch(fetchThreads());
-    demoData.load("customers").then(setCustomers).catch(() => setCustomers([]));
-    demoData.load("jobs").then(setJobs).catch(() => setJobs([]));
+    dispatch(fetchJobs());
   }, [dispatch]);
 
   useEffect(() => {
@@ -63,7 +61,7 @@ export default function CommunicationCenterPage() {
   const activeThread = threads.find((t) => t.id === activeThreadId) ?? null;
 
   const ownerName = (thread: ChatThread) =>
-    customers.find((c) => c.id === thread.ownerId)?.name ?? roNumber(thread.subject);
+    thread.owner?.name ?? roNumber(thread.subject);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -77,8 +75,7 @@ export default function CommunicationCenterPage() {
         lastText.includes(q)
       );
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [threads, search, customers]);
+  }, [threads, search]);
 
   const selectThread = (threadId: string) => {
     const thread = threads.find((t) => t.id === threadId);
@@ -90,13 +87,7 @@ export default function CommunicationCenterPage() {
     e.preventDefault();
     const trimmed = text.trim();
     if (!trimmed || !activeThread) return;
-    const message: ChatMessage = {
-      id: crypto.randomUUID(),
-      sender: "advisor",
-      text: trimmed,
-      time: new Date().toISOString(),
-    };
-    dispatch(sendMessage({ threadId: activeThread.id, message }));
+    dispatch(sendMessage({ threadId: activeThread.id, text: trimmed }));
     setText("");
   };
 

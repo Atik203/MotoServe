@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { AppSidebar } from "./AppSidebar";
 import { AppTopbar } from "./AppTopbar";
+import { SessionBootstrap } from "./SessionBootstrap";
 import type { Role } from "@/lib/nav";
 
 interface AppShellProps {
@@ -22,6 +23,7 @@ export function AppShell({
 }: AppShellProps) {
   return (
     <div className="min-h-screen">
+      <SessionBootstrap />
       <AppSidebar role={role} />
       <AppTopbar
         searchPlaceholder={searchPlaceholder}

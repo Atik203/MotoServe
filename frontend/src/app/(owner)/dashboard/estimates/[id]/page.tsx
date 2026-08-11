@@ -1,20 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { AlertTriangle, Car, Check, Clock, HelpCircle, MessageSquare, X } from "lucide-react";
-import demoData from "@/lib/demo-data";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchEstimates, decideEstimate } from "@/store/slices/estimatesSlice";
 import { Button } from "@/components/ui/button";
 
-type Estimate = Awaited<ReturnType<typeof demoData.load<"estimates">>>[number];
-
 export default function EstimateApprovalPage() {
-  const [estimate, setEstimate] = useState<Estimate | null>(null);
+  const params = useParams<{ id: string }>();
+  const dispatch = useAppDispatch();
+  const estimates = useAppSelector((s) => s.estimates.items);
 
   useEffect(() => {
-    demoData.load("estimates").then((data) => setEstimate(data.find((e) => e.id === "ES-3301") ?? null));
-  }, []);
+    if (estimates.length === 0) dispatch(fetchEstimates());
+  }, [dispatch, estimates.length]);
+
+  const estimate = estimates.find((e) => e.id === params.id) ?? estimates.find((e) => e.id === "ES-3301") ?? null;
 
   if (!estimate) {
     return <div className="bg-background min-h-screen p-[32px] text-muted-foreground">Loading estimate...</div>;
@@ -22,6 +26,15 @@ export default function EstimateApprovalPage() {
 
   const subtotal = estimate.total / 1.085;
   const tax = estimate.total - subtotal;
+
+  const handleDecide = async (decision: "approved" | "rejected") => {
+    try {
+      await dispatch(decideEstimate({ id: estimate.id, decision })).unwrap();
+      toast.success(decision === "approved" ? "Estimate approved — work will continue" : "Estimate rejected — advisor notified");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Action failed");
+    }
+  };
 
   return (
     <div className="bg-background min-h-screen p-[32px]">
@@ -139,16 +152,18 @@ export default function EstimateApprovalPage() {
               </div>
               <div className="flex flex-col gap-[12px] border-t border-border pt-[25px]">
                 <Button
-                  onClick={() => toast.success("Estimate approved — work will continue")}
+                  onClick={() => void handleDecide("approved")}
+                  disabled={estimate.status !== "pending"}
                   className="gap-[8px] rounded-[8px] px-[16px] py-[12px] text-[16px] font-bold shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
                 >
                   <Check className="size-[20px]" />
-                  Approve Estimate
+                  {estimate.status === "approved" ? "Approved" : estimate.status === "rejected" ? "Rejected" : "Approve Estimate"}
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => toast.error("Estimate rejected — advisor notified")}
-                  className="gap-[8px] rounded-[8px] border-2 border-[rgba(244,67,54,0.2)] px-[18px] py-[14px] text-[16px] font-bold text-[#f44336] hover:bg-[rgba(244,67,54,0.05)]"
+                  onClick={() => void handleDecide("rejected")}
+                  disabled={estimate.status !== "pending"}
+                  className="gap-[8px] rounded-[8px] border-2 border-[rgba(244,67,54,0.2)] px-[18px] py-[14px] text-[16px] font-bold text-[#f44336] hover:bg-[rgba(244,67,54,0.05)] disabled:opacity-40"
                 >
                   <X className="size-[20px]" />
                   Reject Estimate

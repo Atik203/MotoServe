@@ -20,7 +20,7 @@ root        AGENTS.md · README.md · blueprint.md (source of truth for screens/
 
 1. **Never re-fetch design data you already captured.** Design tokens, node IDs, demo values, and asset URLs live in this file + `blueprint.md`. Read them instead of calling Figma again.
 2. **Batch reads.** Use `glob`/`grep` over multiple Read calls; read whole files, not 30-line slices.
-3. **Demo data is the source for UI.** All pages render from `frontend/public/demo/*.json` via `src/lib/demo-data.ts`. Never hardcode sample values in components (except fixed labels from the design).
+3. **Demo data is only for public marketing pages.** `home`, `pricing`, `faqs`, `testimonials` still render from `frontend/public/demo/*.json` via `src/lib/demo-data.ts` (no backend endpoints). Everything else loads from the live API through Redux slices (`src/store/slices/*`) using `src/lib/api.ts`. Never hardcode sample values in components (except fixed labels from the design).
 4. **Types before code.** Domain types live in `frontend/src/types/` and mirror `backend/src/types/` (two simple folders; keep them in sync manually — see "Type sync" below).
 5. **Preserve pinned versions.** Do NOT run `npm update`/`pnpm update` or add packages at newer majors without asking. Verify a package exists with `pnpm view <pkg> version` before adding.
 6. **One screen per task.** Build order and node IDs in `blueprint.md`. Design context was already fetched once per screen and distilled there — extend the "Design notes" section instead of re-fetching.
@@ -55,7 +55,7 @@ pnpm db:seed       # node prisma/seed.ts
 - Shared app chrome: `src/components/layout/` (Sidebar, Topbar, PublicNavbar, PublicFooter). The owner/advisor/mechanic/admin apps share ONE sidebar/topbar system styled to the canonical design (256px sidebar, 64px topbar, `#0052cc` active state).
 - shadcn components go in `src/components/ui/`; ONLY add with `pnpm dlx shadcn@latest add <name>` (or copy the component when offline — keep props identical to current shadcn).
 - Tailwind v4: tokens in `src/app/globals.css` under `@theme` (e.g. `--color-primary: #0052cc`). Do NOT create `tailwind.config.js`.
-- Redux: `src/store/` — one slice per domain (auth, jobs, vehicles, appointments, chat, ui). Async demo loads via `createAsyncThunk` calling `demoData.load("services")` etc. Components consume via hooks `useAppSelector`/`useAppDispatch` from `src/store/hooks.ts`.
+- Redux: `src/store/` — one slice per domain (auth, jobs, vehicles, appointments, chat, ui, services, customers, employees, estimates, invoices, reports). Thunks call the live API via `src/lib/api.ts` (`api.get/post/patch/delete`, `credentials: "include"`, cookie auth, throws `ApiError`). Components consume via hooks `useAppSelector`/`useAppDispatch` from `src/store/hooks.ts`. Dashboard KPIs are computed client-side from fetched data via `src/lib/kpis.ts` (`buildKpis(role, ctx)`), never from demo JSON.
 - Assets from Figma land in `frontend/public/images/` (cars, avatars, hero). Icons: lucide-react (shadcn default) — never bitmap icons when a lucide equivalent exists.
 - Forms: react-hook-form + zod (zod v4 API). No separate `zod/v4` subpath needed.
 - Toasts: `sonner` — call `toast.success("...")` / `toast.error("...")`; `<Toaster richColors closeButton />` already mounted in root layout.

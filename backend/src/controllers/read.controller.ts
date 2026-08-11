@@ -54,9 +54,16 @@ export async function getEmployees(req: Request, res: Response): Promise<void> {
   res.json(employees.map((e) => ({ ...e, role: e.role.toLowerCase(), status: e.status.toLowerCase() })));
 }
 
+const mapCustomerStatus = (status: string): string => {
+  if (status === "ACTIVE") return "approved";
+  if (status === "REJECTED") return "rejected";
+  if (status === "PENDING") return "pending";
+  return "inactive";
+};
+
 export async function getCustomers(_req: Request, res: Response): Promise<void> {
   const customers = await listCustomers();
-  res.json(customers.map((c) => ({ ...c, status: c.status.toLowerCase() })));
+  res.json(customers.map((c) => ({ ...c, status: mapCustomerStatus(c.status) })));
 }
 
 export async function getEstimates(req: Request, res: Response): Promise<void> {
@@ -87,6 +94,8 @@ export async function getThreads(req: Request, res: Response): Promise<void> {
       subject: t.subject,
       unread: t.unread,
       lastMessageAt: t.lastMessageAt,
+      owner: { id: t.owner.id, name: t.owner.name, avatar: t.owner.avatar },
+      advisor: { id: t.advisor.id, name: t.advisor.name, avatar: t.advisor.avatar },
       messages: t.messages.map((m) => ({ id: m.id, sender: m.sender.toLowerCase(), text: m.text, time: m.time })),
     })),
   );
@@ -105,7 +114,7 @@ export async function getTestimonials(_req: Request, res: Response): Promise<voi
 }
 
 export async function getReports(_req: Request, res: Response): Promise<void> {
-  const [stats, jobsByStatus, workloadByMechanic, activityLog] = await Promise.all([
+  const [stats, jobsByStatus, mechanics, activityLog, jobCards] = await Promise.all([
     getDashboardStats(),
     prisma.jobCard.groupBy({ by: ["status"], _count: true }),
     prisma.user.findMany({
@@ -113,15 +122,50 @@ export async function getReports(_req: Request, res: Response): Promise<void> {
       include: { _count: { select: { jobCardsAssigned: true } } },
     }),
     listAuditLogsSafe(),
+    prisma.jobCard.findMany({ select: { mechanicId: true, status: true, services: true } }),
   ]);
+
+  const completedByMechanic = jobCards
+    .filter((j) => j.status === "COMPLETED" && j.mechanicId)
+    .reduce<Record<string, number>>((map, j) => {
+      map[j.mechanicId!] = (map[j.mechanicId!] ?? 0) + 1;
+      return map;
+    }, {});
+
+  const serviceCount = new Map<string, number>();
+  for (const job of jobCards) {
+    const services = (job.services ?? []) as { name?: string }[];
+    for (const s of services) {
+      if (!s.name) continue;
+      serviceCount.set(s.name, (serviceCount.get(s.name) ?? 0) + 1);
+    }
+  }
+  const serviceTotal = [...serviceCount.values()].reduce((sum, n) => sum + n, 0);
+  const fallbackCategories = await prisma.service.groupBy({ by: ["category"], _count: true });
+  const fallbackTotal = fallbackCategories.reduce((sum, c) => sum + c._count, 0);
+  const serviceDistribution =
+    serviceTotal > 0
+      ? [...serviceCount.entries()]
+          .map(([name, count]) => ({ name, pct: Math.round((count / serviceTotal) * 100) }))
+          .sort((a, b) => b.pct - a.pct)
+          .slice(0, 4)
+      : fallbackCategories.map((c) => ({
+          name: c.category.charAt(0) + c.category.slice(1).toLowerCase(),
+          pct: fallbackTotal > 0 ? Math.round((c._count / fallbackTotal) * 100) : 0,
+        }));
+
   res.json({
     ...stats,
+    revenueByMonth: stats.revenueByMonth,
     jobsByStatus: jobsByStatus.map((j) => ({ status: j.status.toLowerCase(), count: j._count })),
-    workloadByMechanic: workloadByMechanic.map((m) => ({
+    workloadByMechanic: mechanics.map((m) => ({
       mechanic: m.name,
+      role: m.specialization ?? "Technician",
       active: m._count.jobCardsAssigned,
-      specialization: m.specialization,
+      completed: completedByMechanic[m.id] ?? 0,
+      avgHoursPerJob: 0,
     })),
+    serviceDistribution,
     activityLog: activityLog.map((a) => ({ id: a.id, user: a.user, action: a.action, time: a.time })),
   });
 }
@@ -136,5 +180,5 @@ export async function verifyOwner(req: Request, res: Response): Promise<void> {
     where: { id: req.params.id as string },
     data: { status: decision === "approved" ? "ACTIVE" : "REJECTED", verifiedAt: decision === "approved" ? new Date() : null },
   });
-  res.json({ id: user.id, status: user.status.toLowerCase() });
+  res.json({ id: user.id, status: mapCustomerStatus(user.status) });
 }

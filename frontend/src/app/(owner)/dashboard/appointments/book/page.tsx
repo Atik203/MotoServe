@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchVehicles, selectVehicle } from "@/store/slices/vehiclesSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
+import { addAppointment } from "@/store/slices/appointmentsSlice";
 import { AddVehicleCard, VehicleCard } from "@/components/roles/owner/VehicleCard";
 import { ServiceCard } from "@/components/roles/owner/ServiceCard";
 import { MonthCalendar } from "@/components/roles/owner/MonthCalendar";
@@ -105,7 +106,7 @@ export default function BookAppointmentPage() {
     );
   };
 
-  const handleBook = () => {
+  const handleBook = async () => {
     if (!selectedVehicleId) {
       toast.error("Please select a vehicle");
       return;
@@ -118,8 +119,21 @@ export default function BookAppointmentPage() {
       toast.error("Please pick a date");
       return;
     }
-    toast.success("Appointment booked successfully");
-    router.push("/dashboard/appointments/confirmation");
+    try {
+      await dispatch(
+        addAppointment({
+          vehicleId: selectedVehicleId,
+          serviceIds: selectedServices,
+          date: selectedDate.toISOString().split("T")[0],
+          time: selectedTime,
+          notes: customRequest.trim() || undefined,
+        }),
+      ).unwrap();
+      toast.success("Appointment booked successfully");
+      router.push("/dashboard/appointments/confirmation");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Booking failed");
+    }
   };
 
   const handleAddVehicle = () => {
