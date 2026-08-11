@@ -49,11 +49,10 @@ type DemoMap = {
     revenueByMonth: { month: string; revenue: number }[];
     workloadByMechanic: {
       mechanic: string;
-      role?: string;
-      active?: number;
-      done?: number;
-      completed?: number;
-      avgHoursPerJob?: number;
+      role: string;
+      active: number;
+      completed: number;
+      avgHoursPerJob: number;
     }[];
     serviceDistribution: { name: string; pct: number }[];
     jobsByStatus: { status: string; count: number }[];

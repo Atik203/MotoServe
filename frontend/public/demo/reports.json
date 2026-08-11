@@ -10,9 +10,9 @@
       { "month": "Jul", "revenue": 24850 }
     ],
     "workloadByMechanic": [
-      { "mechanic": "Mike Miller", "role": "Master Technician", "active": 4, "done": 8 },
-      { "mechanic": "Alex Reed", "role": "Specialist", "active": 3, "done": 10 },
-      { "mechanic": "Alex Turner", "completed": 127, "active": 3, "avgHoursPerJob": 1.9 }
+      { "mechanic": "Mike Miller", "role": "Master Technician", "active": 4, "completed": 8, "avgHoursPerJob": 1.9 },
+      { "mechanic": "Alex Reed", "role": "Specialist", "active": 3, "completed": 10, "avgHoursPerJob": 2.1 },
+      { "mechanic": "Alex Turner", "role": "Technician", "active": 3, "completed": 127, "avgHoursPerJob": 1.9 }
     ],
     "serviceDistribution": [
       { "name": "Oil Change", "pct": 40 },

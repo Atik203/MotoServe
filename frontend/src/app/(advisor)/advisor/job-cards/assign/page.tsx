@@ -1,0 +1,292 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Car, Check, Clock, Filter, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
+import demoData from "@/lib/demo-data";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import type { Employee, JobCard } from "@/types";
+
+const WORKLOAD_LIMIT = 5;
+const JOB_ID = "JC-1045";
+
+const initials = (name: string) =>
+  name
+    .split(" ")
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+const workloadOf = (m: Employee) => m.activeJobs ?? 0;
+
+const fillColorFor = (workload: number) => {
+  if (workload >= 4) return "#ba1a1a";
+  if (workload >= 2) return "#ffc107";
+  return "#4caf50";
+};
+
+const availabilityFor = (workload: number) => {
+  if (workload >= WORKLOAD_LIMIT) {
+    return { label: "Unavailable", className: "bg-[rgba(186,26,26,0.1)] text-[#ba1a1a]" };
+  }
+  if (workload >= 2) {
+    return { label: "Busy (in 30m)", className: "bg-[rgba(255,193,7,0.1)] text-[#6a3c00]" };
+  }
+  return { label: "Available Now", className: "bg-[rgba(76,175,80,0.1)] text-[#4caf50]" };
+};
+
+export default function AssignMechanicPage() {
+  const router = useRouter();
+  const [job, setJob] = useState<JobCard | null>(null);
+  const [mechanics, setMechanics] = useState<Employee[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    demoData.load("employees").then((data) => {
+      setMechanics(data.filter((e) => e.role === "mechanic"));
+    });
+    demoData.load("jobs").then((data) => {
+      setJob(data.find((j) => j.id === JOB_ID) ?? null);
+    });
+  }, []);
+
+  const filteredMechanics = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return query
+      ? mechanics.filter((m) => m.name.toLowerCase().includes(query))
+      : mechanics;
+  }, [mechanics, search]);
+
+  const selectedMechanic = mechanics.find((m) => m.id === selectedId) ?? null;
+
+  const handleConfirm = () => {
+    toast.success(`Assigned ${selectedMechanic?.name} to job ${job?.id ?? JOB_ID}`);
+    router.push("/advisor");
+  };
+
+  return (
+    <div className="bg-background min-h-screen p-[32px]">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-[24px]">
+        <div className="flex flex-col gap-[4px]">
+          <nav className="flex items-center gap-[8px] text-[12px] font-semibold text-[#727784]">
+            <span>Dashboard</span>
+            <span>›</span>
+            <span>Job Cards</span>
+            <span>›</span>
+            <span className="text-foreground">Assign Mechanic</span>
+          </nav>
+          <h1 className="text-[36px] font-bold text-foreground">Assign Mechanic</h1>
+          <p className="text-[14px] text-[#424753]">Select an available technician for Job #{job?.id ?? JOB_ID}</p>
+        </div>
+
+        <div className="grid grid-cols-12 items-start gap-[24px]">
+          <div className="col-span-8 flex flex-col gap-[24px]">
+            <section className="relative overflow-hidden rounded-[8px] border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
+              <span className="absolute -top-[64px] -right-[64px] size-[128px] rounded-full bg-[rgba(0,82,204,0.06)]" />
+
+              <div className="relative flex items-center justify-between gap-[16px]">
+                <div className="flex items-center gap-[16px]">
+                  <span className="flex size-[40px] shrink-0 items-center justify-center rounded-[4px] bg-[#f3f4f5]">
+                    <Car className="size-[20px] text-[#191c1d]" />
+                  </span>
+                  <div className="flex flex-col gap-[4px]">
+                    <span className="text-[20px] font-semibold text-foreground">2023 Ford F-150</span>
+                    <span className="flex items-center gap-[6px] text-[11px] text-[#424753]">
+                      <span>Customer: John Doe</span>
+                      <span>•</span>
+                      <span>Plate:</span>
+                      <span className="rounded-[4px] bg-[#edeeef] px-[6px] py-[2px] font-mono text-[11px] font-medium text-[#191c1d]">
+                        A9C-1234
+                      </span>
+                    </span>
+                  </div>
+                </div>
+                <span className="flex shrink-0 items-center gap-[6px] rounded-full bg-[rgba(186,26,26,0.1)] px-[10px] py-[4px] text-[11px] font-semibold text-[#ba1a1a]">
+                  <span className="size-[6px] rounded-full bg-[#ba1a1a]" />
+                  High Priority
+                </span>
+              </div>
+
+              <div className="my-[16px] h-px bg-[#e5e7eb]" />
+
+              <div className="relative grid grid-cols-4 gap-[16px]">
+                <div className="flex flex-col gap-[4px]">
+                  <span className="text-[11px] text-[#727784]">Requested Services</span>
+                  <span className="text-[14px] font-medium text-foreground">Oil Change, Brake Insp.</span>
+                </div>
+                <div className="flex flex-col gap-[4px]">
+                  <span className="text-[11px] text-[#727784]">Est. Time</span>
+                  <span className="flex items-center gap-[6px] text-[14px] font-medium text-foreground">
+                    <Clock className="size-[14px] text-[#727784]" />
+                    2.5 hrs
+                  </span>
+                </div>
+                <div className="flex flex-col gap-[4px]">
+                  <span className="text-[11px] text-[#727784]">Arrival</span>
+                  <span className="text-[14px] font-medium text-foreground">09:00 AM Today</span>
+                </div>
+                <div className="flex flex-col gap-[4px]">
+                  <span className="text-[11px] text-[#727784]">Job Status</span>
+                  <span className="self-start rounded-full bg-[rgba(255,193,7,0.1)] px-[10px] py-[3px] text-[12px] font-semibold text-[#6a3c00]">
+                    Awaiting Assignment
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            <section className="flex flex-col gap-[16px]">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[20px] font-semibold text-foreground">Available Mechanics</h2>
+                <div className="flex items-center gap-[8px]">
+                  <div className="relative">
+                    <Search className="absolute top-1/2 left-[10px] size-[14px] -translate-y-1/2 text-[#727784]" />
+                    <Input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search names..."
+                      className="h-[38px] w-[192px] rounded-[8px] border-[#e5e7eb] pl-[30px] text-[13px]"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-[38px] gap-[8px] rounded-[8px] border-[#e5e7eb] bg-white px-[14px] text-[13px] font-medium text-[#191c1d]"
+                  >
+                    <Filter className="size-[14px]" />
+                    Filter
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-[16px]">
+                {filteredMechanics.map((m) => {
+                  const workload = workloadOf(m);
+                  const unavailable = workload >= WORKLOAD_LIMIT;
+                  const selected = m.id === selectedId;
+                  const fillPct = Math.min((workload / WORKLOAD_LIMIT) * 100, 100);
+                  const fillColor = fillColorFor(workload);
+                  const availability = availabilityFor(workload);
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      disabled={unavailable}
+                      onClick={() => setSelectedId(selected ? null : m.id)}
+                      className={cn(
+                        "relative flex flex-col gap-[14px] rounded-[8px] border bg-white p-[18px] text-left shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors",
+                        selected
+                          ? "border-2 border-primary p-[17px]"
+                          : "border-[#e5e7eb] hover:border-primary/40",
+                        unavailable && "opacity-60",
+                      )}
+                    >
+                      {selected && (
+                        <span className="absolute top-[14px] right-[14px] flex size-[20px] items-center justify-center rounded-full bg-primary">
+                          <Check className="size-[12px] text-white" />
+                        </span>
+                      )}
+
+                      <div className="flex items-center gap-[14px]">
+                        <div className="relative shrink-0">
+                          <Avatar className="size-[48px] rounded-[12px] after:rounded-[12px]">
+                            <AvatarImage
+                              src={m.avatar}
+                              alt={m.name}
+                              className="rounded-[12px]"
+                            />
+                            <AvatarFallback className="rounded-[12px] bg-[#eff6ff] text-[14px] font-semibold text-primary">
+                              {initials(m.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span
+                            className={cn(
+                              "absolute right-0 bottom-0 size-[12px] rounded-full ring-2 ring-white",
+                              unavailable ? "bg-[#ba1a1a]" : workload >= 2 ? "bg-[#ffc107]" : "bg-[#4caf50]",
+                            )}
+                          />
+                        </div>
+                        <div className="flex min-w-0 flex-col gap-[2px]">
+                          <span className="truncate text-[20px] font-semibold text-foreground">{m.name}</span>
+                          <span className="truncate text-[12px] text-[#727784]">
+                            ID: {m.id}
+                            {m.specialization ? ` • ${m.specialization}` : ""}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-end justify-between gap-[12px]">
+                        <div className="flex flex-col gap-[6px]">
+                          <span className="text-[11px] text-[#727784]">Current Workload</span>
+                          <div className="flex items-center gap-[8px]">
+                            <span className="text-[14px] font-semibold text-foreground">
+                              {workload}/{WORKLOAD_LIMIT} jobs
+                            </span>
+                            <span className="h-[6px] w-[64px] overflow-hidden rounded-full bg-[#edeeef]">
+                              <span
+                                className="block h-full rounded-full"
+                                style={{ width: `${fillPct}%`, backgroundColor: fillColor }}
+                              />
+                            </span>
+                          </div>
+                        </div>
+                        <span
+                          className={cn(
+                            "shrink-0 rounded-full px-[10px] py-[3px] text-[11px] font-semibold",
+                            availability.className,
+                          )}
+                        >
+                          {availability.label}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+
+          <div className="col-span-4 flex flex-col gap-[24px] lg:sticky lg:top-[88px]">
+            <section className="flex flex-col gap-[12px] rounded-[8px] border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
+              <h2 className="text-[20px] font-semibold text-foreground">Assignment Notes</h2>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add internal notes about this assignment..."
+                className="min-h-[96px] rounded-[8px] border-[#e5e7eb] text-[13px]"
+              />
+            </section>
+
+            <section className="flex flex-col gap-[14px] rounded-[8px] border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
+              <div className="flex flex-col gap-[4px]">
+                <span className="text-[11px] text-[#727784]">Job</span>
+                <span className="text-[14px] font-semibold text-foreground">#{job?.id ?? JOB_ID}</span>
+              </div>
+              <div className="flex flex-col gap-[4px]">
+                <span className="text-[11px] text-[#727784]">Selected Mechanic</span>
+                <span className={cn("text-[14px]", selectedMechanic ? "font-semibold text-foreground" : "font-medium text-[#727784]")}>
+                  {selectedMechanic?.name ?? "None selected"}
+                </span>
+              </div>
+              <Button
+                type="button"
+                onClick={handleConfirm}
+                disabled={!selectedMechanic}
+                className="h-[40px] rounded-[8px] text-[14px] font-semibold"
+              >
+                Confirm Assignment
+              </Button>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

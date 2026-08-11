@@ -6,10 +6,12 @@
     { "id": "kpi-004", "label": "Completed Today", "value": "2", "delta": "On track", "trend": "up", "icon": "check-circle" }
   ],
   "advisor": [
-    { "id": "kpi-101", "label": "Appointments Today", "value": "14", "delta": "+2 vs yesterday", "trend": "up", "icon": "calendar" },
-    { "id": "kpi-102", "label": "Vehicles Received", "value": "9", "delta": "3 pending intake", "trend": "flat", "icon": "car" },
-    { "id": "kpi-103", "label": "Active Job Cards", "value": "21", "delta": "7 awaiting mechanic", "trend": "flat", "icon": "file-text" },
-    { "id": "kpi-104", "label": "Pending Estimates", "value": "4", "delta": "1 awaiting approval", "trend": "down", "icon": "file-check" }
+    { "id": "kpi-101", "label": "Appointments", "value": "14", "delta": "+2 vs yesterday", "trend": "up", "icon": "calendar" },
+    { "id": "kpi-102", "label": "Active Jobs", "value": "08", "delta": "7 awaiting mechanic", "trend": "flat", "icon": "wrench" },
+    { "id": "kpi-103", "label": "Pending Approvals", "value": "03", "delta": "1 awaiting approval", "trend": "flat", "icon": "file-check" },
+    { "id": "kpi-104", "label": "Ready for Pickup", "value": "05", "delta": "5 ready now", "trend": "flat", "icon": "car" },
+    { "id": "kpi-105", "label": "Active Chats", "value": "12", "delta": "3 unread", "trend": "flat", "icon": "message-square" },
+    { "id": "kpi-106", "label": "Completed Jobs", "value": "24", "delta": "+6 this week", "trend": "up", "icon": "check-circle" }
   ],
   "admin": [
     { "id": "kpi-201", "label": "Total Revenue", "value": "$1.2M", "delta": "+4.2%", "trend": "up", "icon": "dollar-sign" },

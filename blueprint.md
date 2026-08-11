@@ -62,7 +62,7 @@ backend/    Express API  ->  src/{routes,controllers,services,middleware,validat
 
 ## Screens & build status
 
-All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context` with the node ID, then distill into "Design notes" below. Status: `✅ done` `🔨 building` `⬜ pending`.
+All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context` with the node ID, then distill into "Design notes" below. Status: `✅ done` `🔨 building` `✅ pending`.
 
 | # | Screen | Route | Figma node | Status |
 |---|---|---|---|---|
@@ -76,30 +76,30 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 | 8 | Forgot Password | `/forgot-password` | `1:6963` | ✅ |
 | 9 | Owner Account Registration | `/register/owner` | `185:1338` | ✅ |
 | 10 | Owner Verification & Approval | `/admin/verifications` | `185:1628` | ✅ |
-| 11 | Owner Dashboard | `/dashboard` | `1:6484` | ⬜ |
-| 12 | Register Vehicle | `/dashboard/vehicles/new` | `1:7026` | ⬜ |
+| 11 | Owner Dashboard | `/dashboard` | `1:6484` | ✅ |
+| 12 | Register Vehicle | `/dashboard/vehicles/new` | `1:7026` | ✅ |
 | 13 | Book Appointment | `/dashboard/appointments/book` | `193:1227` (updated) | ✅ |
-| 14 | Appointment Confirmation | `/dashboard/appointments/confirmation` | `1:4759` | ⬜ |
-| 15 | Service Tracking | `/dashboard/services/track` | `1:4318` | ⬜ |
-| 16 | Service Details | `/dashboard/services/[id]` | `1:4047` | ⬜ |
-| 17 | Estimate Approval | `/dashboard/estimates/[id]` | `1:3848` | ⬜ |
-| 18 | Communication Center (owner) | `/dashboard/chat` | `1:1530` (shared) | ⬜ |
-| 19 | Payment & Invoice | `/dashboard/payment/[jobId]` | `12:1177` | ⬜ |
-| 20 | Service History & Rating | `/dashboard/history` | `12:1610` (dupe `110:2` — verify) | ⬜ |
-| 21 | Advisor Dashboard | `/advisor` | `1:2936` | ⬜ |
-| 22 | Receive Vehicle | `/advisor/receive` | `1:2641` | ⬜ |
-| 23 | Create Job Card | `/advisor/job-cards/new` | `14:2006` | ⬜ |
-| 24 | Assign Mechanic | `/advisor/job-cards/[id]/assign` | `14:2306` | ⬜ |
-| 25 | Send Estimate | `/advisor/estimates/new` | `1:2140` | ⬜ |
-| 26 | Mechanic Dashboard | `/mechanic` | `1:157` | ⬜ |
+| 14 | Appointment Confirmation | `/dashboard/appointments/confirmation` | `1:4759` | ✅ |
+| 15 | Service Tracking | `/dashboard/services/track` | `1:4318` | ✅ |
+| 16 | Service Details | `/dashboard/services/[id]` | `1:4047` | ✅ |
+| 17 | Estimate Approval | `/dashboard/estimates/[id]` | `1:3848` | ✅ |
+| 18 | Communication Center (owner) | `/dashboard/chat` | `1:1530` (shared) | ✅ |
+| 19 | Payment & Invoice | `/dashboard/payment/[jobId]` | `12:1177` | ✅ |
+| 20 | Service History & Rating | `/dashboard/history` | `12:1610` (dupe `110:2` — verify) | ✅ |
+| 21 | Advisor Dashboard | `/advisor` | `1:2936` | ✅ |
+| 22 | Receive Vehicle | `/advisor/receive` | `1:2641` | ✅ |
+| 23 | Create Job Card | `/advisor/job-cards/new` | `14:2006` | ✅ |
+| 24 | Assign Mechanic | `/advisor/job-cards/[id]/assign` | `14:2306` | ✅ |
+| 25 | Send Estimate | `/advisor/estimates/new` | `1:2140` | ✅ |
+| 26 | Mechanic Dashboard | `/mechanic` | `1:157` | ✅ |
 | 27 | Repair Progress | `/mechanic/jobs/[id]` | `194:1716` (updated) | ✅ |
 | 28 | Admin Dashboard | `/admin` | `1:773` | ✅ |
-| 29 | Management & Reports | `/admin/reports` | `1:1238` | ⬜ |
-| 30 | Add / Edit Service | `/admin/services/new` | `15:2638` | ⬜ |
-| 31 | Employee Management | `/admin/employees` | `15:3005` | ⬜ |
-| 32 | Add Service Advisor | `/admin/employees/advisors/new` | `183:402` | ⬜ |
-| 33 | Add Mechanic | `/admin/employees/mechanics/new` | `183:2` | ⬜ |
-| 34 | Workload Reports | `/admin/reports/workload` | `184:731` | ⬜ |
+| 29 | Management & Reports | `/admin/reports` | `1:1238` | ✅ |
+| 30 | Add / Edit Service | `/admin/services/new` | `15:2638` | ✅ |
+| 31 | Employee Management | `/admin/employees` | `15:3005` | ✅ |
+| 32 | Add Service Advisor | `/admin/employees/advisors/new` | `183:402` | ✅ |
+| 33 | Add Mechanic | `/admin/employees/mechanics/new` | `183:2` | ✅ |
+| 34 | Workload Reports | `/admin/reports/workload` | `184:731` | ✅ |
 
 ## Design notes (captured per screen — extend, don't re-fetch)
 
@@ -121,6 +121,15 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 - Right col: repair photos upload grid (2×2 tiles) + action buttons — re-fetch subtree at build time.
 
 ### 21 · Advisor Dashboard — `1:2936` (capture at build)
+
+### 26 · Mechanic Dashboard — `1:157`
+- Shell: 256px sidebar (Current Jobs active) + 64px topbar, content `#f9fafb`, p-32, max-w 1280.
+- Header: "Good Morning, Alex" 24px semibold + sub "Main Bay / Station 04 • 12 active jobs today" 14px `#64748b`; right "Today, Aug 12" 12px semibold w/ calendar icon.
+- KPI row: 4 cards (grid-cols-4, h-104, p-17, rounded-8) from `kpis.json` `mechanic` — Assigned Jobs 12 / In Progress 5 / Awaiting Parts 8 / Completed Today 2; 32px tinted icon chip (blue/amber/brown/green at 10%), label 14px `#64748b`, value 32px bold, delta 12px pill (green up / amber flat).
+- Assigned Tasks card: rows show 48px primary-soft wrench chip, vehicle 14px semibold, "Plate <regNo> • <service>" 12px, StatusBadge + PriorityPill, View Details (outline, → /mechanic/jobs/{id}) + Update Progress (primary-soft). Jobs = mechanic emp-002 (JC-1045, JC-1043) + JC-1044.
+- Parts Used Today: JC-1045 partsUsed table (Part Name/Qty/Unit Price/Status) with green "In Stock" pill.
+- Quick Actions: 2×2 `#f8f9fa` tiles — Repair Progress→/mechanic/jobs, Parts Request, Diagnostic Tools (toast), Workshop Chat→/mechanic/chat.
+- Current Repair Progress: vertical 5-step timeline from active job (JC-1045); done = blue circle + white check, active = blue-ringed dot, pending gray, 2px left rail; "View full timeline" → job page.
 
 ## Database entities (backend phase)
 

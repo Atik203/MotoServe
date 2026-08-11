@@ -183,7 +183,7 @@ export default function AdminDashboardPage() {
                             <span>Active</span>
                           </span>
                           <span className="flex flex-col items-end rounded-[12px] bg-[rgba(76,175,80,0.1)] px-[8px] py-[4px] text-[11px] font-medium text-[#4caf50]">
-                            {m.done}
+                            {m.completed}
                             <span>Done</span>
                           </span>
                         </div>
