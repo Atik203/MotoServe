@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
+import { getIo } from "../lib/socket.js";
 import { ApiError } from "../middleware/error.js";
 
 export async function createService(req: Request, res: Response): Promise<void> {
@@ -175,6 +176,7 @@ export async function createThread(req: Request, res: Response): Promise<void> {
     },
     include: { messages: true },
   });
+  getIo().to(`user:${advisorId}`).emit("thread:new", { id: thread.id, ownerId: thread.ownerId, subject: thread.subject });
   res.status(201).json(thread);
 }
 
@@ -186,7 +188,9 @@ export async function sendMessage(req: Request, res: Response): Promise<void> {
     where: { id: threadId },
     data: { lastMessageAt: new Date() },
   });
-  res.status(201).json({ ...message, sender: message.sender.toLowerCase() });
+  const payload = { ...message, sender: message.sender.toLowerCase() };
+  getIo().to(threadId).emit("message:new", payload);
+  res.status(201).json(payload);
 }
 
 export async function payInvoice(req: Request, res: Response): Promise<void> {

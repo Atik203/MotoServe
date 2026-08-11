@@ -27,16 +27,30 @@ export const sendMessage = createAsyncThunk(
   },
 );
 
+function pushMessage(state: ChatState, threadId: string, message: ChatMessage) {
+  const thread = state.threads.find((t) => t.id === threadId);
+  if (!thread) return;
+  if (thread.messages.some((m) => m.id === message.id)) return;
+  thread.messages.push(message);
+  thread.lastMessageAt = message.time;
+  thread.unread = thread.id === state.activeThreadId ? 0 : thread.unread + 1;
+}
+
 const chatSlice = createSlice({
   name: "chat",
   initialState,
   reducers: {
     setActiveThread(state, action: PayloadAction<string | null>) {
       state.activeThreadId = action.payload;
+      const thread = state.threads.find((t) => t.id === action.payload);
+      if (thread) thread.unread = 0;
     },
     markThreadRead(state, action: PayloadAction<string>) {
       const thread = state.threads.find((t) => t.id === action.payload);
       if (thread) thread.unread = 0;
+    },
+    receiveMessage(state, action: PayloadAction<{ threadId: string; message: ChatMessage }>) {
+      pushMessage(state, action.payload.threadId, action.payload.message);
     },
   },
   extraReducers: (builder) => {
@@ -53,14 +67,10 @@ const chatSlice = createSlice({
         state.error = action.error.message ?? "Failed to load chat threads";
       })
       .addCase(sendMessage.fulfilled, (state, action) => {
-        const thread = state.threads.find((t) => t.id === action.meta.arg.threadId);
-        if (!thread) return;
-        thread.messages.push(action.payload);
-        thread.lastMessageAt = action.payload.time;
-        thread.unread = 0;
+        pushMessage(state, action.meta.arg.threadId, action.payload);
       });
   },
 });
 
-export const { setActiveThread, markThreadRead } = chatSlice.actions;
+export const { setActiveThread, markThreadRead, receiveMessage } = chatSlice.actions;
 export default chatSlice.reducer;
