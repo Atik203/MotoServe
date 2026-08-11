@@ -6,3 +6,346 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum Role {
+  ADMIN
+  ADVISOR
+  MECHANIC
+  OWNER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  REJECTED
+}
+
+enum FuelType {
+  GASOLINE
+  DIESEL
+  HYBRID
+  ELECTRIC
+}
+
+enum ServiceCategory {
+  MAINTENANCE
+  REPAIRS
+  INSPECTIONS
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum JobStatus {
+  RECEIVED
+  INSPECTING
+  REPAIRING
+  TESTING
+  READY
+  COMPLETED
+}
+
+enum JobPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum EstimateStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum EstimateItemCategory {
+  SERVICE
+  PARTS
+  LABOR
+}
+
+enum SenderRole {
+  ADVISOR
+  OWNER
+}
+
+enum PaymentMethod {
+  CARD
+  CASH
+  MOBILE
+}
+
+enum InvoiceStatus {
+  PAID
+  UNPAID
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  passwordHash   String
+  role           Role
+  phone          String?
+  avatar         String?
+  station        String?
+  specialization String?
+  status         UserStatus @default(ACTIVE)
+  nid            String?
+  drivingLicense String?
+  occupation     String?
+  street         String?
+  city           String?
+  district       String?
+  zip            String?
+  country        String?
+  dateOfBirth    DateTime?
+  gender         String?
+  verifiedAt     DateTime?
+  joinedAt       DateTime  @default(now())
+
+  vehicles       Vehicle[]
+  appointments   Appointment[]
+  jobCardsAdvised JobCard[]   @relation("AdvisorJobs")
+  jobCardsAssigned JobCard[]  @relation("MechanicJobs")
+  jobCardsCustomer JobCard[]  @relation("CustomerJobs")
+  threadsOwned     ChatThread[] @relation("OwnerThreads")
+  threadsAdvised ChatThread[] @relation("AdvisorThreads")
+  ratings        Rating[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Vehicle {
+  id           String   @id @default(cuid())
+  ownerId      String
+  owner        User     @relation(fields: [ownerId], references: [id])
+  make         String
+  model        String
+  year         Int
+  regNo        String   @unique
+  fuelType     FuelType
+  mileage      Int
+  vin          String?
+  color        String?
+  transmission String?
+  image        String?
+
+  appointments Appointment[]
+  jobCards     JobCard[]
+  invoices     Invoice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Service {
+  id          String          @id @default(cuid())
+  name        String
+  category    ServiceCategory
+  basePrice   Float
+  durationMins Int
+  description String
+  active      Boolean         @default(true)
+  marketing   Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Appointment {
+  id         String            @id @default(cuid())
+  ownerId    String
+  owner      User              @relation(fields: [ownerId], references: [id])
+  vehicleId  String
+  vehicle    Vehicle           @relation(fields: [vehicleId], references: [id])
+  serviceIds String[]
+  date       String
+  time       String
+  status     AppointmentStatus @default(PENDING)
+  notes      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model JobCard {
+  id             String     @id
+  vehicleId      String
+  vehicle        Vehicle    @relation(fields: [vehicleId], references: [id])
+  customerId     String
+  customer       User       @relation("CustomerJobs", fields: [customerId], references: [id])
+  advisorId      String
+  advisor        User       @relation("AdvisorJobs", fields: [advisorId], references: [id])
+  mechanicId     String?
+  mechanic       User?      @relation("MechanicJobs", fields: [mechanicId], references: [id])
+  station        String?
+  priority       JobPriority @default(MEDIUM)
+  status         JobStatus  @default(RECEIVED)
+  issues         String
+  totalEstimate  Float?
+
+  progress       JobProgress[]
+  notes          JobNote[]
+  partsUsed      PartsUsed[]
+  estimates      Estimate[]
+  invoices       Invoice[]
+  ratings        Rating[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model JobProgress {
+  id        String    @id @default(cuid())
+  jobCardId String
+  jobCard   JobCard   @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
+  step      JobStatus
+  label     String
+  timestamp String?
+  done      Boolean   @default(false)
+}
+
+model JobNote {
+  id        String  @id @default(cuid())
+  jobCardId String
+  jobCard   JobCard @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
+  author    String
+  time      String
+  text      String
+}
+
+model PartsUsed {
+  id        String  @id @default(cuid())
+  jobCardId String
+  jobCard   JobCard @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
+  name      String
+  qty       Int
+  unitPrice Float
+  supplier  String
+  subtotal  Float
+}
+
+model Part {
+  id        String  @id @default(cuid())
+  name      String
+  sku       String  @unique
+  unitPrice Float
+  supplier  String
+  stock     Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Estimate {
+  id         String          @id
+  jobCardId  String
+  jobCard    JobCard         @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
+  customerId String
+  advisorId  String
+  createdAt  DateTime        @default(now())
+  status     EstimateStatus  @default(PENDING)
+  summary    String
+  total      Float
+
+  items EstimateItem[]
+}
+
+model EstimateItem {
+  id          String              @id @default(cuid())
+  estimateId  String
+  estimate    Estimate            @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  description String
+  category    EstimateItemCategory
+  amount      Float
+}
+
+model ChatThread {
+  id            String   @id @default(cuid())
+  ownerId       String
+  owner         User     @relation("OwnerThreads", fields: [ownerId], references: [id])
+  advisorId     String
+  advisor       User     @relation("AdvisorThreads", fields: [advisorId], references: [id])
+  subject       String
+  unread        Int      @default(0)
+  lastMessageAt DateTime @default(now())
+
+  messages Message[]
+
+  createdAt DateTime @default(now())
+}
+
+model Message {
+  id       String     @id @default(cuid())
+  threadId String
+  thread   ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender   SenderRole
+  text     String
+  time     DateTime   @default(now())
+}
+
+model Invoice {
+  id         String        @id
+  jobId      String
+  job        JobCard       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  customerId String
+  vehicleId  String
+  vehicle    Vehicle       @relation(fields: [vehicleId], references: [id])
+  issuedAt   DateTime      @default(now())
+  status     InvoiceStatus @default(UNPAID)
+  items      Json
+  laborTotal Float
+  partsTotal Float
+  subtotal   Float
+  tax        Float
+  total      Float
+  paymentMethod PaymentMethod?
+  last4      String?
+  paidAt     DateTime?
+
+  payment Payment?
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  invoiceId String        @unique
+  invoice   Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  jobCardId String
+  amount    Float
+  method    PaymentMethod
+  status    InvoiceStatus @default(PAID)
+  paidAt    DateTime      @default(now())
+}
+
+model Rating {
+  id          String  @id @default(cuid())
+  jobId       String
+  job         JobCard @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  customerId  String
+  customer    User    @relation(fields: [customerId], references: [id])
+  serviceName String
+  score       Int
+  review      String
+  date        DateTime @default(now())
+}
+
+model Testimonial {
+  id      String  @id @default(cuid())
+  name    String
+  vehicle String
+  rating  Int
+  review  String
+  date    DateTime @default(now())
+}
+
+model AuditLog {
+  id     String   @id @default(cuid())
+  user   String
+  action String
+  time   DateTime @default(now())
+}

@@ -138,5 +138,12 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 ## Roadmap
 
 - **Phase 0** ✅ scaffold root docs + configs + frontend/backend shells
-- **Phase 1** frontend demo-data UI (batches A–F above, desktop-first)
-- **Phase 2** backend: Prisma schema+seed → auth → REST → RTK Query swap → chat → PDF → reports
+- **Phase 1** ✅ frontend demo-data UI (all 35 screens, batches A–F, desktop-first)
+- **Phase 2** 🔨 backend: Prisma schema+seed ✅ → auth ✅ → REST endpoints ✅ (auth/services/vehicles/appointments/jobs/employees/estimates/invoices/chat/parts/ratings/reports) → frontend RTK Query swap → socket.io chat → PDF → reports
+
+## API conventions (backend)
+
+- Base URL `http://localhost:4000/api` · JSON bodies sent raw (the `validate` middleware wraps them internally — do NOT send `{body: ...}` wrappers).
+- Auth: JWT in httpOnly cookie `motoserve_token` (login sets it; `credentials: "include"` on the frontend).
+- Roles enforced per route (`requireRole`); 401 unauthenticated / 403 forbidden.
+- Demo accounts: `admin@motorserve.com / admin123` · `john.doe@example.com / password123` (owner) · `alex.turner@motorserve.com / password123` (mechanic) · `sarah.jenkins@motorserve.com / password123` (advisor).

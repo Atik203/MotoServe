@@ -67,6 +67,7 @@ pnpm db:seed       # node prisma/seed.ts
 - Routes: `src/routes/*.router.ts` → `src/controllers/*.controller.ts` → `src/services/*.service.ts`. Zod schemas in `src/validation/`, validated in a `validate` middleware.
 - Auth: JWT (httpOnly cookie) + `requireRole("admin"|"advisor"|"mechanic"|"owner")` middleware.
 - Every public API response shape MUST match the demo JSON shape so the frontend swap is seamless.
+- API request bodies are sent RAW (no `{body: ...}` wrapper) — the `validate` middleware wraps internally. Demo accounts: admin@motorserve.com/admin123, john.doe@example.com/password123, alex.turner@motorserve.com/password123, sarah.jenkins@motorserve.com/password123.
 
 ## Type sync (frontend ↔ backend)
 
