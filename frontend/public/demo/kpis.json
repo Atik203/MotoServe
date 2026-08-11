@@ -20,9 +20,10 @@
     { "id": "kpi-206", "label": "Active Mechanics", "value": "12", "delta": "Optimal", "trend": "flat", "icon": "wrench" }
   ],
   "owner": [
-    { "id": "kpi-301", "label": "Registered Vehicles", "value": "2", "delta": "1 in service", "trend": "flat", "icon": "car" },
-    { "id": "kpi-302", "label": "Upcoming Appointments", "value": "1", "delta": "Aug 14, 10:30 AM", "trend": "flat", "icon": "calendar" },
-    { "id": "kpi-303", "label": "Pending Estimates", "value": "1", "delta": "$469.99 awaiting", "trend": "flat", "icon": "file-check" },
-    { "id": "kpi-304", "label": "Service History", "value": "9", "delta": "Last: Aug 12", "trend": "flat", "icon": "history" }
+    { "id": "kpi-301", "label": "Upcoming Appts", "value": "3", "delta": "Next on Aug 14", "trend": "up", "icon": "calendar" },
+    { "id": "kpi-302", "label": "Active Services", "value": "1", "delta": "In progress", "trend": "flat", "icon": "wrench" },
+    { "id": "kpi-303", "label": "Registered Vehicles", "value": "2", "delta": "All active", "trend": "flat", "icon": "car" },
+    { "id": "kpi-304", "label": "Pending Payments", "value": "$1,240.00", "delta": "2 invoices due", "trend": "down", "icon": "wallet" },
+    { "id": "kpi-305", "label": "Next Reminder", "value": "Tesla Model 3 - Maintenance", "delta": "Due in 5 days", "trend": "flat", "icon": "bell" }
   ]
 }
