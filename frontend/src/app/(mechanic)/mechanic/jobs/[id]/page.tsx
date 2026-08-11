@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchJobs, updateJobStatus } from "@/store/slices/jobsSlice";
+import { downloadJobCardPdf } from "@/lib/pdf";
 import { ProgressStepper } from "@/components/roles/mechanic/ProgressStepper";
 import { PriorityPill } from "@/components/roles/mechanic/StatusBadge";
 import { MechanicNotes } from "@/components/roles/mechanic/MechanicNotes";
@@ -105,6 +106,13 @@ export default function RepairProgressPage() {
           <div className="col-span-4 flex flex-col gap-[24px]">
             <RepairPhotos photos={job.photos} />
             <div className="flex flex-col gap-[8px]">
+              <Button
+                variant="outline"
+                onClick={() => { downloadJobCardPdf(job); toast.success("Job card PDF downloaded"); }}
+                className="rounded-[4px] border-[#c2c6d5] bg-secondary text-foreground hover:bg-muted"
+              >
+                Download Job Card
+              </Button>
               <Button variant="outline" className="rounded-[4px] border-[#c2c6d5] bg-secondary text-foreground hover:bg-muted">
                 Save Progress
               </Button>

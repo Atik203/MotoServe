@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { CalendarDays, CreditCard, Info, Landmark, ReceiptText, Wallet } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchInvoices, payInvoice } from "@/store/slices/invoicesSlice";
+import { fetchVehicles } from "@/store/slices/vehiclesSlice";
+import { downloadInvoicePdf } from "@/lib/pdf";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,11 +23,13 @@ const PAYMENT_METHODS = [
 export default function PaymentInvoicePage() {
   const dispatch = useAppDispatch();
   const invoices = useAppSelector((s) => s.invoices.items);
+  const vehicles = useAppSelector((s) => s.vehicles.items);
   const [method, setMethod] = useState("card");
   const [paying, setPaying] = useState(false);
 
   useEffect(() => {
     dispatch(fetchInvoices());
+    dispatch(fetchVehicles());
   }, [dispatch]);
 
   const invoice = invoices.find((i) => i.jobId === "JC-1045") ?? invoices[0] ?? null;
@@ -203,7 +207,8 @@ export default function PaymentInvoicePage() {
                 href="#"
                 onClick={(e) => {
                   e.preventDefault();
-                  toast.info("Invoice PDF download (demo)");
+                  downloadInvoicePdf(invoice, vehicles.find((v) => v.id === invoice.vehicleId) ?? null);
+                  toast.success("Invoice PDF downloaded");
                 }}
                 className="flex items-center justify-center gap-[8px] text-[14px] font-semibold text-primary hover:underline"
               >

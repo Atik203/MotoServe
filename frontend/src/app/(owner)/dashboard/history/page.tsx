@@ -9,6 +9,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchInvoices } from "@/store/slices/invoicesSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { cn } from "@/lib/utils";
+import { downloadInvoicePdf } from "@/lib/pdf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Invoice, Vehicle } from "@/types";
@@ -175,7 +176,7 @@ export default function ServiceHistoryPage() {
                           <p className="pt-[4px] text-[11px] font-medium text-[#424753]">Submitted on {entry.ratedAt}</p>
                         </div>
                         <div className="flex gap-[8px]">
-                          <Button variant="outline" size="sm" onClick={() => toast.info("Invoice PDF (demo)")} className="gap-[8px] rounded-[12px] px-[17px] py-[9px] text-[12px] font-semibold">
+                          <Button variant="outline" size="sm" onClick={() => { downloadInvoicePdf(entry.invoice, entry.vehicle); toast.success("Invoice PDF downloaded"); }} className="gap-[8px] rounded-[12px] px-[17px] py-[9px] text-[12px] font-semibold">
                             <Download className="size-[12px]" />
                             Invoice
                           </Button>
