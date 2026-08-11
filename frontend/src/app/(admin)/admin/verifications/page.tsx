@@ -1,0 +1,229 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Download, RefreshCw, Search, ShieldCheck, UserCheck, UserX, Users } from "lucide-react";
+import demoData from "@/lib/demo-data";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+type Customer = Awaited<ReturnType<typeof demoData.load<"customers">>>[number];
+type Status = "pending" | "approved" | "rejected";
+
+const statusPill: Record<Status, string> = {
+  pending: "bg-[rgba(255,193,7,0.1)] border-[rgba(255,193,7,0.2)] text-warning",
+  approved: "bg-[rgba(76,175,80,0.1)] border-[rgba(76,175,80,0.2)] text-[#4caf50]",
+  rejected: "bg-[rgba(244,67,54,0.1)] border-[rgba(244,67,54,0.2)] text-[#f44336]",
+};
+
+const EXTRA_ROWS: Customer[] = [
+  {
+    id: "cus-004",
+    name: "Marcus Johnson",
+    phone: "+1 (555) 019-2834",
+    email: "marcus.j@example.com",
+    nid: "NID-998812345",
+    drivingLicense: "DL-4412098",
+    status: "pending",
+    verifiedAt: null,
+  },
+  {
+    id: "cus-005",
+    name: "Emily Carter",
+    phone: "+1 (555) 771-9045",
+    email: "emily.c@example.com",
+    nid: "NID-553290111",
+    drivingLicense: "DL-8890123",
+    status: "approved",
+    verifiedAt: "2026-08-10T13:00:00Z",
+  },
+  {
+    id: "cus-006",
+    name: "Robert Kim",
+    phone: "+1 (555) 442-7761",
+    email: "robert.kim@example.com",
+    nid: "NID-774558812",
+    drivingLicense: "DL-2209876",
+    status: "rejected",
+    verifiedAt: null,
+  },
+];
+
+export default function VerificationPage() {
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | Status>("all");
+
+  useEffect(() => {
+    demoData.load("customers").then((data) => setCustomers([...EXTRA_ROWS, ...data]));
+  }, []);
+
+  const counts = {
+    pending: customers.filter((c) => c.status === "pending").length,
+    approved: customers.filter((c) => c.status === "approved").length,
+    rejected: customers.filter((c) => c.status === "rejected").length,
+    total: customers.length,
+  };
+
+  const rows = customers.filter((c) => {
+    const matchSearch =
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.phone.includes(search) ||
+      c.email.toLowerCase().includes(search.toLowerCase()) ||
+      c.nid.includes(search);
+    const matchFilter = filter === "all" || c.status === filter;
+    return matchSearch && matchFilter;
+  });
+
+  const setStatus = (id: string, status: Status) => {
+    setCustomers((prev) => prev.map((c) => (c.id === id ? { ...c, status, verifiedAt: status === "approved" ? new Date().toISOString() : null } : c)));
+    toast.success(status === "approved" ? "Account approved" : status === "rejected" ? "Account rejected" : "Status updated");
+  };
+
+  const kpis = [
+    { label: "Pending Verification", value: counts.pending, icon: ShieldCheck },
+    { label: "Approved Accounts", value: counts.approved, icon: UserCheck },
+    { label: "Rejected Accounts", value: counts.rejected, icon: UserX },
+    { label: "Total Registered", value: counts.total, icon: Users },
+  ];
+
+  return (
+    <div className="bg-background min-h-screen p-[32px]">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-[24px]">
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-[11px] font-medium text-[#424753]">
+              Dashboard › Customer Management › Vehicle Owner Verification
+            </p>
+            <h1 className="text-[24px] font-semibold tracking-[-0.24px] text-foreground">Vehicle Owner Verification</h1>
+          </div>
+          <div className="flex gap-[8px]">
+            <Button variant="outline" size="sm" className="gap-[4px] rounded-[8px] px-[13px] py-[7px] text-[12px] font-semibold tracking-[0.24px]" onClick={() => toast.success("List exported (demo)")}>
+              <Download className="size-[12px]" />
+              Export List
+            </Button>
+            <Button variant="outline" size="sm" className="gap-[4px] rounded-[8px] px-[13px] py-[7px] text-[12px] font-semibold tracking-[0.24px]" onClick={() => setCustomers((prev) => [...prev])}>
+              <RefreshCw className="size-[12px]" />
+              Refresh
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex gap-[24px]">
+          {kpis.map((kpi) => (
+            <div key={kpi.label} className="flex h-[128px] flex-1 flex-col justify-between rounded-[8px] border border-[#e2e8f0] bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <div className="flex items-center gap-[8px]">
+                <kpi.icon className="size-[20px] text-muted-foreground" />
+                <span className="text-[12px] font-semibold tracking-[0.24px] text-[#424753]">{kpi.label}</span>
+              </div>
+              <span className="text-[36px] font-bold tracking-[-0.72px] text-foreground">{kpi.value}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="overflow-hidden rounded-[8px] border border-[#e2e8f0] bg-white shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
+          <div className="flex items-center justify-between border-b border-[#e2e8f0] bg-background px-[16px] pt-[16px] pb-[17px]">
+            <div className="relative w-[384px]">
+              <Search className="absolute top-1/2 left-[12px] size-[13.5px] -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search Name, Phone, Email, ID..."
+                className="h-[38px] rounded-[8px] pl-[41px]"
+              />
+            </div>
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value as typeof filter)}
+              className="h-[38px] rounded-[8px] border border-[#e2e8f0] bg-white px-[13px] text-[14px] text-[#424753] outline-none focus:border-primary"
+            >
+              <option value="all">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-background hover:bg-background">
+                <TableHead className="px-[16px] py-[12px] text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Owner</TableHead>
+                <TableHead className="px-[16px] py-[12px] text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Contact</TableHead>
+                <TableHead className="px-[16px] py-[12px] text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Documents</TableHead>
+                <TableHead className="px-[16px] py-[12px] text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Reg. Date</TableHead>
+                <TableHead className="px-[16px] py-[12px] text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Status</TableHead>
+                <TableHead className="px-[16px] py-[12px] text-right text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((customer) => (
+                <TableRow key={customer.id} className="border-t border-border">
+                  <TableCell className="px-[16px] py-[19px]">
+                    <div className="flex items-center">
+                      <span className="flex size-[40px] items-center justify-center rounded-[12px] border border-[#e2e8f0] bg-secondary text-[12px] font-semibold text-muted-foreground">
+                        {customer.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                      </span>
+                      <div className="pl-[16px]">
+                        <p className="text-[12px] font-semibold tracking-[0.24px] text-foreground">{customer.name}</p>
+                        <p className="text-[11px] font-medium text-[#424753]">{customer.id.toUpperCase()}</p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-[16px] py-[19px]">
+                    <p className="text-[14px] text-foreground">{customer.phone}</p>
+                    <p className="text-[11px] font-medium text-[#424753]">{customer.email}</p>
+                  </TableCell>
+                  <TableCell className="px-[16px] py-[19px]">
+                    <span className="flex gap-[4px] text-muted-foreground">
+                      <ShieldCheck className="size-[15px]" />
+                      <ShieldCheck className="size-[12px]" />
+                    </span>
+                  </TableCell>
+                  <TableCell className="px-[16px] py-[19px] text-[14px] text-[#424753]">
+                    {customer.verifiedAt ? new Date(customer.verifiedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Pending"}
+                  </TableCell>
+                  <TableCell className="px-[16px] py-[19px]">
+                    <span className={cn("inline-flex rounded-[12px] border px-[11px] py-[3px] text-[11px] font-medium capitalize", statusPill[customer.status])}>
+                      {customer.status}
+                    </span>
+                  </TableCell>
+                  <TableCell className="px-[16px] py-[19px]">
+                    <div className="flex justify-end gap-[8px]">
+                      {customer.status !== "approved" && (
+                        <button
+                          type="button"
+                          onClick={() => setStatus(customer.id, "approved")}
+                          className="rounded-[4px] border border-[rgba(76,175,80,0.2)] bg-[rgba(76,175,80,0.1)] px-[13px] py-[5px] text-[12px] font-semibold tracking-[0.24px] text-[#4caf50] transition-colors hover:bg-[rgba(76,175,80,0.2)]"
+                        >
+                          Approve
+                        </button>
+                      )}
+                      {customer.status !== "rejected" && (
+                        <button
+                          type="button"
+                          onClick={() => setStatus(customer.id, "rejected")}
+                          className="rounded-[4px] border border-[rgba(244,67,54,0.2)] bg-[rgba(244,67,54,0.1)] px-[13px] py-[5px] text-[12px] font-semibold tracking-[0.24px] text-[#f44336] transition-colors hover:bg-[rgba(244,67,54,0.2)]"
+                        >
+                          Reject
+                        </button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    </div>
+  );
+}

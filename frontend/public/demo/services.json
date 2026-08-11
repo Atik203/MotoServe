@@ -14,9 +14,17 @@
       "name": "Full Synthetic Oil Change",
       "category": "maintenance",
       "basePrice": 79.99,
-      "durationMins": 30,
+      "durationMins": 45,
       "description": "Full synthetic engine oil with premium filter.",
-      "active": true
+      "active": true,
+      "marketing": {
+        "name": "Premium Oil Change",
+        "from": "$49",
+        "durationLabel": "45 mins",
+        "tags": ["Synthetic", "Filter"],
+        "image": "/images/services/premium-oil-change.png",
+        "blurb": "Full synthetic oil replacement, new filter installation, and comprehensive 21-point vehicle inspection."
+      }
     },
     {
       "id": "svc-003",
@@ -43,7 +51,33 @@
       "basePrice": 129.99,
       "durationMins": 120,
       "description": "Inspect and service brake pads, rotors and fluid levels.",
-      "active": true
+      "active": true,
+      "marketing": {
+        "name": "Brake Service",
+        "from": "$129",
+        "durationLabel": "90 mins",
+        "tags": ["Safety"],
+        "tagStyle": "warning",
+        "image": "/images/services/brake-service.png",
+        "blurb": "Pad and rotor replacement, caliper inspection, and brake fluid top-up ensuring optimal stopping power."
+      }
+    },
+    {
+      "id": "svc-007",
+      "name": "Engine Diagnostic",
+      "category": "repairs",
+      "basePrice": 89.99,
+      "durationMins": 60,
+      "description": "Computer diagnostics scan for fault codes and performance issues.",
+      "active": true,
+      "marketing": {
+        "name": "Engine Diagnostics",
+        "from": "$89",
+        "durationLabel": "Varies",
+        "tags": ["Diagnostic"],
+        "image": "/images/services/engine-diagnostics.png",
+        "blurb": "Advanced computerized scanning, check engine light resolution, and comprehensive performance analysis."
+      }
     },
     {
       "id": "svc-006",

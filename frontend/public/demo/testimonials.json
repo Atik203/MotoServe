@@ -1,36 +1,58 @@
 {
-  "testimonials": [
+  "hero": {
+    "title": "Trusted by Fleet Managers Nationwide",
+    "subtitle": "Discover how MotoServe is revolutionizing maintenance workflows, reducing downtime, and increasing operational efficiency for fleets of all sizes."
+  },
+  "video": {
+    "image": "/images/testimonial-video.png",
+    "quote": "\"MotoServe cut our downtime by 40%.\"",
+    "author": "Sarah Jenkins, Director of Logistics at TransCorp"
+  },
+  "stats": {
+    "rating": "4.9/5",
+    "ratingLabel": "OVERALL SATISFACTION",
+    "ratingNote": "Based on 1,200+ fleet managers",
+    "efficiency": "98%",
+    "efficiencyLabel": "EFFICIENCY GAIN",
+    "efficiencyNote": "of our clients report immediate improvements in maintenance tracking accuracy."
+  },
+  "reviews": [
     {
-      "id": "tst-001",
-      "name": "John Doe",
-      "vehicle": "2023 Ford F-150",
+      "id": "rev-001",
+      "name": "Marcus R.",
+      "role": "Ops Manager, Velocity Freight",
       "rating": 5,
-      "review": "MotoServe kept me updated at every step. The brake replacement was done on time and the invoice was clear.",
-      "date": "2026-08-13"
+      "avatar": "/images/avatars/marcus-r.png",
+      "review": "\"The automated scheduling feature alone paid for the system in the first month. Our mechanics know exactly what to prep for.\""
     },
     {
-      "id": "tst-002",
-      "name": "Maria Garcia",
-      "vehicle": "2021 Honda CR-V",
-      "rating": 5,
-      "review": "Booking online took two minutes. The chat with the advisor made everything effortless.",
-      "date": "2026-08-05"
+      "id": "rev-002",
+      "name": "Elena L.",
+      "role": "Regional Director",
+      "rating": 4.5,
+      "initials": "EL",
+      "review": "\"Unparalleled data density. I can see the status of 400 vehicles at a glance without feeling overwhelmed. The UI is exceptionally clean.\""
     },
     {
-      "id": "tst-003",
-      "name": "James Wilson",
-      "vehicle": "2020 Tesla Model 3",
-      "rating": 4,
-      "review": "Great diagnostics and honest pricing. The estimate approval flow is very transparent.",
-      "date": "2026-07-21"
+      "id": "rev-003",
+      "name": "David T.",
+      "role": "City Transit Authority",
+      "rating": 5,
+      "avatar": "/images/avatars/david-t.png",
+      "review": "\"Finally, a fleet management tool that looks like it was built in this decade. Extremely reliable and the support team is responsive.\""
     },
     {
-      "id": "tst-004",
-      "name": "Aisha Khan",
-      "vehicle": "2022 Hyundai Tucson",
-      "rating": 5,
-      "review": "Fast oil change service and the PDF invoice download was super handy for my records.",
-      "date": "2026-07-14"
+      "id": "rev-004",
+      "name": "Samantha J.",
+      "role": "VP Operations",
+      "rating": 4.5,
+      "initials": "SJ",
+      "review": "\"Integration with our existing telematics was seamless. It pulls everything into one dashboard. Highly recommended.\""
     }
-  ]
+  ],
+  "cta": {
+    "title": "Ready to optimize your fleet?",
+    "subtitle": "Join thousands of professionals who trust MotoServe for their daily operations.",
+    "button": "Book a Free Demo"
+  }
 }

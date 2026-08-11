@@ -1,34 +1,45 @@
 {
+  "categories": ["Booking", "Payments", "Repair Process", "Cost Estimates", "Service Tracking", "Warranty", "Invoices", "Support"],
   "faqs": [
     {
       "id": "faq-001",
-      "question": "How do I book a servicing appointment?",
+      "category": "Booking",
+      "question": "How do I schedule a fleet maintenance check?",
       "answer": "Log in to your owner account, pick a vehicle, choose the services you need, and select a date and time. You'll receive an instant confirmation and can track progress in real time."
     },
     {
       "id": "faq-002",
+      "category": "Booking",
+      "question": "Can I book recurring services for multiple vehicles?",
+      "answer": "Yes. The fleet plan supports recurring maintenance schedules across all registered vehicles with consolidated billing and predictive maintenance alerts."
+    },
+    {
+      "id": "faq-003",
+      "category": "Booking",
+      "question": "What happens if I need to cancel or reschedule a booking?",
+      "answer": "You can cancel or reschedule free of charge up to 24 hours before your appointment from the Appointments page in your dashboard."
+    },
+    {
+      "id": "faq-004",
+      "category": "Booking",
+      "question": "Is emergency roadside assistance available 24/7?",
+      "answer": "Yes, emergency roadside assistance is available around the clock for Premium Care members. Contact support anytime for immediate dispatch."
+    },
+    {
+      "id": "faq-005",
+      "category": "Cost Estimates",
       "question": "Can I approve extra repair costs before you start?",
       "answer": "Yes. If the workshop finds additional repairs needed, you'll get a digital estimate. You can approve or reject it — no work happens without your approval."
     },
     {
-      "id": "faq-003",
+      "id": "faq-006",
+      "category": "Service Tracking",
       "question": "How do I track my vehicle's repair progress?",
       "answer": "Follow your vehicle through the live status timeline: Received → Inspecting → Repairing → Testing → Ready. You can also chat with your service advisor anytime."
-    },
-    {
-      "id": "faq-004",
-      "question": "What payment methods do you accept?",
-      "answer": "We accept card payments and cash at the counter. After payment you can download your invoice as a PDF from your service history."
-    },
-    {
-      "id": "faq-005",
-      "question": "Do you offer a warranty on repairs?",
-      "answer": "Yes, all parts and labor are covered by a 12-month / 12,000-mile warranty on approved repairs."
-    },
-    {
-      "id": "faq-006",
-      "question": "How do I register a new vehicle?",
-      "answer": "From your dashboard, go to My Vehicles → Add New Vehicle and enter the model, registration number, year, fuel type, and current mileage."
     }
-  ]
+  ],
+  "cta": {
+    "title": "Still Need Help?",
+    "subtitle": "If you couldn't find the answer to your question, our dedicated fleet support team is ready to assist you with tailored solutions."
+  }
 }

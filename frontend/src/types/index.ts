@@ -8,6 +8,15 @@ export interface Service {
   durationMins: number;
   description: string;
   active: boolean;
+  marketing?: {
+    name: string;
+    from: string;
+    durationLabel: string;
+    tags: string[];
+    tagStyle?: "info" | "warning";
+    image: string;
+    blurb: string;
+  };
 }
 
 export type FuelType = "gasoline" | "diesel" | "hybrid" | "electric";

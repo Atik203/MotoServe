@@ -1,0 +1,40 @@
+{
+  "features": [
+    {
+      "id": "feat-001",
+      "title": "Certified Mechanics",
+      "description": "Expert technicians with industry-recognized certifications handling your vehicle with precision.",
+      "icon": "shield-check"
+    },
+    {
+      "id": "feat-002",
+      "title": "Transparent Pricing",
+      "description": "Upfront estimates before any work begins. No hidden fees or unexpected charges.",
+      "icon": "receipt"
+    },
+    {
+      "id": "feat-003",
+      "title": "Live Repair Tracking",
+      "description": "Monitor your vehicle's status in real-time through our digital dashboard.",
+      "icon": "activity"
+    },
+    {
+      "id": "feat-004",
+      "title": "Genuine Spare Parts",
+      "description": "We source only OEM and premium aftermarket parts to ensure long-lasting repairs.",
+      "icon": "package"
+    },
+    {
+      "id": "feat-005",
+      "title": "Fast Service",
+      "description": "Optimized workshop scheduling ensures quick turnaround times for routine maintenance.",
+      "icon": "zap"
+    },
+    {
+      "id": "feat-006",
+      "title": "Digital Invoices",
+      "description": "Paperless billing with complete service history stored securely in your account.",
+      "icon": "file-text"
+    }
+  ]
+}

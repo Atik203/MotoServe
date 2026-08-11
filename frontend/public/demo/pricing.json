@@ -1,40 +1,103 @@
 {
   "hero": {
-    "title": "Workshop management that keeps your wheels turning",
-    "subtitle": "Book appointments, track repairs in real time, approve estimates, and pay online — all in one place.",
-    "ctaPrimary": "Book an Appointment",
-    "ctaSecondary": "Explore Services"
+    "title": "Transparent Pricing, Professional Service",
+    "subtitle": "Clear, upfront costs for all your fleet and personal vehicle maintenance needs. No hidden fees, just reliable service."
   },
-  "stats": [
-    { "id": "st-001", "label": "Vehicles Serviced", "value": "12,400+" },
-    { "id": "st-002", "label": "Average Rating", "value": "4.8/5" },
-    { "id": "st-003", "label": "Certified Mechanics", "value": "18" },
-    { "id": "st-004", "label": "Years in Business", "value": "15" }
-  ],
-  "plans": [
+  "cards": [
     {
-      "id": "plan-001",
-      "name": "Maintenance",
-      "description": "Routine care to keep your vehicle healthy.",
+      "id": "pc-001",
+      "title": "Premium Oil Change",
+      "subtitle": "Full synthetic or conventional",
+      "price": "From $49",
+      "priceSuffix": "/ vehicle",
+      "duration": "Est. 45 mins",
+      "icon": "droplet",
+      "badge": "Popular",
       "highlight": false,
-      "features": ["Oil change from $49.99", "Tire rotation $29.99", "Multi-point inspection $89.99", "Free health report"],
-      "cta": "Book Maintenance"
+      "features": [
+        "Up to 5 quarts of quality motor oil",
+        "New oil filter installation",
+        "Comprehensive fluid check",
+        "Tire pressure adjustment"
+      ],
+      "cta": "Book Oil Change"
     },
     {
-      "id": "plan-002",
-      "name": "Repair",
-      "description": "Expert repairs with transparent estimates.",
+      "id": "pc-002",
+      "title": "Brake Pad Replacement",
+      "subtitle": "Front or rear axle",
+      "price": "From $149",
+      "priceSuffix": "/ axle",
+      "duration": "Est. 1.5 - 2 hrs",
+      "icon": "disc",
+      "badge": "Recommended",
       "highlight": true,
-      "features": ["Brake service from $129.99", "Engine diagnostics $59.99", "Approve estimates online", "12-month parts warranty"],
-      "cta": "Book a Repair"
+      "features": [
+        "High-quality ceramic or metallic pads",
+        "Rotor inspection & resurfacing if needed",
+        "Brake fluid top-off",
+        "Caliper hardware inspection"
+      ],
+      "cta": "Book Brake Service"
     },
     {
-      "id": "plan-003",
-      "name": "Premium Care",
-      "description": "Priority service for busy owners.",
+      "id": "pc-003",
+      "title": "Engine Diagnostics",
+      "subtitle": "Check engine light scan",
+      "price": "$89",
+      "priceSuffix": "flat fee",
+      "duration": "Est. 1 hr",
+      "icon": "gauge",
+      "badge": null,
       "highlight": false,
-      "features": ["Priority scheduling", "Same-day service", "Loaner vehicle option", "Dedicated advisor chat"],
-      "cta": "Join Premium Care"
+      "features": [
+        "OBD-II code scanning",
+        "Detailed diagnostic report",
+        "Visual inspection of related components",
+        "Repair estimate consultation"
+      ],
+      "cta": "Book Diagnostics",
+      "ctaVariant": "outline"
+    },
+    {
+      "id": "pc-004",
+      "title": "Enterprise Fleet Plan",
+      "subtitle": "Custom solutions for 5+ vehicles",
+      "price": "Custom Pricing",
+      "priceSuffix": "",
+      "icon": "truck",
+      "badge": null,
+      "highlight": false,
+      "accent": "brown",
+      "features": [
+        "Dedicated account manager",
+        "Priority scheduling & mobile service",
+        "Volume discount pricing tiers",
+        "Consolidated monthly billing",
+        "Detailed maintenance history portal",
+        "Predictive maintenance alerts"
+      ],
+      "cta": "Contact Sales",
+      "ctaVariant": "brown"
     }
-  ]
+  ],
+  "pricingFaq": [
+    {
+      "question": "Are there any hidden fees?",
+      "answer": "No. The prices listed are base prices. Any additional necessary work or parts (like specialized filters or extra oil quarts) will be clearly quoted and require your approval before we proceed."
+    },
+    {
+      "question": "Do you offer mobile service?",
+      "answer": "Yes, mobile service is available for most basic maintenance tasks including oil changes and diagnostics. A mobile service fee of $40 applies, which is waived for Fleet Plan members."
+    },
+    {
+      "question": "How accurate are the estimated durations?",
+      "answer": "Estimates are based on standard vehicles under normal conditions. Complex vehicle designs, severe rust, or unexpected issues may extend service time. We will always communicate any delays promptly."
+    }
+  ],
+  "cta": {
+    "title": "Ready to get your vehicle serviced?",
+    "subtitle": "Book online today and experience transparent pricing with professional, reliable maintenance.",
+    "button": "Book Now"
+  }
 }

@@ -66,16 +66,16 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 
 | # | Screen | Route | Figma node | Status |
 |---|---|---|---|---|
-| 1 | Home | `/` | `1:5897` | ⬜ |
-| 2 | Services | `/services` | `17:5640` | ⬜ |
-| 3 | Pricing | `/pricing` | `17:4635` | ⬜ |
-| 4 | Testimonials | `/testimonials` | `17:4427` | ⬜ |
-| 5 | FAQ | `/faqs` | `17:5169` | ⬜ |
-| 6 | Login | `/login` | `1:6130` | ⬜ |
-| 7 | Register (owner) | `/register` | `1:6272` | ⬜ |
-| 8 | Forgot Password | `/forgot-password` | `1:6963` | ⬜ |
-| 9 | Owner Account Registration | `/register/owner` | `185:1338` | ⬜ |
-| 10 | Owner Verification & Approval | `/admin/verifications` | `185:1628` | ⬜ |
+| 1 | Home | `/` | `1:5897` | ✅ |
+| 2 | Services | `/services` | `17:5640` | ✅ |
+| 3 | Pricing | `/pricing` | `17:4635` | ✅ |
+| 4 | Testimonials | `/testimonials` | `17:4427` | ✅ |
+| 5 | FAQ | `/faqs` | `17:5169` | ✅ |
+| 6 | Login | `/login` | `1:6130` | ✅ |
+| 7 | Register (owner) | `/register` | `1:6272` | ✅ |
+| 8 | Forgot Password | `/forgot-password` | `1:6963` | ✅ |
+| 9 | Owner Account Registration | `/register/owner` | `185:1338` | ✅ |
+| 10 | Owner Verification & Approval | `/admin/verifications` | `185:1628` | ✅ |
 | 11 | Owner Dashboard | `/dashboard` | `1:6484` | ⬜ |
 | 12 | Register Vehicle | `/dashboard/vehicles/new` | `1:7026` | ⬜ |
 | 13 | Book Appointment | `/dashboard/appointments/book` | `193:1227` (updated) | ✅ |
