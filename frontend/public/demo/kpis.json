@@ -12,10 +12,12 @@
     { "id": "kpi-104", "label": "Pending Estimates", "value": "4", "delta": "1 awaiting approval", "trend": "down", "icon": "file-check" }
   ],
   "admin": [
-    { "id": "kpi-201", "label": "Total Revenue", "value": "$24,850", "delta": "+12.4% vs last month", "trend": "up", "icon": "dollar-sign" },
-    { "id": "kpi-202", "label": "Active Jobs", "value": "18", "delta": "5 high priority", "trend": "flat", "icon": "wrench" },
-    { "id": "kpi-203", "label": "New Customers", "value": "32", "delta": "+8 this week", "trend": "up", "icon": "users" },
-    { "id": "kpi-204", "label": "Pending Verifications", "value": "6", "delta": "3 from today", "trend": "flat", "icon": "shield-check" }
+    { "id": "kpi-201", "label": "Total Revenue", "value": "$1.2M", "delta": "+4.2%", "trend": "up", "icon": "dollar-sign" },
+    { "id": "kpi-202", "label": "Today's Income", "value": "$8,420", "delta": "+1.2%", "trend": "up", "icon": "wallet" },
+    { "id": "kpi-203", "label": "Vehicles Serviced", "value": "128", "delta": "-2", "trend": "down", "icon": "car" },
+    { "id": "kpi-204", "label": "Pending Payments", "value": "$12.5k", "delta": "+14%", "trend": "up", "icon": "file-check" },
+    { "id": "kpi-205", "label": "Registered Customers", "value": "2,450", "delta": "+124", "trend": "up", "icon": "users" },
+    { "id": "kpi-206", "label": "Active Mechanics", "value": "12", "delta": "Optimal", "trend": "flat", "icon": "wrench" }
   ],
   "owner": [
     { "id": "kpi-301", "label": "Registered Vehicles", "value": "2", "delta": "1 in service", "trend": "flat", "icon": "car" },

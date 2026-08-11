@@ -10,9 +10,15 @@
       { "month": "Jul", "revenue": 24850 }
     ],
     "workloadByMechanic": [
-      { "mechanic": "Alex Turner", "completed": 127, "active": 3, "avgHoursPerJob": 1.9 },
-      { "mechanic": "Priya Nair", "completed": 214, "active": 2, "avgHoursPerJob": 2.2 },
-      { "mechanic": "David Chen", "completed": 64, "active": 1, "avgHoursPerJob": 1.6 }
+      { "mechanic": "Mike Miller", "role": "Master Technician", "active": 4, "done": 8 },
+      { "mechanic": "Alex Reed", "role": "Specialist", "active": 3, "done": 10 },
+      { "mechanic": "Alex Turner", "completed": 127, "active": 3, "avgHoursPerJob": 1.9 }
+    ],
+    "serviceDistribution": [
+      { "name": "Oil Change", "pct": 40 },
+      { "name": "Brake Service", "pct": 25 },
+      { "name": "Engine Repair", "pct": 20 },
+      { "name": "Diagnostics", "pct": 15 }
     ],
     "jobsByStatus": [
       { "status": "received", "count": 4 },
@@ -22,11 +28,11 @@
       { "status": "ready", "count": 2 }
     ],
     "activityLog": [
-      { "id": "act-001", "user": "Sarah Jenkins", "action": "Created job card JC-1046", "time": "Today, 12:15 PM" },
-      { "id": "act-002", "user": "Alex Turner", "action": "Added parts to JC-1045", "time": "Today, 11:02 AM" },
-      { "id": "act-003", "user": "Sarah Jenkins", "action": "Sent estimate ES-3301 to John Doe", "time": "Today, 09:40 AM" },
-      { "id": "act-004", "user": "Priya Nair", "action": "Completed job JC-1044", "time": "Yesterday, 04:20 PM" },
-      { "id": "act-005", "user": "Admin", "action": "Approved owner account - Michael Brown", "time": "Yesterday, 02:10 PM" }
+      { "id": "act-001", "user": "Reception", "action": "Vehicle received", "time": "10 mins ago" },
+      { "id": "act-002", "user": "Sarah Jenkins", "action": "Estimate approved - Brake replacement $450", "time": "45 mins ago" },
+      { "id": "act-003", "user": "Billing", "action": "Invoice generated - INV-2026-089", "time": "2 hours ago" },
+      { "id": "act-004", "user": "Priya Nair", "action": "Service completed - Oil change - Honda Civic", "time": "3 hours ago" },
+      { "id": "act-005", "user": "Alex Turner", "action": "Added parts to JC-1045", "time": "Today, 11:02 AM" }
     ]
   }
 }

@@ -35,7 +35,8 @@ backend/    Express API  ->  src/{routes,controllers,services,middleware,validat
 - Warning badge: `#ffc107` on 10% amber bg · Success: green pill per screen
 - Radius: owner-side cards `12px`, staff-side cards `8px`, pills `9999px`
 - Card shadow: `0 1px 1.5px rgba(0,0,0,0.1), 0 1px 1px rgba(0,0,0,0.06)` · subtle: `0 1px 1px rgba(0,0,0,0.05)`
-- Sidebar 256px · Topbar 64px · active nav item = `#0052cc` bg, white text, radius 6px
+- Sidebar 256px · Topbar 64px · active nav item = `#0052cc` bg, white text, radius 6px; single shared `AppSidebar`/`AppTopbar` system for ALL roles — nav items per role in `src/lib/nav.ts` (owner/advisor/mechanic/admin), active state derived from `usePathname`.
+- Admin dashboard accents: green `#4caf50` (positive delta), amber `#ffc107` (warning delta), red `#ba1a1a` (negative delta), each on 10% bg pill; border `#e2e8f0`; headings 20px semibold.
 - Inter 400/500/600/700; headings bold 14px uppercase w/ 0.35px tracking (owner side sections)
 
 ## Demo data (public/demo/)
@@ -77,7 +78,7 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 | 10 | Owner Verification & Approval | `/admin/verifications` | `185:1628` | ⬜ |
 | 11 | Owner Dashboard | `/dashboard` | `1:6484` | ⬜ |
 | 12 | Register Vehicle | `/dashboard/vehicles/new` | `1:7026` | ⬜ |
-| 13 | Book Appointment | `/dashboard/appointments/book` | `193:1227` (updated) | ⬜ |
+| 13 | Book Appointment | `/dashboard/appointments/book` | `193:1227` (updated) | ✅ |
 | 14 | Appointment Confirmation | `/dashboard/appointments/confirmation` | `1:4759` | ⬜ |
 | 15 | Service Tracking | `/dashboard/services/track` | `1:4318` | ⬜ |
 | 16 | Service Details | `/dashboard/services/[id]` | `1:4047` | ⬜ |
@@ -91,8 +92,8 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 | 24 | Assign Mechanic | `/advisor/job-cards/[id]/assign` | `14:2306` | ⬜ |
 | 25 | Send Estimate | `/advisor/estimates/new` | `1:2140` | ⬜ |
 | 26 | Mechanic Dashboard | `/mechanic` | `1:157` | ⬜ |
-| 27 | Repair Progress | `/mechanic/jobs/[id]` | `194:1716` (updated) | ⬜ |
-| 28 | Admin Dashboard | `/admin` | `1:773` | ⬜ |
+| 27 | Repair Progress | `/mechanic/jobs/[id]` | `194:1716` (updated) | ✅ |
+| 28 | Admin Dashboard | `/admin` | `1:773` | ✅ |
 | 29 | Management & Reports | `/admin/reports` | `1:1238` | ⬜ |
 | 30 | Add / Edit Service | `/admin/services/new` | `15:2638` | ⬜ |
 | 31 | Employee Management | `/admin/employees` | `15:3005` | ⬜ |

@@ -48,7 +48,15 @@ type DemoMap = {
   kpis: Record<string, KpiCard[]>;
   reports: {
     revenueByMonth: { month: string; revenue: number }[];
-    workloadByMechanic: { mechanic: string; completed: number; active: number; avgHoursPerJob: number }[];
+    workloadByMechanic: {
+      mechanic: string;
+      role?: string;
+      active?: number;
+      done?: number;
+      completed?: number;
+      avgHoursPerJob?: number;
+    }[];
+    serviceDistribution: { name: string; pct: number }[];
     jobsByStatus: { status: string; count: number }[];
     activityLog: { id: string; user: string; action: string; time: string }[];
   };

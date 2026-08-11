@@ -36,7 +36,7 @@
       ],
       "partsUsed": [
         { "id": "prt-001", "name": "Brake Pads (Front)", "qty": 1, "unitPrice": 45.0, "supplier": "AutoZone", "subtotal": 45.0 },
-        { "id": "prt-002", "name": "Brake Rotors (Front)", "qty": 2, "unitPrice": 85.0, "supplier": "AutoZone", "subtotal": 170.0 }
+        { "id": "prt-002", "name": "Brake Rotors (Front)", "qty": 2, "unitPrice": 65.0, "supplier": "AutoZone Pro", "subtotal": 130.0 }
       ],
       "photos": [
         "/images/repair-photos/brake-1.png",
