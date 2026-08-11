@@ -1,0 +1,52 @@
+{
+  "parts": [
+    {
+      "id": "prt-001",
+      "name": "Brake Pads (Front)",
+      "sku": "BP-FR-001",
+      "unitPrice": 45.0,
+      "supplier": "AutoZone",
+      "stock": 24
+    },
+    {
+      "id": "prt-002",
+      "name": "Brake Rotors (Front)",
+      "sku": "BR-FR-002",
+      "unitPrice": 85.0,
+      "supplier": "AutoZone",
+      "stock": 12
+    },
+    {
+      "id": "prt-003",
+      "name": "Synthetic Oil 5W-30",
+      "sku": "OL-5W30-001",
+      "unitPrice": 8.5,
+      "supplier": "Napa",
+      "stock": 80
+    },
+    {
+      "id": "prt-004",
+      "name": "Oil Filter",
+      "sku": "OF-001",
+      "unitPrice": 9.5,
+      "supplier": "Napa",
+      "stock": 60
+    },
+    {
+      "id": "prt-005",
+      "name": "Spark Plugs (Set of 4)",
+      "sku": "SP-4-001",
+      "unitPrice": 32.0,
+      "supplier": "Bosch",
+      "stock": 18
+    },
+    {
+      "id": "prt-006",
+      "name": "Air Filter",
+      "sku": "AF-001",
+      "unitPrice": 18.0,
+      "supplier": "Fram",
+      "stock": 35
+    }
+  ]
+}

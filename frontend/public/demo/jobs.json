@@ -1,0 +1,124 @@
+{
+  "jobs": [
+    {
+      "id": "JC-1045",
+      "vehicleId": "veh-001",
+      "customerId": "cus-001",
+      "advisorId": "emp-001",
+      "mechanicId": "emp-002",
+      "station": "Main Bay / Station 04",
+      "priority": "high",
+      "status": "repairing",
+      "services": [
+        { "id": "svc-006", "name": "Brake Pad Replacement", "price": 179.99 }
+      ],
+      "issues": "Front brakes squealing when stopping. Pads at 3mm.",
+      "progress": [
+        { "step": "received", "label": "Vehicle Received", "timestamp": "08:30 AM", "done": true },
+        { "step": "inspecting", "label": "Initial Inspection", "timestamp": "09:15 AM", "done": true },
+        { "step": "repairing", "label": "Repairing", "timestamp": "Brake Replacement - Est. 1h", "done": true },
+        { "step": "testing", "label": "Testing", "timestamp": null, "done": false },
+        { "step": "completed", "label": "Completed", "timestamp": null, "done": false }
+      ],
+      "notes": [
+        {
+          "id": "note-001",
+          "author": "Alex Turner",
+          "time": "Today, 10:45 AM",
+          "text": "Verified brake pad thickness. Front pads are at 3mm, recommend replacement."
+        },
+        {
+          "id": "note-002",
+          "author": "Alex Turner",
+          "time": "Today, 09:30 AM",
+          "text": "Ran computer diagnostics. No fault codes found in the braking system."
+        }
+      ],
+      "partsUsed": [
+        { "id": "prt-001", "name": "Brake Pads (Front)", "qty": 1, "unitPrice": 45.0, "supplier": "AutoZone", "subtotal": 45.0 },
+        { "id": "prt-002", "name": "Brake Rotors (Front)", "qty": 2, "unitPrice": 85.0, "supplier": "AutoZone", "subtotal": 170.0 }
+      ],
+      "photos": [
+        "/images/repair-photos/brake-1.png",
+        "/images/repair-photos/brake-2.png",
+        "/images/repair-photos/brake-3.png",
+        "/images/repair-photos/brake-4.png"
+      ]
+    },
+    {
+      "id": "JC-1044",
+      "vehicleId": "veh-002",
+      "customerId": "cus-001",
+      "advisorId": "emp-001",
+      "mechanicId": "emp-003",
+      "station": "Main Bay / Station 01",
+      "priority": "medium",
+      "status": "testing",
+      "services": [
+        { "id": "svc-001", "name": "Oil Change", "price": 49.99 },
+        { "id": "svc-004", "name": "Multi-Point Inspection", "price": 89.99 }
+      ],
+      "issues": "Scheduled maintenance.",
+      "progress": [
+        { "step": "received", "label": "Vehicle Received", "timestamp": "07:45 AM", "done": true },
+        { "step": "inspecting", "label": "Initial Inspection", "timestamp": "08:05 AM", "done": true },
+        { "step": "repairing", "label": "Repairing", "timestamp": "08:40 AM", "done": true },
+        { "step": "testing", "label": "Testing", "timestamp": "11:20 AM", "done": true },
+        { "step": "completed", "label": "Completed", "timestamp": null, "done": false }
+      ],
+      "notes": [],
+      "partsUsed": [
+        { "id": "prt-003", "name": "Synthetic Oil 5W-30", "qty": 5, "unitPrice": 8.5, "supplier": "Napa", "subtotal": 42.5 }
+      ],
+      "photos": []
+    },
+    {
+      "id": "JC-1046",
+      "vehicleId": "veh-003",
+      "customerId": "cus-002",
+      "advisorId": "emp-001",
+      "mechanicId": null,
+      "station": null,
+      "priority": "low",
+      "status": "received",
+      "services": [
+        { "id": "svc-008", "name": "AC Recharge", "price": 99.99 }
+      ],
+      "issues": "AC blowing warm air.",
+      "progress": [
+        { "step": "received", "label": "Vehicle Received", "timestamp": "12:10 PM", "done": true },
+        { "step": "inspecting", "label": "Initial Inspection", "timestamp": null, "done": false },
+        { "step": "repairing", "label": "Repairing", "timestamp": null, "done": false },
+        { "step": "testing", "label": "Testing", "timestamp": null, "done": false },
+        { "step": "completed", "label": "Completed", "timestamp": null, "done": false }
+      ],
+      "notes": [],
+      "partsUsed": [],
+      "photos": []
+    },
+    {
+      "id": "JC-1043",
+      "vehicleId": "veh-002",
+      "customerId": "cus-001",
+      "advisorId": "emp-001",
+      "mechanicId": "emp-002",
+      "station": "Main Bay / Station 04",
+      "priority": "medium",
+      "status": "ready",
+      "services": [
+        { "id": "svc-003", "name": "Tire Rotation", "price": 29.99 }
+      ],
+      "issues": "Uneven tire wear, rotation requested.",
+      "progress": [
+        { "step": "received", "label": "Vehicle Received", "timestamp": "06/12, 08:00 AM", "done": true },
+        { "step": "inspecting", "label": "Initial Inspection", "timestamp": "06/12, 08:20 AM", "done": true },
+        { "step": "repairing", "label": "Repairing", "timestamp": "06/12, 09:00 AM", "done": true },
+        { "step": "testing", "label": "Testing", "timestamp": "06/12, 10:30 AM", "done": true },
+        { "step": "completed", "label": "Completed", "timestamp": null, "done": false }
+      ],
+      "notes": [],
+      "partsUsed": [],
+      "photos": []
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "mechanic": [
+    { "id": "kpi-001", "label": "Assigned Jobs", "value": "12", "delta": "+3 today", "trend": "up", "icon": "clipboard-list" },
+    { "id": "kpi-002", "label": "In Progress", "value": "5", "delta": "2 high priority", "trend": "flat", "icon": "wrench" },
+    { "id": "kpi-003", "label": "Awaiting Parts", "value": "8", "delta": "2 arriving today", "trend": "flat", "icon": "package" },
+    { "id": "kpi-004", "label": "Completed Today", "value": "2", "delta": "On track", "trend": "up", "icon": "check-circle" }
+  ],
+  "advisor": [
+    { "id": "kpi-101", "label": "Appointments Today", "value": "14", "delta": "+2 vs yesterday", "trend": "up", "icon": "calendar" },
+    { "id": "kpi-102", "label": "Vehicles Received", "value": "9", "delta": "3 pending intake", "trend": "flat", "icon": "car" },
+    { "id": "kpi-103", "label": "Active Job Cards", "value": "21", "delta": "7 awaiting mechanic", "trend": "flat", "icon": "file-text" },
+    { "id": "kpi-104", "label": "Pending Estimates", "value": "4", "delta": "1 awaiting approval", "trend": "down", "icon": "file-check" }
+  ],
+  "admin": [
+    { "id": "kpi-201", "label": "Total Revenue", "value": "$24,850", "delta": "+12.4% vs last month", "trend": "up", "icon": "dollar-sign" },
+    { "id": "kpi-202", "label": "Active Jobs", "value": "18", "delta": "5 high priority", "trend": "flat", "icon": "wrench" },
+    { "id": "kpi-203", "label": "New Customers", "value": "32", "delta": "+8 this week", "trend": "up", "icon": "users" },
+    { "id": "kpi-204", "label": "Pending Verifications", "value": "6", "delta": "3 from today", "trend": "flat", "icon": "shield-check" }
+  ],
+  "owner": [
+    { "id": "kpi-301", "label": "Registered Vehicles", "value": "2", "delta": "1 in service", "trend": "flat", "icon": "car" },
+    { "id": "kpi-302", "label": "Upcoming Appointments", "value": "1", "delta": "Aug 14, 10:30 AM", "trend": "flat", "icon": "calendar" },
+    { "id": "kpi-303", "label": "Pending Estimates", "value": "1", "delta": "$469.99 awaiting", "trend": "flat", "icon": "file-check" },
+    { "id": "kpi-304", "label": "Service History", "value": "9", "delta": "Last: Aug 12", "trend": "flat", "icon": "history" }
+  ]
+}

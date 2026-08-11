@@ -1,0 +1,34 @@
+{
+  "faqs": [
+    {
+      "id": "faq-001",
+      "question": "How do I book a servicing appointment?",
+      "answer": "Log in to your owner account, pick a vehicle, choose the services you need, and select a date and time. You'll receive an instant confirmation and can track progress in real time."
+    },
+    {
+      "id": "faq-002",
+      "question": "Can I approve extra repair costs before you start?",
+      "answer": "Yes. If the workshop finds additional repairs needed, you'll get a digital estimate. You can approve or reject it — no work happens without your approval."
+    },
+    {
+      "id": "faq-003",
+      "question": "How do I track my vehicle's repair progress?",
+      "answer": "Follow your vehicle through the live status timeline: Received → Inspecting → Repairing → Testing → Ready. You can also chat with your service advisor anytime."
+    },
+    {
+      "id": "faq-004",
+      "question": "What payment methods do you accept?",
+      "answer": "We accept card payments and cash at the counter. After payment you can download your invoice as a PDF from your service history."
+    },
+    {
+      "id": "faq-005",
+      "question": "Do you offer a warranty on repairs?",
+      "answer": "Yes, all parts and labor are covered by a 12-month / 12,000-mile warranty on approved repairs."
+    },
+    {
+      "id": "faq-006",
+      "question": "How do I register a new vehicle?",
+      "answer": "From your dashboard, go to My Vehicles → Add New Vehicle and enter the model, registration number, year, fuel type, and current mileage."
+    }
+  ]
+}

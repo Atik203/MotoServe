@@ -1,0 +1,22 @@
+{
+  "ratings": [
+    {
+      "id": "rtg-001",
+      "jobId": "JC-1043",
+      "customerId": "cus-001",
+      "serviceName": "Tire Rotation",
+      "score": 5,
+      "review": "Quick and professional service. Car feels brand new.",
+      "date": "2026-08-13"
+    },
+    {
+      "id": "rtg-002",
+      "jobId": "JC-1040",
+      "customerId": "cus-001",
+      "serviceName": "Full Synthetic Oil Change",
+      "score": 4,
+      "review": "Good service, slightly long wait time.",
+      "date": "2026-07-29"
+    }
+  ]
+}

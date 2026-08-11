@@ -1,0 +1,37 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# next.js
+frontend/.next/
+frontend/out/
+
+# production
+frontend/build/
+
+# misc
+.DS_Store
+*.pem
+*.log
+
+# env
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# prisma generated client
+backend/src/generated/
+
+# backend build
+backend/dist/
+
+# editor
+.vscode/
+.idea/

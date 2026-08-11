@@ -1,0 +1,37 @@
+{
+  "vehicles": [
+    {
+      "id": "veh-001",
+      "ownerId": "cus-001",
+      "make": "Ford",
+      "model": "F-150",
+      "year": 2023,
+      "regNo": "A9C-1234",
+      "fuelType": "gasoline",
+      "mileage": 24500,
+      "image": "/images/cars/ford-f150.png"
+    },
+    {
+      "id": "veh-002",
+      "ownerId": "cus-001",
+      "make": "Toyota",
+      "model": "Camry",
+      "year": 2022,
+      "regNo": "XYZ-9876",
+      "fuelType": "hybrid",
+      "mileage": 42100,
+      "image": "/images/cars/toyota-camry.png"
+    },
+    {
+      "id": "veh-003",
+      "ownerId": "cus-002",
+      "make": "Honda",
+      "model": "Civic",
+      "year": 2021,
+      "regNo": "KLM-5588",
+      "fuelType": "gasoline",
+      "mileage": 31200,
+      "image": "/images/cars/honda-civic.png"
+    }
+  ]
+}

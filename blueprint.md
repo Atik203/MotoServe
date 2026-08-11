@@ -1,87 +1,132 @@
-Vehicle Workshop & Servicing Management System
-Stakeholders: Admin, Service Advisors, Mechanics, Vehicle Owners, Guests
-Admin
-• Add service types with base prices (oil change, brake, engine, wash)
-• Add service advisors and mechanics
-• Generate income and workload reports
-Vehicle Owner
-• Register vehicles (model, registration number)
-• Book a servicing appointment
-• Approve/reject extra repair cost estimates
-• Track service status (Received → Inspecting → Repairing → Testing → Ready)
-• Pay using dummy payment and download invoice
-• Rate the service
-Service Advisor
-• Receive vehicles and create job cards
-• Assign jobs to mechanics
-• Send cost estimates to owners
-• Chat with vehicle owners
-Mechanic
-• See assigned task cards
-• Update repair progress and add parts used
-• Mark jobs as completed
-Guests
-• See service list, prices, and workshop info
-Others
-• Full service history per vehicle
-• Job card and invoice PDF generation
+# MotoServe — Blueprint
 
-MotoServe — Complete Screen List
-🌐 Public / Marketing
+Source of truth for screens, design references, build status, and data model. Agents: read this + `AGENTS.md`, cache both, extend "Design notes" per screen instead of re-fetching Figma.
 
-# Screen Purpose
+## Stakeholders & permissions
 
-1 Home Main MotoServe landing page
-2 Features Showcase platform features
-3 Services Display available workshop services and prices
-4 Pricing Service pricing overview
-5 Testimonials Customer reviews and ratings
-6 FAQ Frequently asked questions
-7 Login User authentication
-8 Register / Vehicle Owner Registration Create a vehicle-owner account with NID, driving license, etc.
-9 Forgot Password Password recovery
+| Role | Capabilities |
+|---|---|
+| **Admin** | Manage service types & prices · manage advisors/mechanics · income & workload reports · verify owner accounts |
+| **Service Advisor** | Receive vehicles · create job cards · assign mechanics · send cost estimates · chat with owners |
+| **Mechanic** | See assigned task cards · update repair progress + parts used · mark jobs completed |
+| **Vehicle Owner** | Register vehicles · book appointments · approve/reject estimates · track service status · pay + download invoice · rate service |
+| **Guest** | Browse services, prices, workshop info |
 
-Shared: MotoServe navbar + footer across all public pages.
+Status flow: `received → inspecting → repairing → testing → ready/completed`
 
-🚗 Vehicle Owner
+## Tech stack (pinned — do not bump majors without asking)
 
-# Screen Purpose
+- Frontend: Next.js 16.3.0 · React 19.2.8 · Tailwind CSS 4.3.3 (CSS-first `@theme`, no tailwind.config.js) · shadcn/ui (CLI 4.x) · @reduxjs/toolkit 2.12.0 + react-redux · lucide-react · sonner 2.0.8 · react-hook-form + Zod 4.4.3 · pnpm
+- Backend: Express 5.2.1 · Prisma 7.9.1 + @prisma/adapter-pg · PostgreSQL · Zod 4.4.3 · jsonwebtoken + bcryptjs · socket.io · pdfkit (later)
+- Node 24 LTS · TypeScript strict · Inter font · brand blue `#0052cc`
 
-10 Vehicle Owner Dashboard Overview of vehicles, appointments, service status, reminders
-11 Register Vehicle Add vehicle model, registration number, mileage, etc.
-12 Book Service Appointment Single-page booking form containing vehicle, service, date/time, details, estimate, and status
-13 Appointment Confirmation Shows submitted appointment and pending status
-14 Track Service Track vehicle through Received → Inspecting → Repairing → Testing → Ready
-15 Active Service Details Detailed information about the current service/job
-16 Repair Cost Estimate Approval Review and approve/reject additional repair costs
-17 Chat with Service Advisor Communicate with the service advisor
-18 Payment & Invoice Review final bill, dummy payment, and invoice
-19 Service History & Rating View previous services, download invoices, and rate completed services
-🧑‍💼 Service Advisor
+## Folder layout
 
-# Screen Purpose
+```
+frontend/   Next.js app  ->  src/app/(public) (auth) (owner) (advisor) (mechanic) (admin)
+                            src/components/{ui,layout,roles} · src/store · src/lib · src/types · src/hooks
+                            public/demo/*.json · public/images/
+backend/    Express API  ->  src/{routes,controllers,services,middleware,validation,types,lib} · prisma/{schema.prisma,seed.ts} · prisma.config.ts
+```
 
-20 Service Advisor Dashboard Overview of appointments, vehicles, jobs, workload
-21 Receive Vehicle Receive/check in a customer's vehicle
-22 Create Job Card Create digital job card with vehicle condition, customer issues, inspection notes, etc.
-23 Assign Mechanic Select and assign a suitable mechanic based on specialization/workload
-24 Send Repair Cost Estimate Create and send additional repair estimate to vehicle owner
-25 Customer Communication Center Chat/communicate with vehicle owners
-🔧 Mechanic
+## Design tokens (canonical — captured, do not re-fetch)
 
-# Screen Purpose
+- Primary `#0052cc` · Primary-soft `#eff6ff` · Text `#111827` / `#6b7280` · Border `#e5e7eb` · Page bg `#f9fafb` · Card `#ffffff`
+- Warning badge: `#ffc107` on 10% amber bg · Success: green pill per screen
+- Radius: owner-side cards `12px`, staff-side cards `8px`, pills `9999px`
+- Card shadow: `0 1px 1.5px rgba(0,0,0,0.1), 0 1px 1px rgba(0,0,0,0.06)` · subtle: `0 1px 1px rgba(0,0,0,0.05)`
+- Sidebar 256px · Topbar 64px · active nav item = `#0052cc` bg, white text, radius 6px
+- Inter 400/500/600/700; headings bold 14px uppercase w/ 0.35px tracking (owner side sections)
 
-26 Mechanic Dashboard View assigned jobs and current workload
-27 Repair Progress & Parts Management Update repair progress, add parts used, notes, photos, and mark job completed
-🛠️ Admin
+## Demo data (public/demo/)
 
-# Screen Purpose
+| File | Contents | Used by |
+|---|---|---|
+| `services.json` | service types: name, category, basePrice, durationMins, description | Services, Book Appointment, Add/Edit Service |
+| `vehicles.json` | owner vehicles: make, model, year, regNo, fuelType, mileage, image | Owner Dashboard, Book Appointment, Register Vehicle |
+| `appointments.json` | date, time, vehicleId, serviceIds, status (pending/confirmed) | Book Appointment, Confirmation, Advisor Dashboard |
+| `jobs.json` | job cards: id (JC-1045), vehicle, customer, advisor, mechanic, station, priority, status, progress | Mechanic Dashboard, Repair Progress, Receive Vehicle, Admin |
+| `parts.json` | parts: name, qty, unitPrice, supplier, stock | Parts Used, Create Job Card |
+| `employees.json` | advisors & mechanics: name, role, specialization, station, workload | Assign Mechanic, Employee Management, Dashboards |
+| `customers.json` | owners: name, phone, email, nid, drivingLicense, status (pending/approved) | Verification, Receive Vehicle, Communication |
+| `estimates.json` | estimate id, jobId, items, total, status (pending/approved/rejected) | Send Estimate, Estimate Approval |
+| `invoices.json` | invoice id, jobId, items, labor, parts, tax, total, paid | Payment & Invoice, Service History |
+| `messages.json` | chat: thread (owner+advisor), sender, text, time | Communication Center |
+| `ratings.json` | rating, review, serviceId, date | Service History, Testimonials |
+| `kpis.json` | dashboard cards per role: label, value, delta, icon | All dashboards |
+| `reports.json` | revenue by month, workload per mechanic, activity log | Management & Reports, Workload Reports |
+| `testimonials.json` | name, vehicle, rating, review, avatar | Testimonials |
+| `faqs.json` | question, answer | FAQ |
+| `pricing.json` | price tables + plan highlights | Pricing |
 
-28 Admin Dashboard Overall workshop administration and KPIs
-29 Service Management View/manage available service types and prices
-30 Add / Edit Service Create or update services and base prices
-31 Employee Management Manage Service Advisors and Mechanics
-32 Add Service Advisor Account Create advisor account with personal/employment/account information
-33 Add Mechanic Account Create mechanic account with specialization, skills, certifications, etc.
-34 Income & Workload Reports Revenue, workload, employee performance, activity logs, and downloadable reports
-35 Vehicle Owner Verification & Approval Review submitted owner information/documents and approve/reject accounts
+## Screens & build status
+
+All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context` with the node ID, then distill into "Design notes" below. Status: `✅ done` `🔨 building` `⬜ pending`.
+
+| # | Screen | Route | Figma node | Status |
+|---|---|---|---|---|
+| 1 | Home | `/` | `1:5897` | ⬜ |
+| 2 | Services | `/services` | `17:5640` | ⬜ |
+| 3 | Pricing | `/pricing` | `17:4635` | ⬜ |
+| 4 | Testimonials | `/testimonials` | `17:4427` | ⬜ |
+| 5 | FAQ | `/faqs` | `17:5169` | ⬜ |
+| 6 | Login | `/login` | `1:6130` | ⬜ |
+| 7 | Register (owner) | `/register` | `1:6272` | ⬜ |
+| 8 | Forgot Password | `/forgot-password` | `1:6963` | ⬜ |
+| 9 | Owner Account Registration | `/register/owner` | `185:1338` | ⬜ |
+| 10 | Owner Verification & Approval | `/admin/verifications` | `185:1628` | ⬜ |
+| 11 | Owner Dashboard | `/dashboard` | `1:6484` | ⬜ |
+| 12 | Register Vehicle | `/dashboard/vehicles/new` | `1:7026` | ⬜ |
+| 13 | Book Appointment | `/dashboard/appointments/book` | `193:1227` (updated) | ⬜ |
+| 14 | Appointment Confirmation | `/dashboard/appointments/confirmation` | `1:4759` | ⬜ |
+| 15 | Service Tracking | `/dashboard/services/track` | `1:4318` | ⬜ |
+| 16 | Service Details | `/dashboard/services/[id]` | `1:4047` | ⬜ |
+| 17 | Estimate Approval | `/dashboard/estimates/[id]` | `1:3848` | ⬜ |
+| 18 | Communication Center (owner) | `/dashboard/chat` | `1:1530` (shared) | ⬜ |
+| 19 | Payment & Invoice | `/dashboard/payment/[jobId]` | `12:1177` | ⬜ |
+| 20 | Service History & Rating | `/dashboard/history` | `12:1610` (dupe `110:2` — verify) | ⬜ |
+| 21 | Advisor Dashboard | `/advisor` | `1:2936` | ⬜ |
+| 22 | Receive Vehicle | `/advisor/receive` | `1:2641` | ⬜ |
+| 23 | Create Job Card | `/advisor/job-cards/new` | `14:2006` | ⬜ |
+| 24 | Assign Mechanic | `/advisor/job-cards/[id]/assign` | `14:2306` | ⬜ |
+| 25 | Send Estimate | `/advisor/estimates/new` | `1:2140` | ⬜ |
+| 26 | Mechanic Dashboard | `/mechanic` | `1:157` | ⬜ |
+| 27 | Repair Progress | `/mechanic/jobs/[id]` | `194:1716` (updated) | ⬜ |
+| 28 | Admin Dashboard | `/admin` | `1:773` | ⬜ |
+| 29 | Management & Reports | `/admin/reports` | `1:1238` | ⬜ |
+| 30 | Add / Edit Service | `/admin/services/new` | `15:2638` | ⬜ |
+| 31 | Employee Management | `/admin/employees` | `15:3005` | ⬜ |
+| 32 | Add Service Advisor | `/admin/employees/advisors/new` | `183:402` | ⬜ |
+| 33 | Add Mechanic | `/admin/employees/mechanics/new` | `183:2` | ⬜ |
+| 34 | Workload Reports | `/admin/reports/workload` | `184:731` | ⬜ |
+
+## Design notes (captured per screen — extend, don't re-fetch)
+
+### 13 · Book Appointment — `193:1227` (updated reference)
+- Shell: 256px sidebar (brand row "MotoServe", nav: Dashboard / My Vehicles / **Appointments (active)** / Service History, bottom: Support / Settings), 64px topbar (search "Search vehicles, services..." + bell w/ red dot + 32px avatar), page bg `#f9fafb`, content p-24.
+- Header: breadcrumb `Dashboard › Book Appointment` + outline button "Appointment Help" (16px icon + "Appointment Help").
+- Left col (7/12): **SELECT VEHICLE** section — 256px vehicle cards (photo top 96px, "Selected" pill `#0052cc` top-left when active, name, Reg/Year/Fuel/Mileage rows 12px `#6b7280`); active = `#eff6ff` bg + 2px `#0052cc` border; inactive = white + `#e5e7eb`; third = dashed "Add New Vehicle" tile (soft-blue 32px circle with `+`).
+- **CHOOSE SERVICES**: search input w/ icon, filter pills (All active `#eff6ff`/`#0052cc`; Maintenance, Repairs, Inspections outline `#d1d5db`), 2-col grid of service cards: 40px icon circle `#eff6ff` (selected: white + shadow), bold name 14px, `⏱ 45 mins` + `from $29.99` (bold). Selected card: `#eff6ff` + 2px `#0052cc` + check icon top-right.
+- Assets captured: `imgUserAvatar`, `imgFordF150`, `imgToyotaCamry` + ~26 svg icons (nav, search, clock, check, bell) at `http://localhost:3845/assets/<hash>` → download into `public/images/`.
+- Right col (5/12) — re-fetch `193:1279` subtree at build time if needed.
+
+### 27 · Repair Progress — `194:1716` (updated reference, re-skinned to canonical)
+- Shell: 280px sidebar (profile card "Main Bay / Station 04" + avatar, nav Current Jobs/History/Parts Request/**Repair Progress active**/Diagnostic Tools/Workshop Chat, bottom Help/Logout/Clock Out btn), topbar links Jobs/Schedule/Inventory/Team + bell/chat/avatar. Page bg `#f8f9fa`→ canonical `#f9fafb`.
+- Title "Repair Progress" + amber pill **HIGH PRIORITY** (10% `#ffc107`, uppercase 16px, tracking 0.8px).
+- Job summary card (12col): Vehicle 2023 Ford F-150 · Customer John Doe · Job Card #JC-1045 (blue) · Advisor Sarah Jenkins; labels `#64748b`→`#6b7280`, values bold.
+- Progress timeline card: "Status" title; 5 steps (Received ✓ / Inspecting ✓ / Repairing active / Testing / Completed) with 32px circles on a 4px track; done = primary blue + white check; active = blue + glow ring `0 0 0 4px rgba(0,68,146,0.2)`; pending = `#e1e3e4`; active label bold.
+- **Mechanic Notes**: timestamped note cards (`#f3f4f5`, time + kebab, 16px text) + 136px textarea "Enter detailed repair notes..." + right-aligned primary "Save Note" button.
+- **Parts Used** table: columns PART NAME / QTY / UNIT PRICE / SUPPLIER / SUBTOTAL (right), header 16px uppercase `#6b7280`, rows 16px `#111827`, zebra borders `#e5e7eb`; + Add Part button.
+- Right col: repair photos upload grid (2×2 tiles) + action buttons — re-fetch subtree at build time.
+
+### 21 · Advisor Dashboard — `1:2936` (capture at build)
+
+## Database entities (backend phase)
+
+`User` (role enum: admin/advisor/mechanic/owner; verification fields for owners) · `Vehicle` (ownerId, make, model, year, regNo, fuelType, mileage, photo) · `Service` (name, category, basePrice, durationMins, description, active) · `Appointment` (ownerId, vehicleId, date, time, status) · `JobCard` (appointmentId?, vehicleId, customerId, advisorId, mechanicId, station, priority, status, notes, totalEstimate) · `JobStatusLog` (timeline steps + timestamps) · `Part` (name, sku, unitPrice, supplier, stock) · `PartsUsed` (jobCardId, partId, qty, unitPriceAtSale) · `Estimate` (jobCardId, items, total, status, sentAt, decidedAt) · `Payment` (jobCardId, amount, method, status, paidAt) · `Invoice` (paymentId, number, line items, tax, total, pdfUrl) · `Message` (thread, senderRole, text, createdAt) · `Rating` (jobCardId, ownerId, score, review) · `Testimonial` (approved showcase of rating) · `AuditLog` (admin/advisor activity for reports)
+
+## Roadmap
+
+- **Phase 0** ✅ scaffold root docs + configs + frontend/backend shells
+- **Phase 1** frontend demo-data UI (batches A–F above, desktop-first)
+- **Phase 2** backend: Prisma schema+seed → auth → REST → RTK Query swap → chat → PDF → reports

@@ -1,0 +1,32 @@
+{
+  "estimates": [
+    {
+      "id": "ES-3301",
+      "jobId": "JC-1045",
+      "customerId": "cus-001",
+      "advisorId": "emp-001",
+      "createdAt": "2026-08-12T09:40:00Z",
+      "status": "pending",
+      "summary": "Additional repair required beyond original booking",
+      "items": [
+        { "id": "est-001", "description": "Brake Pad Replacement", "category": "parts", "amount": 179.99 },
+        { "id": "est-002", "description": "Brake Rotors (Front) x2", "category": "parts", "amount": 170.0 },
+        { "id": "est-003", "description": "Labor - Brake Service (2 hrs)", "category": "labor", "amount": 120.0 }
+      ],
+      "total": 469.99
+    },
+    {
+      "id": "ES-3298",
+      "jobId": "JC-1043",
+      "customerId": "cus-001",
+      "advisorId": "emp-001",
+      "createdAt": "2026-08-08T16:10:00Z",
+      "status": "approved",
+      "summary": "",
+      "items": [
+        { "id": "est-004", "description": "Tire Rotation", "category": "service", "amount": 29.99 }
+      ],
+      "total": 29.99
+    }
+  ]
+}

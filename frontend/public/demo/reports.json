@@ -1,0 +1,32 @@
+{
+  "reports": {
+    "revenueByMonth": [
+      { "month": "Jan", "revenue": 14200 },
+      { "month": "Feb", "revenue": 16800 },
+      { "month": "Mar", "revenue": 15300 },
+      { "month": "Apr", "revenue": 18900 },
+      { "month": "May", "revenue": 22100 },
+      { "month": "Jun", "revenue": 19800 },
+      { "month": "Jul", "revenue": 24850 }
+    ],
+    "workloadByMechanic": [
+      { "mechanic": "Alex Turner", "completed": 127, "active": 3, "avgHoursPerJob": 1.9 },
+      { "mechanic": "Priya Nair", "completed": 214, "active": 2, "avgHoursPerJob": 2.2 },
+      { "mechanic": "David Chen", "completed": 64, "active": 1, "avgHoursPerJob": 1.6 }
+    ],
+    "jobsByStatus": [
+      { "status": "received", "count": 4 },
+      { "status": "inspecting", "count": 3 },
+      { "status": "repairing", "count": 6 },
+      { "status": "testing", "count": 3 },
+      { "status": "ready", "count": 2 }
+    ],
+    "activityLog": [
+      { "id": "act-001", "user": "Sarah Jenkins", "action": "Created job card JC-1046", "time": "Today, 12:15 PM" },
+      { "id": "act-002", "user": "Alex Turner", "action": "Added parts to JC-1045", "time": "Today, 11:02 AM" },
+      { "id": "act-003", "user": "Sarah Jenkins", "action": "Sent estimate ES-3301 to John Doe", "time": "Today, 09:40 AM" },
+      { "id": "act-004", "user": "Priya Nair", "action": "Completed job JC-1044", "time": "Yesterday, 04:20 PM" },
+      { "id": "act-005", "user": "Admin", "action": "Approved owner account - Michael Brown", "time": "Yesterday, 02:10 PM" }
+    ]
+  }
+}

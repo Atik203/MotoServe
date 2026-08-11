@@ -1,0 +1,40 @@
+{
+  "hero": {
+    "title": "Workshop management that keeps your wheels turning",
+    "subtitle": "Book appointments, track repairs in real time, approve estimates, and pay online — all in one place.",
+    "ctaPrimary": "Book an Appointment",
+    "ctaSecondary": "Explore Services"
+  },
+  "stats": [
+    { "id": "st-001", "label": "Vehicles Serviced", "value": "12,400+" },
+    { "id": "st-002", "label": "Average Rating", "value": "4.8/5" },
+    { "id": "st-003", "label": "Certified Mechanics", "value": "18" },
+    { "id": "st-004", "label": "Years in Business", "value": "15" }
+  ],
+  "plans": [
+    {
+      "id": "plan-001",
+      "name": "Maintenance",
+      "description": "Routine care to keep your vehicle healthy.",
+      "highlight": false,
+      "features": ["Oil change from $49.99", "Tire rotation $29.99", "Multi-point inspection $89.99", "Free health report"],
+      "cta": "Book Maintenance"
+    },
+    {
+      "id": "plan-002",
+      "name": "Repair",
+      "description": "Expert repairs with transparent estimates.",
+      "highlight": true,
+      "features": ["Brake service from $129.99", "Engine diagnostics $59.99", "Approve estimates online", "12-month parts warranty"],
+      "cta": "Book a Repair"
+    },
+    {
+      "id": "plan-003",
+      "name": "Premium Care",
+      "description": "Priority service for busy owners.",
+      "highlight": false,
+      "features": ["Priority scheduling", "Same-day service", "Loaner vehicle option", "Dedicated advisor chat"],
+      "cta": "Join Premium Care"
+    }
+  ]
+}

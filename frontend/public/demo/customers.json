@@ -1,0 +1,34 @@
+{
+  "customers": [
+    {
+      "id": "cus-001",
+      "name": "John Doe",
+      "phone": "+1 (555) 234-8876",
+      "email": "john.doe@example.com",
+      "nid": "NID-882345671",
+      "drivingLicense": "DL-5521489",
+      "status": "approved",
+      "verifiedAt": "2026-07-02T09:00:00Z"
+    },
+    {
+      "id": "cus-002",
+      "name": "Jane Smith",
+      "phone": "+1 (555) 871-3345",
+      "email": "jane.smith@example.com",
+      "nid": "NID-774312098",
+      "drivingLicense": "DL-7740912",
+      "status": "pending",
+      "verifiedAt": null
+    },
+    {
+      "id": "cus-003",
+      "name": "Michael Brown",
+      "phone": "+1 (555) 990-2214",
+      "email": "michael.brown@example.com",
+      "nid": "NID-661203475",
+      "drivingLicense": "DL-3398817",
+      "status": "approved",
+      "verifiedAt": "2026-06-18T14:30:00Z"
+    }
+  ]
+}

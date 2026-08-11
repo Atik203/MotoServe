@@ -1,0 +1,56 @@
+{
+  "employees": [
+    {
+      "id": "emp-001",
+      "name": "Sarah Jenkins",
+      "role": "advisor",
+      "email": "sarah.jenkins@motorserve.com",
+      "phone": "+1 (555) 334-0921",
+      "avatar": "/images/avatars/sarah-jenkins.png",
+      "status": "active",
+      "joinedAt": "2024-03-11T00:00:00Z"
+    },
+    {
+      "id": "emp-002",
+      "name": "Alex Turner",
+      "role": "mechanic",
+      "email": "alex.turner@motorserve.com",
+      "phone": "+1 (555) 667-8842",
+      "avatar": "/images/avatars/alex-turner.png",
+      "station": "Main Bay / Station 04",
+      "specialization": "Brakes & Suspension",
+      "status": "active",
+      "joinedAt": "2024-08-22T00:00:00Z",
+      "activeJobs": 3,
+      "completedJobs": 127
+    },
+    {
+      "id": "emp-003",
+      "name": "Priya Nair",
+      "role": "mechanic",
+      "email": "priya.nair@motorserve.com",
+      "phone": "+1 (555) 221-4473",
+      "avatar": "/images/avatars/priya-nair.png",
+      "station": "Main Bay / Station 01",
+      "specialization": "Engine & Diagnostics",
+      "status": "active",
+      "joinedAt": "2023-11-05T00:00:00Z",
+      "activeJobs": 2,
+      "completedJobs": 214
+    },
+    {
+      "id": "emp-004",
+      "name": "David Chen",
+      "role": "mechanic",
+      "email": "david.chen@motorserve.com",
+      "phone": "+1 (555) 908-1157",
+      "avatar": "/images/avatars/david-chen.png",
+      "station": "Main Bay / Station 02",
+      "specialization": "Electrical & AC",
+      "status": "active",
+      "joinedAt": "2025-01-14T00:00:00Z",
+      "activeJobs": 1,
+      "completedJobs": 64
+    }
+  ]
+}

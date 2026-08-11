@@ -1,0 +1,48 @@
+{
+  "threads": [
+    {
+      "id": "thr-001",
+      "ownerId": "cus-001",
+      "advisorId": "emp-001",
+      "subject": "JC-1045 Brake Service",
+      "unread": 1,
+      "lastMessageAt": "2026-08-12T10:52:00Z",
+      "messages": [
+        {
+          "id": "msg-001",
+          "sender": "advisor",
+          "text": "Hi John, we inspected your F-150. Front brake pads are at 3mm and will need replacement soon.",
+          "time": "2026-08-12T10:30:00Z"
+        },
+        {
+          "id": "msg-002",
+          "sender": "owner",
+          "text": "Thanks Sarah! Please go ahead with the replacement, I already approved the estimate.",
+          "time": "2026-08-12T10:41:00Z"
+        },
+        {
+          "id": "msg-003",
+          "sender": "advisor",
+          "text": "Perfect. Alex is on it now — should be ready by this afternoon. I'll keep you posted.",
+          "time": "2026-08-12T10:52:00Z"
+        }
+      ]
+    },
+    {
+      "id": "thr-002",
+      "ownerId": "cus-002",
+      "advisorId": "emp-001",
+      "subject": "JC-1046 AC Recharge",
+      "unread": 0,
+      "lastMessageAt": "2026-08-12T12:20:00Z",
+      "messages": [
+        {
+          "id": "msg-004",
+          "sender": "advisor",
+          "text": "Hi Jane, we received your Civic. We'll start the AC diagnosis shortly.",
+          "time": "2026-08-12T12:20:00Z"
+        }
+      ]
+    }
+  ]
+}

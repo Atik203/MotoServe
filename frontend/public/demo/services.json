@@ -1,0 +1,76 @@
+{
+  "services": [
+    {
+      "id": "svc-001",
+      "name": "Oil Change",
+      "category": "maintenance",
+      "basePrice": 49.99,
+      "durationMins": 30,
+      "description": "Engine oil replacement with standard oil filter.",
+      "active": true
+    },
+    {
+      "id": "svc-002",
+      "name": "Full Synthetic Oil Change",
+      "category": "maintenance",
+      "basePrice": 79.99,
+      "durationMins": 30,
+      "description": "Full synthetic engine oil with premium filter.",
+      "active": true
+    },
+    {
+      "id": "svc-003",
+      "name": "Tire Rotation",
+      "category": "maintenance",
+      "basePrice": 29.99,
+      "durationMins": 45,
+      "description": "Rotate all four tires for even wear and check pressure.",
+      "active": true
+    },
+    {
+      "id": "svc-004",
+      "name": "Multi-Point Inspection",
+      "category": "inspections",
+      "basePrice": 89.99,
+      "durationMins": 60,
+      "description": "42-point inspection covering safety, fluids, brakes and suspension.",
+      "active": true
+    },
+    {
+      "id": "svc-005",
+      "name": "Brake Service",
+      "category": "repairs",
+      "basePrice": 129.99,
+      "durationMins": 120,
+      "description": "Inspect and service brake pads, rotors and fluid levels.",
+      "active": true
+    },
+    {
+      "id": "svc-006",
+      "name": "Brake Pad Replacement",
+      "category": "repairs",
+      "basePrice": 179.99,
+      "durationMins": 120,
+      "description": "Replace front or rear brake pads and resurface rotors.",
+      "active": true
+    },
+    {
+      "id": "svc-007",
+      "name": "Engine Diagnostic",
+      "category": "repairs",
+      "basePrice": 59.99,
+      "durationMins": 60,
+      "description": "Computer diagnostics scan for fault codes and performance issues.",
+      "active": true
+    },
+    {
+      "id": "svc-008",
+      "name": "AC Recharge",
+      "category": "maintenance",
+      "basePrice": 99.99,
+      "durationMins": 45,
+      "description": "Air conditioning system check and refrigerant recharge.",
+      "active": true
+    }
+  ]
+}
