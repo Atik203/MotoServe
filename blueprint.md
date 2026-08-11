@@ -17,14 +17,13 @@ Service Advisor
 • Send cost estimates to owners
 • Chat with vehicle owners
 Mechanic
-• See assigned job cards
+• See assigned task cards
 • Update repair progress and add parts used
 • Mark jobs as completed
 Guests
 • See service list, prices, and workshop info
 Others
 • Full service history per vehicle
-• Next service due reminder alerts
 • Job card and invoice PDF generation
 
 MotoServe — Complete Screen List
