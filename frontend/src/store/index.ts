@@ -11,6 +11,7 @@ import employeesReducer from "./slices/employeesSlice";
 import estimatesReducer from "./slices/estimatesSlice";
 import invoicesReducer from "./slices/invoicesSlice";
 import reportsReducer from "./slices/reportsSlice";
+import partsReducer from "./slices/partsSlice";
 
 export const makeStore = () =>
   configureStore({
@@ -27,6 +28,7 @@ export const makeStore = () =>
       estimates: estimatesReducer,
       invoices: invoicesReducer,
       reports: reportsReducer,
+      parts: partsReducer,
     },
   });
 
