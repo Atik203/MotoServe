@@ -123,8 +123,12 @@ export function listParts() {
   return prisma.part.findMany({ orderBy: { name: "asc" } });
 }
 
-export function listRatings() {
-  return prisma.rating.findMany({ include: { job: true }, orderBy: { date: "desc" } });
+export function listRatings(customerId?: string) {
+  return prisma.rating.findMany({
+    where: { customerId: customerId ?? undefined },
+    include: { job: true },
+    orderBy: { date: "desc" },
+  });
 }
 
 export function listTestimonials() {

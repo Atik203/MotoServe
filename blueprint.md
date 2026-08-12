@@ -100,6 +100,15 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 | 32 | Add Service Advisor | `/admin/employees/advisors/new` | `183:402` | ✅ |
 | 33 | Add Mechanic | `/admin/employees/mechanics/new` | `183:2` | ✅ |
 | 34 | Workload Reports | `/admin/reports/workload` | `184:731` | ✅ |
+| 35 | My Vehicles (list) | `/dashboard/vehicles` | — (no Figma ref) | ✅ |
+| 36 | My Appointments (list) | `/dashboard/appointments` | — (no Figma ref) | ✅ |
+| 37 | My Estimates (list) | `/dashboard/estimates` | — (no Figma ref) | ✅ |
+| 38 | Service Tracking (list) | `/dashboard/services` | — (no Figma ref) | ✅ |
+| 39 | Mechanic Jobs (list) | `/mechanic/jobs` | — (no Figma ref) | ✅ |
+| 40 | Mechanic History | `/mechanic/history` | — (no Figma ref) | ✅ |
+| 41 | Parts Inventory | `/mechanic/parts` | — (no Figma ref) | ✅ |
+| 42 | Diagnostic Tools | `/mechanic/diagnostics` | — (no Figma ref) | ✅ |
+| 43 | Reset Password | `/reset-password` | — (no Figma ref) | ✅ |
 
 ## Design notes (captured per screen — extend, don't re-fetch)
 
@@ -120,6 +129,15 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 - **Parts Used** table: columns PART NAME / QTY / UNIT PRICE / SUPPLIER / SUBTOTAL (right), header 16px uppercase `#6b7280`, rows 16px `#111827`, zebra borders `#e5e7eb`; + Add Part button.
 - Right col: repair photos upload grid (2×2 tiles) + action buttons — re-fetch subtree at build time.
 
+### 9 · Owner Account Registration — `185:1338` (implemented at `/register`)
+- Split card: 460px left value-prop column (`#f3f4f5`, blue/orange blurred blobs, workshop photo) + right form column (48px padding).
+- Sections: **Personal Information** (profile photo upload tile, Full Name/Email/Phone/Password/Confirm (all required, red `*`), DOB `mm/dd/yyyy`, Gender select, NID*, Driving License*, Occupation) → **Address Information** (Street*, City*, District/State*, Zip, Country) → **Emergency Contact** (UI-only) → **Identity Verification** (upload dropzone, UI-only).
+- Inputs: h-46px, rounded-md, border `#c2c6d5`, bg `#f8f9fa`, left icon at 15px. Submit → `registerUser` (full profile persisted; owner created PENDING → admin verification).
+
+### 35–43 · List/tool screens (no Figma refs — built to canonical tokens)
+- Owner lists reuse card/table patterns: vehicles grid (photo, reg plate, in-service pill, Book Service/History actions), appointments rows (status pills pending/confirmed/cancelled + cancel action via `PATCH /appointments/:id`), estimates grid (status pill, top-3 items, total, Review link), services list (ProgressStepper sm + StatusBadge, links to `/dashboard/services/[id]`).
+- Mechanic: jobs list (assigned, current first), history table (completed), parts inventory (from `GET /parts`, stock pills In/Low/Out), diagnostics (simulated scan modules — engine/battery/brakes/full sweep, toast results, clear codes).
+
 ### 21 · Advisor Dashboard — `1:2936` (capture at build)
 
 ### 26 · Mechanic Dashboard — `1:157`
@@ -139,7 +157,10 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 
 - **Phase 0** ✅ scaffold root docs + configs + frontend/backend shells
 - **Phase 1** ✅ frontend demo-data UI (all 35 screens, batches A–F, desktop-first)
-- **Phase 2** 🔨 backend: Prisma schema+seed ✅ → auth ✅ → REST endpoints ✅ (auth/services/vehicles/appointments/jobs/employees/estimates/invoices/chat/parts/ratings/reports) → frontend RTK Query swap ✅ (all non-marketing pages on live API via `src/lib/api.ts`; `src/lib/kpis.ts` computes dashboards) → socket.io chat → PDF → reports
+- **Phase 2** ✅ backend: Prisma schema+seed → auth → REST endpoints (auth/services/vehicles/appointments/jobs/employees/estimates/invoices/chat/parts/ratings/reports) → frontend RTK swap (all non-marketing pages on live API) → socket.io chat → jspdf PDFs
+- **Phase 3** ✅ route protection (Next 16 `proxy.ts` role guard + client fallback), real logout, API-backed forms (employee CRUD, forgot/reset password, register profile fields, create job card, appointment confirm/cancel), hardcoded-key cleanup, public navbar auth-aware
+- **Phase 4** ✅ missing sidebar pages (owner vehicles/appointments/estimates/services lists; mechanic jobs/history/parts/diagnostics)
+- **Phase 5** 🔨 polish: /health db check ✅, ratings role-scoping ✅, missing assets ✅ (honda-civic, repair-photos, 3 avatars), blueprint update 🔨
 
 ## API conventions (backend)
 

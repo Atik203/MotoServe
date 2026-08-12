@@ -19,8 +19,13 @@ import {
 import { getIo } from "../../lib/socket.js";
 import { prisma } from "../../lib/prisma.js";
 
-export function getHealth(_req: Request, res: Response): void {
-  res.json({ status: "ok", db: "pending" });
+export async function getHealth(_req: Request, res: Response): Promise<void> {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: "ok", db: "ok" });
+  } catch {
+    res.status(503).json({ status: "degraded", db: "down" });
+  }
 }
 
 export async function getServices(_req: Request, res: Response): Promise<void> {
@@ -142,8 +147,9 @@ export async function getParts(_req: Request, res: Response): Promise<void> {
   res.json(await listParts());
 }
 
-export async function getRatings(_req: Request, res: Response): Promise<void> {
-  res.json(await listRatings());
+export async function getRatings(req: Request, res: Response): Promise<void> {
+  const customerId = req.user?.role === "OWNER" ? req.user.userId : undefined;
+  res.json(await listRatings(customerId));
 }
 
 export async function getTestimonials(_req: Request, res: Response): Promise<void> {
