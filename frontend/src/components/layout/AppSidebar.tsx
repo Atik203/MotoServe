@@ -23,7 +23,9 @@ export function AppSidebar({ role }: AppSidebarProps) {
     <aside className="bg-white border-r border-border fixed inset-y-0 left-0 z-30 flex w-[256px] flex-col justify-between">
       <div>
         <div className="flex h-[64px] items-center border-b border-border px-[24px]">
-          <span className="text-[18px] font-bold tracking-[-0.45px] text-foreground">MotoServe</span>
+          <Link href="/" className="text-[18px] font-bold tracking-[-0.45px] text-foreground transition-colors hover:text-primary">
+            MotoServe
+          </Link>
         </div>
 
         {config.profile && (

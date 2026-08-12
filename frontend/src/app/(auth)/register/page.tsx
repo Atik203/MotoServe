@@ -67,8 +67,8 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-start bg-white">
-      <div className="relative flex h-screen flex-1 items-start justify-center overflow-hidden bg-[#edeeef]">
+    <div className="flex min-h-[calc(100vh-65px)] items-start bg-white">
+      <div className="relative flex h-[calc(100vh-65px)] flex-1 items-start justify-center overflow-hidden bg-[#edeeef]">
         <Image src="/images/register-bg.png" alt="" fill className="object-cover" />
         <div className="absolute inset-0 bg-[rgba(0,91,191,0.9)] mix-blend-multiply" />
         <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,91,191,0.8)] to-[rgba(0,91,191,0)]" />
@@ -91,7 +91,7 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      <div className="flex h-screen flex-1 items-center justify-center overflow-auto bg-white p-[96px]">
+      <div className="flex h-[calc(100vh-65px)] flex-1 items-center justify-center overflow-auto bg-white p-[96px]">
         <div className="flex w-full max-w-[448px] flex-col gap-[32px]">
           <div>
             <h2 className="text-[24px] font-semibold tracking-[-0.24px] text-foreground">Create Account</h2>

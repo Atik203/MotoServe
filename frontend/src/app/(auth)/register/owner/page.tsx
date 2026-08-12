@@ -61,7 +61,7 @@ export default function OwnerRegistrationPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="flex min-h-screen flex-col items-center gap-[48px] bg-background">
+    <div className="flex min-h-[calc(100vh-65px)] flex-col items-center gap-[48px] bg-background">
       <header className="flex h-[64px] w-full items-center justify-between border-b border-border bg-white px-[32px]">
         <span className="flex items-center gap-[8px] text-[16px] font-bold tracking-[-0.4px] text-primary">
           <Wrench className="size-[16px]" />

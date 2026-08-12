@@ -13,7 +13,7 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-[32px]">
+    <div className="flex min-h-[calc(100vh-65px)] items-center justify-center bg-background px-[32px]">
       <div className="w-full max-w-[420px]">
         <div className="flex flex-col gap-[24px] rounded-[12px] border border-[#e2e8f0] bg-white p-[33px] shadow-[0_2px_2px_rgba(0,0,0,0.05)]">
           <div className="flex flex-col items-center gap-[4px]">

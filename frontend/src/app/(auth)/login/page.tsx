@@ -49,8 +49,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-start bg-background">
-      <div className="relative flex h-screen w-[576px] shrink-0 flex-col justify-between overflow-hidden border-r border-[#e2e8f0] bg-white">
+    <div className="flex min-h-[calc(100vh-65px)] items-start bg-background">
+      <div className="relative flex h-[calc(100vh-65px)] w-[576px] shrink-0 flex-col justify-between overflow-hidden border-r border-[#e2e8f0] bg-white">
         <div className="absolute -top-[10%] right-[60%] bottom-[60%] -left-[10%] rounded-[12px] bg-[rgba(0,82,204,0.05)] blur-[32px]" />
         <div className="absolute top-1/2 -right-[10%] -bottom-[10%] left-[50%] rounded-[12px] bg-[rgba(0,91,191,0.1)] blur-[32px]" />
 
@@ -94,7 +94,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="flex h-screen flex-1 items-center justify-center bg-[#f8f9fa] p-[32px]">
+      <div className="flex h-[calc(100vh-65px)] flex-1 items-center justify-center bg-[#f8f9fa] p-[32px]">
         <div className="flex w-[440px] max-w-full flex-col gap-[24px] rounded-[16px] border border-[#e2e8f0] bg-white p-[41px] shadow-[0_8px_15px_rgba(0,0,0,0.04)]">
           <div className="flex justify-center">
             <span className="flex size-[48px] items-center justify-center rounded-[8px] bg-primary shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
