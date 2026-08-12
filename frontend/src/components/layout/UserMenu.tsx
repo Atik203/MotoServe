@@ -42,7 +42,7 @@ export function UserMenu() {
 
   const scheduleClose = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
-    closeTimer.current = setTimeout(() => setOpen(false), 150);
+    closeTimer.current = setTimeout(() => setOpen(false), 250);
   };
 
   const handleLogout = async () => {
@@ -59,7 +59,7 @@ export function UserMenu() {
       <div
         onMouseEnter={openMenu}
         onMouseLeave={scheduleClose}
-        className="flex items-center"
+        className="-mb-2 flex items-center pb-2"
       >
         <DropdownMenuTrigger asChild>
           <button
