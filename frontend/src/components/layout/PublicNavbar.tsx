@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { roleHome } from "@/lib/nav";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchMe } from "@/store/slices/authSlice";
+import { UserMenu } from "./UserMenu";
 
 const NAV_LINKS = [
   { label: "Services", href: "/services" },
@@ -59,22 +60,13 @@ export function PublicNavbar({ fixed = true }: { fixed?: boolean }) {
         <div className="flex items-center gap-4">
           {user ? (
             <>
-              <Link href={home} className="hidden items-center gap-2 text-sm font-medium text-[#414754] transition-colors hover:text-primary sm:flex">
-                <span className="flex size-7 items-center justify-center rounded-full bg-primary-soft text-[11px] font-bold text-primary">
-                  {user.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .slice(0, 2)
-                    .join("")}
-                </span>
-                {user.name.split(" ")[0]}
-              </Link>
               <Link
                 href={home}
                 className="flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-xs font-semibold tracking-[0.24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-colors hover:bg-primary/90"
               >
                 Dashboard
               </Link>
+              <UserMenu />
             </>
           ) : (
             <>

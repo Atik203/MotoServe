@@ -8,29 +8,20 @@ interface AppShellProps {
   role: Role;
   children: ReactNode;
   searchPlaceholder?: string;
-  avatar?: string;
   topbarLinks?: string[];
-  topbarShowChat?: boolean;
 }
 
 export function AppShell({
   role,
   children,
   searchPlaceholder,
-  avatar,
   topbarLinks,
-  topbarShowChat,
 }: AppShellProps) {
   return (
     <div className="min-h-screen">
       <SessionBootstrap requiredRole={role} />
       <AppSidebar role={role} />
-      <AppTopbar
-        searchPlaceholder={searchPlaceholder}
-        avatar={avatar}
-        links={topbarLinks}
-        showChat={topbarShowChat}
-      />
+      <AppTopbar searchPlaceholder={searchPlaceholder} links={topbarLinks} />
       <main className="ml-64 pt-16">{children}</main>
     </div>
   );

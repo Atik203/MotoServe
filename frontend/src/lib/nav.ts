@@ -38,7 +38,6 @@ export interface RoleNavConfig {
   brand: string;
   items: NavItem[];
   bottomItems: NavItem[];
-  profile?: { name: string; subtitle: string; avatar: string };
   actionButton?: { label: string };
 }
 
@@ -89,7 +88,6 @@ export const roleNav: Record<Role, RoleNavConfig> = {
       { label: "Help", href: "#", icon: LifeBuoy },
       { label: "Logout", href: "/login", icon: LogOut },
     ],
-    profile: { name: "Main Bay", subtitle: "Station 04", avatar: "/images/avatars/alex-turner.png" },
     actionButton: { label: "Clock Out" },
   },
   admin: {

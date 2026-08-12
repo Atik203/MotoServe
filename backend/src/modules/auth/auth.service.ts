@@ -35,3 +35,10 @@ export async function updatePassword(userId: string, password: string) {
     data: { passwordHash: await bcrypt.hash(password, 10) },
   });
 }
+
+export function updateProfile(userId: string, data: { name?: string; phone?: string; avatar?: string | null }) {
+  return prisma.user.update({
+    where: { id: userId },
+    data,
+  });
+}

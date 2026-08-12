@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { COOKIE_NAME, cookieOptions, signToken, verifyToken } from "../../lib/auth.js";
 import { ApiError } from "../../middleware/error.js";
 import { findUserByEmail, findUserById } from "../shared/shared.service.js";
-import { createOwner, updatePassword, verifyCredentials } from "./auth.service.js";
+import { createOwner, updatePassword, updateProfile, verifyCredentials } from "./auth.service.js";
 import type { ForgotPasswordBody, RegisterBody, ResetPasswordBody } from "./auth.types.js";
 
 export async function login(req: Request, res: Response): Promise<void> {
@@ -57,4 +57,19 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
   if (payload.purpose !== "password-reset") throw new ApiError(400, "Invalid reset token");
   await updatePassword(payload.userId, password);
   res.json({ ok: true });
+}
+
+export async function updateProfileController(req: Request, res: Response): Promise<void> {
+  if (!req.user) throw new ApiError(401, "Authentication required");
+  const user = await updateProfile(req.user.userId, req.body.body as { name?: string; phone?: string; avatar?: string | null });
+  res.json({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role.toLowerCase(),
+    avatar: user.avatar,
+    phone: user.phone,
+    station: user.station,
+    specialization: user.specialization,
+  });
 }

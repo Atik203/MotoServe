@@ -67,6 +67,13 @@ export const resetPassword = createAsyncThunk(
   },
 );
 
+export const updateProfile = createAsyncThunk(
+  "auth/updateProfile",
+  async (data: { name?: string; phone?: string | null; avatar?: string | null }) => {
+    return await api.patch<AuthUser>("/auth/me", data);
+  },
+);
+
 export const fetchMe = createAsyncThunk("auth/me", async () => {
   return await api.get<AuthUser>("/auth/me");
 });
@@ -107,6 +114,9 @@ const authSlice = createSlice({
       })
       .addCase(fetchMe.rejected, (state) => {
         state.user = null;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.user = action.payload;
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;

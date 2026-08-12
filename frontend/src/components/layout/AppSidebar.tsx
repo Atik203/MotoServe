@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -40,22 +39,6 @@ export function AppSidebar({ role }: AppSidebarProps) {
             MotoServe
           </Link>
         </div>
-
-        {config.profile && (
-          <div className="m-4 mb-2 flex items-center gap-2 rounded-md border border-border bg-secondary p-[9px]">
-            <Image
-              src={config.profile.avatar}
-              alt={config.profile.name}
-              width={32}
-              height={32}
-              className="rounded-md"
-            />
-            <div>
-              <p className="text-sm font-semibold text-foreground">{config.profile.name}</p>
-              <p className="text-xs text-muted-foreground">{config.profile.subtitle}</p>
-            </div>
-          </div>
-        )}
 
         <nav className="flex flex-col gap-1 p-4 pt-2">
           {config.items.map((item) => {

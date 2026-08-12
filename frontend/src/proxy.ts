@@ -63,6 +63,7 @@ export const config = {
     "/advisor/:path*",
     "/mechanic/:path*",
     "/admin/:path*",
+    "/profile/:path*",
     "/login/:path*",
     "/register/:path*",
     "/forgot-password/:path*",
