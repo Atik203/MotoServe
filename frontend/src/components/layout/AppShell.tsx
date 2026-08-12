@@ -23,7 +23,7 @@ export function AppShell({
 }: AppShellProps) {
   return (
     <div className="min-h-screen">
-      <SessionBootstrap />
+      <SessionBootstrap requiredRole={role} />
       <AppSidebar role={role} />
       <AppTopbar
         searchPlaceholder={searchPlaceholder}

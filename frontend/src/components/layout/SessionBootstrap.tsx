@@ -1,25 +1,42 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchMe } from "@/store/slices/authSlice";
 import { fetchThreads, receiveMessage } from "@/store/slices/chatSlice";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
+import { roleHome, type Role } from "@/lib/nav";
 import type { ChatMessage } from "@/types";
 
 interface SocketMessage extends ChatMessage {
   threadId: string;
 }
 
-export function SessionBootstrap() {
+interface SessionBootstrapProps {
+  requiredRole?: Role;
+}
+
+export function SessionBootstrap({ requiredRole }: SessionBootstrapProps) {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const user = useAppSelector((s) => s.auth.user);
+  const [booted, setBooted] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      dispatch(fetchMe());
+    if (!user && !booted) {
+      void dispatch(fetchMe()).finally(() => setBooted(true));
     }
-  }, [dispatch, user]);
+  }, [dispatch, user, booted]);
+
+  useEffect(() => {
+    if (!booted) return;
+    if (!user) {
+      router.replace("/login");
+    } else if (requiredRole && user.role !== requiredRole) {
+      router.replace(roleHome(user.role));
+    }
+  }, [booted, user, requiredRole, router]);
 
   useEffect(() => {
     if (!user) {

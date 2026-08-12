@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { roleNav, type Role } from "@/lib/nav";
+import { useAppDispatch } from "@/store/hooks";
+import { logoutUser } from "@/store/slices/authSlice";
 
 interface AppSidebarProps {
   role: Role;
@@ -13,6 +15,17 @@ interface AppSidebarProps {
 export function AppSidebar({ role }: AppSidebarProps) {
   const config = roleNav[role];
   const pathname = usePathname();
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutUser()).unwrap();
+    } catch {
+      // ignore
+    }
+    router.push("/login");
+  };
 
   const isActive = (href: string) => {
     if (href === "#") return false;
@@ -68,21 +81,36 @@ export function AppSidebar({ role }: AppSidebarProps) {
 
       <div className="border-t border-border">
         <div className="flex flex-col gap-1 p-4">
-          {config.bottomItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-            >
-              <span className="flex w-6 items-center justify-center">
-                <item.icon className="size-[18px]" />
-              </span>
-              {item.label}
-            </Link>
-          ))}
+          {config.bottomItems.map((item) =>
+            item.label === "Logout" ? (
+              <button
+                key={item.label}
+                type="button"
+                onClick={handleLogout}
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              >
+                <span className="flex w-6 items-center justify-center">
+                  <item.icon className="size-[18px]" />
+                </span>
+                {item.label}
+              </button>
+            ) : (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              >
+                <span className="flex w-6 items-center justify-center">
+                  <item.icon className="size-[18px]" />
+                </span>
+                {item.label}
+              </Link>
+            ),
+          )}
           {config.actionButton && (
             <button
               type="button"
+              onClick={handleLogout}
               className="mt-2 w-full rounded border border-input bg-secondary py-[9px] text-sm font-medium text-foreground transition-colors hover:bg-muted"
             >
               {config.actionButton.label}

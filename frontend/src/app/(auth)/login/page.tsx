@@ -19,6 +19,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { roleHome } from "@/lib/nav";
 
 const DEMO_ROLES: {
   role: string;
@@ -68,7 +69,9 @@ export default function LoginPage() {
         loginUser({ email: emailValue, password: passwordValue }),
       ).unwrap();
       toast.success(`Welcome back, ${res.name}`);
-      router.push(res.role === "owner" ? "/dashboard" : `/${res.role}`);
+      const home = roleHome(res.role);
+      const next = new URLSearchParams(window.location.search).get("next");
+      router.push(next && next.startsWith(home) ? next : home);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Login failed");
       setSubmitting(false);
@@ -262,16 +265,3 @@ export default function LoginPage() {
   );
 }
 
-function WrenchSmall() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="white"
-      strokeWidth="2"
-      className="size-[15px]"
-    >
-      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-    </svg>
-  );
-}

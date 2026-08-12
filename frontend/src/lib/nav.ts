@@ -24,6 +24,10 @@ import {
 
 export type Role = "owner" | "advisor" | "mechanic" | "admin";
 
+export function roleHome(role: Role): string {
+  return role === "owner" ? "/dashboard" : `/${role}`;
+}
+
 export interface NavItem {
   label: string;
   href: string;
@@ -54,6 +58,7 @@ export const roleNav: Record<Role, RoleNavConfig> = {
     bottomItems: [
       { label: "Support", href: "#", icon: LifeBuoy },
       { label: "Settings", href: "#", icon: Settings },
+      { label: "Logout", href: "/login", icon: LogOut },
     ],
   },
   advisor: {
