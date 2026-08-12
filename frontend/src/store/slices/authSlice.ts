@@ -77,8 +77,12 @@ export const updateProfile = createAsyncThunk(
 
 export const uploadDocument = createAsyncThunk(
   "auth/uploadDocument",
-  async ({ fileName, data }: { fileName: string; data: string }) => {
-    return await api.post<{ url: string; name: string }>("/auth/upload-document", { fileName, data });
+  async ({ fileName, fileType, purpose }: { fileName: string; fileType: string; purpose: "document" | "image" }) => {
+    return await api.post<{ uploadUrl: string; key: string; getUrl: string | null }>("/upload/presign", {
+      fileName,
+      fileType,
+      purpose,
+    });
   },
 );
 

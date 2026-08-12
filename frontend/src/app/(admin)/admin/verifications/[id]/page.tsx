@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowLeft, Briefcase, CalendarDays, Download, FileText, Mail, MapPin, Phone, ShieldCheck, User as UserIcon, UserX, UserCheck } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchCustomers, verifyCustomer } from "@/store/slices/customersSlice";
-import { API_ORIGIN } from "@/lib/api";
+import { fetchCustomers, fetchDocumentUrl, verifyCustomer } from "@/store/slices/customersSlice";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -35,12 +34,30 @@ export default function VerificationDetailPage() {
   const params = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const customers = useAppSelector((s) => s.customers.items);
+  const [doc, setDoc] = useState<{ key: string; url: string } | null>(null);
 
   useEffect(() => {
     if (customers.length === 0) dispatch(fetchCustomers());
   }, [dispatch, customers.length]);
 
   const customer = customers.find((c) => c.id === params.id) ?? null;
+
+  useEffect(() => {
+    const key = customer?.documentUrl;
+    if (!key) return;
+    let cancelled = false;
+    dispatch(fetchDocumentUrl(key))
+      .unwrap()
+      .then((res) => {
+        if (!cancelled) setDoc({ key, url: res.url });
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Could not load the verification document");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [dispatch, customer?.documentUrl]);
 
   const decide = async (decision: "approved" | "rejected") => {
     if (!customer) return;
@@ -56,8 +73,8 @@ export default function VerificationDetailPage() {
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">Loading owner details...</div>;
   }
 
-  const isPdf = customer.documentUrl?.toLowerCase().endsWith(".pdf");
-  const docSrc = customer.documentUrl ? (customer.documentUrl.startsWith("/uploads/") ? `${API_ORIGIN}${customer.documentUrl}` : customer.documentUrl) : null;
+  const docSrc = doc && doc.key === customer.documentUrl ? doc.url : null;
+  const isPdf = docSrc?.toLowerCase().includes(".pdf");
   const fullAddress = [customer.street, customer.city, customer.district, customer.zip, customer.country].filter(Boolean).join(", ");
 
   return (

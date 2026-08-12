@@ -4,18 +4,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CalendarDays, CreditCard, Info, Landmark, ReceiptText, Wallet } from "lucide-react";
+import { CalendarDays, CreditCard, Info, Landmark, ReceiptText, ShieldCheck, Wallet } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchInvoices, payInvoice } from "@/store/slices/invoicesSlice";
+import { createCheckoutSession, fetchInvoices, payInvoice } from "@/store/slices/invoicesSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { downloadInvoicePdf } from "@/lib/pdf";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 const PAYMENT_METHODS = [
-  { id: "card", label: "Credit Card (Dummy)", icon: CreditCard },
+  { id: "card", label: "Credit Card (Stripe)", icon: CreditCard },
   { id: "mobile", label: "Mobile Banking", icon: Wallet },
   { id: "cash", label: "Cash on Pickup", icon: Landmark },
 ];
@@ -32,6 +30,19 @@ export default function PaymentInvoicePage() {
     dispatch(fetchVehicles());
   }, [dispatch]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("status");
+    if (status === "success") {
+      toast.success("Payment successful — invoice marked as paid");
+      dispatch(fetchInvoices());
+      window.history.replaceState({}, "", "/dashboard/payments");
+    } else if (status === "cancelled") {
+      toast.info("Payment cancelled — no charge was made");
+      window.history.replaceState({}, "", "/dashboard/payments");
+    }
+  }, [dispatch]);
+
   const invoice = invoices.find((i) => i.status === "unpaid") ?? invoices[0] ?? null;
 
   if (!invoice) {
@@ -43,7 +54,12 @@ export default function PaymentInvoicePage() {
   const handlePay = async () => {
     setPaying(true);
     try {
-      await dispatch(payInvoice({ id: invoice.id, method: method as "card" | "cash" | "mobile" })).unwrap();
+      if (method === "card") {
+        const res = await dispatch(createCheckoutSession(invoice.id)).unwrap();
+        window.location.href = res.url;
+        return;
+      }
+      await dispatch(payInvoice({ id: invoice.id, method: method as "cash" | "mobile" })).unwrap();
       toast.success("Payment successful — invoice marked as paid");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Payment failed");
@@ -154,24 +170,13 @@ export default function PaymentInvoicePage() {
               </div>
 
               {method === "card" && (
-                <div className="flex flex-col gap-4 pt-2">
+                <div className="flex items-start gap-3 rounded-lg border border-[rgba(0,82,204,0.15)] bg-[rgba(0,82,204,0.05)] p-[17px]">
+                  <ShieldCheck className="size-5 shrink-0 text-primary" />
                   <div>
-                    <Label className="text-xs font-semibold tracking-[0.6px] text-[#444651]">Cardholder Name</Label>
-                    <Input defaultValue="John Doe" className="mt-1 rounded border-[#c5c5d3] bg-[#f8f9ff]" />
-                  </div>
-                  <div>
-                    <Label className="text-xs font-semibold tracking-[0.6px] text-[#444651]">Card Number</Label>
-                    <Input defaultValue="4111 1111 1111 1111" className="mt-1 rounded border-[#c5c5d3] bg-[#f8f9ff]" />
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex-1">
-                      <Label className="text-xs font-semibold tracking-[0.6px] text-[#444651]">Expiry Date</Label>
-                      <Input defaultValue="12/26" className="mt-1 rounded border-[#c5c5d3] bg-[#f8f9ff]" />
-                    </div>
-                    <div className="flex-1">
-                      <Label className="text-xs font-semibold tracking-[0.6px] text-[#444651]">CVV</Label>
-                      <Input defaultValue="123" className="mt-1 rounded border-[#c5c5d3] bg-[#f8f9ff]" />
-                    </div>
+                    <p className="text-sm font-medium text-foreground">Secure card payment via Stripe</p>
+                    <p className="text-sm text-[#444651]">
+                      You&apos;ll be redirected to Stripe&apos;s hosted checkout — your card details never touch MotoServe.
+                    </p>
                   </div>
                 </div>
               )}

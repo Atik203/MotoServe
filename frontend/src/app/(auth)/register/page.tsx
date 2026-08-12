@@ -25,7 +25,6 @@ import {
 } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { registerUser, uploadDocument } from "@/store/slices/authSlice";
-import { API_ORIGIN } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -103,7 +102,7 @@ export default function RegisterPage() {
   const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [document, setDocument] = useState<{ name: string; url: string } | null>(null);
+  const [document, setDocument] = useState<{ name: string; key: string; preview: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState<FormState>(initialForm);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -157,7 +156,7 @@ export default function RegisterPage() {
           district: form.district.trim(),
           zip: form.zip.trim() || undefined,
           country: form.country.trim() || undefined,
-          documentUrl: document?.url ?? undefined,
+          documentUrl: document?.key ?? undefined,
         }),
       ).unwrap();
       toast.success("Account created — verification pending. You can log in once approved.");
@@ -168,7 +167,7 @@ export default function RegisterPage() {
     }
   };
 
-  const handleDocumentPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDocumentPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
@@ -180,22 +179,24 @@ export default function RegisterPage() {
       toast.error("Document exceeds 5MB limit");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const raw = String(reader.result ?? "");
-      const base64 = raw.includes(",") ? raw.slice(raw.indexOf(",") + 1) : raw;
-      setUploading(true);
-      try {
-        const res = await dispatch(uploadDocument({ fileName: file.name, data: base64 })).unwrap();
-        setDocument({ name: file.name, url: res.url });
-        toast.success("Document uploaded for verification");
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Upload failed");
-      } finally {
-        setUploading(false);
-      }
-    };
-    reader.readAsDataURL(file);
+    setUploading(true);
+    try {
+      const res = await dispatch(
+        uploadDocument({ fileName: file.name, fileType: file.type, purpose: "document" }),
+      ).unwrap();
+      const put = await fetch(res.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!put.ok) throw new Error("Upload to storage failed");
+      setDocument({ name: file.name, key: res.key, preview: URL.createObjectURL(file) });
+      toast.success("Document uploaded for verification");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -349,7 +350,7 @@ export default function RegisterPage() {
                       <IdCard className="size-5 text-primary" />
                     </span>
                   ) : (
-                    <img src={`${API_ORIGIN}${document.url}`} alt="Identity document" className="size-10 rounded object-cover" />
+                    <img src={document.preview} alt="Identity document" className="size-10 rounded object-cover" />
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">{document.name}</p>
@@ -357,7 +358,10 @@ export default function RegisterPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setDocument(null)}
+                    onClick={() => {
+                      URL.revokeObjectURL(document.preview);
+                      setDocument(null);
+                    }}
                     className="rounded border border-border px-3 py-1.5 text-xs font-semibold text-[#ba1a1a]"
                   >
                     Remove

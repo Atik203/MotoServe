@@ -28,6 +28,10 @@ export const verifyCustomer = createAsyncThunk(
   },
 );
 
+export const fetchDocumentUrl = createAsyncThunk("customers/documentUrl", async (key: string) => {
+  return await api.post<{ url: string }>("/upload/presign-get", { key });
+});
+
 const customersSlice = createSlice({
   name: "customers",
   initialState,

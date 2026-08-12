@@ -21,9 +21,13 @@ export const fetchInvoices = createAsyncThunk("invoices/fetchAll", async () => {
 export const payInvoice = createAsyncThunk(
   "invoices/pay",
   async ({ id, method }: { id: string; method: "card" | "cash" | "mobile" }) => {
-    return await api.post<{ id: string; status: "paid" }>(`/invoices/${id}/pay`, { method });
+    return await api.post<{ id: string; status: string }>(`/invoices/${id}/pay`, { method });
   },
 );
+
+export const createCheckoutSession = createAsyncThunk("invoices/checkout", async (invoiceId: string) => {
+  return await api.post<{ url: string }>("/payments/checkout", { invoiceId });
+});
 
 const invoicesSlice = createSlice({
   name: "invoices",

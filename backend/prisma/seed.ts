@@ -1,11 +1,28 @@
 import "dotenv/config";
 import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client.js";
 import bcrypt from "bcryptjs";
+import { putObject } from "../src/lib/s3.js";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
+
+const DEMO_DOC_KEY = "MotoServe/demo/demo-nid.png";
+
+async function uploadDemoDocument(): Promise<string | null> {
+  if (!process.env.AWS_ACCESS_KEY_ID) return null;
+  try {
+    const data = await readFile(path.join(path.dirname(fileURLToPath(import.meta.url)), "demo-nid.png"));
+    await putObject(DEMO_DOC_KEY, data, "image/png");
+    return DEMO_DOC_KEY;
+  } catch (err) {
+    console.warn("Could not upload demo document to S3:", err instanceof Error ? err.message : err);
+    return null;
+  }
+}
 
 async function loadJson<T>(path: string): Promise<T> {
   const raw = await readFile(path, "utf-8");
@@ -14,6 +31,7 @@ async function loadJson<T>(path: string): Promise<T> {
 
 async function main() {
   const demo = (file: string) => loadJson<Record<string, unknown>>(`../frontend/public/demo/${file}`);
+  const demoDocKey = await uploadDemoDocument();
 
   console.log("Seeding database...");
 
@@ -76,7 +94,7 @@ async function main() {
         drivingLicense: c.drivingLicense,
         status: status as never,
         verifiedAt: c.verifiedAt ? new Date(c.verifiedAt) : null,
-        documentUrl: status === "PENDING" ? "/uploads/demo-nid.png" : null,
+        documentUrl: status === "PENDING" ? demoDocKey : null,
       },
       create: {
         id: c.id,
@@ -87,7 +105,7 @@ async function main() {
         drivingLicense: c.drivingLicense,
         status: status as never,
         verifiedAt: c.verifiedAt ? new Date(c.verifiedAt) : null,
-        documentUrl: status === "PENDING" ? "/uploads/demo-nid.png" : null,
+        documentUrl: status === "PENDING" ? demoDocKey : null,
         role: "OWNER",
         passwordHash: await bcrypt.hash("password123", 10),
       },

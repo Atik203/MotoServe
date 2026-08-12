@@ -47,10 +47,3 @@ export const updateProfileSchema = z.object({
     avatar: z.string().nullable().optional(),
   }),
 });
-
-export const uploadDocumentSchema = z.object({
-  body: z.object({
-    fileName: z.string().min(1).max(255),
-    data: z.string().min(1),
-  }),
-});
