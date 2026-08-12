@@ -8,7 +8,6 @@ import {
   Check,
   CheckCircle2,
   ClipboardList,
-  Gauge,
   Package,
   Wrench,
   type LucideIcon,
@@ -48,7 +47,6 @@ const STEP_ORDER = ["received", "inspecting", "repairing", "testing", "completed
 const quickActions: { label: string; icon: LucideIcon; href?: string }[] = [
   { label: "Repair Progress", icon: Wrench, href: "/mechanic/jobs" },
   { label: "Parts Request", icon: Package, href: "/mechanic/parts" },
-  { label: "Diagnostic Tools", icon: Gauge, href: "/mechanic/diagnostics" },
   { label: "History", icon: ClipboardList, href: "/mechanic/history" },
 ];
 
@@ -234,7 +232,7 @@ export default function MechanicDashboardPage() {
           <div className="col-span-4 flex flex-col gap-6">
             <section className="flex flex-col gap-4 rounded-lg border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
               <h2 className="text-xl font-semibold text-foreground">Quick Actions</h2>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {quickActions.map((action) => {
                   const content = (
                     <>

@@ -109,7 +109,6 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 | 39 | Mechanic Jobs (list) | `/mechanic/jobs` | — (no Figma ref) | ✅ |
 | 40 | Mechanic History | `/mechanic/history` | — (no Figma ref) | ✅ |
 | 41 | Parts Inventory | `/mechanic/parts` | — (no Figma ref) | ✅ |
-| 42 | Diagnostic Tools | `/mechanic/diagnostics` | — (no Figma ref) | ✅ |
 | 43 | Reset Password | `/reset-password` | — (no Figma ref) | ✅ |
 | 44 | Profile (all roles) | `/profile` | — (no Figma ref) | ✅ |
 
