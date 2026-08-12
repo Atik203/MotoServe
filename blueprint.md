@@ -84,12 +84,12 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 | 16 | Service Details | `/dashboard/services/[id]` | `1:4047` | ✅ |
 | 17 | Estimate Approval | `/dashboard/estimates/[id]` | `1:3848` | ✅ |
 | 18 | Communication Center (owner) | `/dashboard/chat` | `1:1530` (shared) | ✅ |
-| 19 | Payment & Invoice | `/dashboard/payment/[jobId]` | `12:1177` | ✅ |
+| 19 | Payment & Invoice | `/dashboard/payments` | `12:1177` | ✅ |
 | 20 | Service History & Rating | `/dashboard/history` | `12:1610` (dupe `110:2` — verify) | ✅ |
 | 21 | Advisor Dashboard | `/advisor` | `1:2936` | ✅ |
 | 22 | Receive Vehicle | `/advisor/receive` | `1:2641` | ✅ |
 | 23 | Create Job Card | `/advisor/job-cards/new` | `14:2006` | ✅ |
-| 24 | Assign Mechanic | `/advisor/job-cards/[id]/assign` | `14:2306` | ✅ |
+| 24 | Assign Mechanic | `/advisor/job-cards/assign` | `14:2306` | ✅ |
 | 25 | Send Estimate | `/advisor/estimates/new` | `1:2140` | ✅ |
 | 26 | Mechanic Dashboard | `/mechanic` | `1:157` | ✅ |
 | 27 | Repair Progress | `/mechanic/jobs/[id]` | `194:1716` (updated) | ✅ |
