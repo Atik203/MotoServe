@@ -15,7 +15,6 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Employee, JobCard } from "@/types";
 
 const WORKLOAD_LIMIT = 5;
-const JOB_ID = "JC-1045";
 
 const initials = (name: string) =>
   name
@@ -47,6 +46,7 @@ export default function AssignMechanicPage() {
   const jobs = useAppSelector((s) => s.jobs.items);
   const employees = useAppSelector((s) => s.employees.items);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [jobId, setJobId] = useState("");
   const [search, setSearch] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -56,7 +56,10 @@ export default function AssignMechanicPage() {
     dispatch(fetchJobs());
   }, [dispatch]);
 
-  const job: JobCard | null = jobs.find((j) => j.id === JOB_ID) ?? jobs[0] ?? null;
+  const assignableJobs = jobs.filter((j) => !["completed", "ready"].includes(j.status));
+  const defaultJob = assignableJobs.find((j) => !j.mechanicId) ?? assignableJobs[0] ?? null;
+  const job: JobCard | null =
+    (jobId ? jobs.find((j) => j.id === jobId) ?? null : null) ?? defaultJob;
 
   const mechanics = useMemo(
     () => employees.filter((e) => e.role === "mechanic"),
@@ -110,7 +113,23 @@ export default function AssignMechanicPage() {
             <span className="text-foreground">Assign Mechanic</span>
           </nav>
           <h1 className="text-4xl font-bold text-foreground">Assign Mechanic</h1>
-          <p className="text-sm text-[#424753]">Select an available technician for Job #{job?.id ?? JOB_ID}</p>
+          <div className="flex items-center gap-3 pt-1">
+            <label className="text-sm text-[#424753]">Job:</label>
+            <select
+              value={job?.id ?? ""}
+              onChange={(e) => {
+                setJobId(e.target.value);
+                setSelectedId(null);
+              }}
+              className="rounded border border-[#e5e7eb] bg-white px-3 py-1.5 text-sm font-medium text-foreground outline-none"
+            >
+              {assignableJobs.map((j) => (
+                <option key={j.id} value={j.id}>
+                  {j.id} — {j.vehicle ? `${j.vehicle.year} ${j.vehicle.make} ${j.vehicle.model}` : "Vehicle"} ({j.status})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="grid grid-cols-12 items-start gap-6">
@@ -124,20 +143,40 @@ export default function AssignMechanicPage() {
                     <Car className="size-5 text-[#191c1d]" />
                   </span>
                   <div className="flex flex-col gap-1">
-                    <span className="text-xl font-semibold text-foreground">2023 Ford F-150</span>
+                    <span className="text-xl font-semibold text-foreground">
+                      {job?.vehicle ? `${job.vehicle.year} ${job.vehicle.make} ${job.vehicle.model}` : "Select a job"}
+                    </span>
                     <span className="flex items-center gap-1.5 text-[11px] text-[#424753]">
-                      <span>Customer: John Doe</span>
+                      <span>Customer: {job?.customer?.name ?? "—"}</span>
                       <span>•</span>
                       <span>Plate:</span>
                       <span className="rounded bg-[#edeeef] px-1.5 py-0.5 font-mono text-[11px] font-medium text-[#191c1d]">
-                        A9C-1234
+                        {job?.vehicle?.regNo ?? "—"}
                       </span>
                     </span>
                   </div>
                 </div>
-                <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-[rgba(186,26,26,0.1)] px-2.5 py-1 text-[11px] font-semibold text-[#ba1a1a]">
-                  <span className="size-1.5 rounded-full bg-[#ba1a1a]" />
-                  High Priority
+                <span
+                  className={cn(
+                    "flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase",
+                    job?.priority === "high"
+                      ? "bg-[rgba(186,26,26,0.1)] text-[#ba1a1a]"
+                      : job?.priority === "medium"
+                        ? "bg-[rgba(255,193,7,0.1)] text-[#6a3c00]"
+                        : "bg-[rgba(76,175,80,0.1)] text-[#4caf50]",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "size-1.5 rounded-full",
+                      job?.priority === "high"
+                        ? "bg-[#ba1a1a]"
+                        : job?.priority === "medium"
+                          ? "bg-[#ffc107]"
+                          : "bg-[#4caf50]",
+                    )}
+                  />
+                  {job ? `${job.priority} Priority` : "No job"}
                 </span>
               </div>
 
@@ -146,23 +185,25 @@ export default function AssignMechanicPage() {
               <div className="relative grid grid-cols-4 gap-4">
                 <div className="flex flex-col gap-1">
                   <span className="text-[11px] text-[#727784]">Requested Services</span>
-                  <span className="text-sm font-medium text-foreground">Oil Change, Brake Insp.</span>
+                  <span className="truncate text-sm font-medium text-foreground">
+                    {job?.services.length ? job.services.map((s) => s.name).join(", ") : job?.issues ?? "—"}
+                  </span>
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-[11px] text-[#727784]">Est. Time</span>
                   <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
                     <Clock className="size-3.5 text-[#727784]" />
-                    2.5 hrs
+                    {job?.services.length ? `${job.services.length} services` : "TBD"}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-[11px] text-[#727784]">Arrival</span>
-                  <span className="text-sm font-medium text-foreground">09:00 AM Today</span>
+                  <span className="text-[11px] text-[#727784]">Station</span>
+                  <span className="truncate text-sm font-medium text-foreground">{job?.station ?? "Not set"}</span>
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-[11px] text-[#727784]">Job Status</span>
                   <span className="self-start rounded-full bg-[rgba(255,193,7,0.1)] px-2.5 py-0.75 text-xs font-semibold text-[#6a3c00]">
-                    Awaiting Assignment
+                    {job?.status ?? "—"}
                   </span>
                 </div>
               </div>
@@ -293,7 +334,7 @@ export default function AssignMechanicPage() {
             <section className="flex flex-col gap-3.5 rounded-lg border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
               <div className="flex flex-col gap-1">
                 <span className="text-[11px] text-[#727784]">Job</span>
-                <span className="text-sm font-semibold text-foreground">#{job?.id ?? JOB_ID}</span>
+                <span className="text-sm font-semibold text-foreground">#{job?.id ?? "—"}</span>
               </div>
               <div className="flex flex-col gap-1">
                 <span className="text-[11px] text-[#727784]">Selected Mechanic</span>

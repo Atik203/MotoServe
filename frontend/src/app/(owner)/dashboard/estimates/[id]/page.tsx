@@ -18,7 +18,7 @@ export default function EstimateApprovalPage() {
     if (estimates.length === 0) dispatch(fetchEstimates());
   }, [dispatch, estimates.length]);
 
-  const estimate = estimates.find((e) => e.id === params.id) ?? estimates.find((e) => e.id === "ES-3301") ?? null;
+  const estimate = estimates.find((e) => e.id === params.id) ?? null;
 
   if (!estimate) {
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">Loading estimate...</div>;

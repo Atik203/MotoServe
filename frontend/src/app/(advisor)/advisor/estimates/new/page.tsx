@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Car, Mail, Phone, Plus, Send, User } from "lucide-react";
@@ -39,6 +39,7 @@ export default function SendEstimatePage() {
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const customers = useAppSelector((s) => s.customers.items);
   const estimates = useAppSelector((s) => s.estimates.items);
+  const [jobId, setJobId] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -49,11 +50,26 @@ export default function SendEstimatePage() {
     dispatch(fetchEstimates());
   }, [dispatch]);
 
-  const job: JobCard | null = jobs.find((j) => j.id === "JC-1045") ?? jobs[0] ?? null;
-  const vehicle: Vehicle | null = vehicles.find((v) => v.id === job?.vehicleId) ?? null;
-  const customer: Customer | null = customers.find((c) => c.id === job?.customerId) ?? null;
+  const activeJobs = jobs.filter((j) => !["completed", "ready"].includes(j.status));
+  const job: JobCard | null =
+    (jobId ? jobs.find((j) => j.id === jobId) ?? null : null) ?? activeJobs[0] ?? jobs[0] ?? null;
+  const vehicle: Vehicle | null = job?.vehicle ?? vehicles.find((v) => v.id === job?.vehicleId) ?? null;
+  const customer: Customer | null =
+    customers.find((c) => c.id === job?.customerId) ??
+    (job?.customer
+      ? {
+          id: job.customer.id,
+          name: job.customer.name,
+          phone: "",
+          email: "",
+          nid: "",
+          drivingLicense: "",
+          status: "approved",
+          verifiedAt: null,
+        }
+      : null);
 
-  const prefilled = useMemo<LineItem[] | null>(() => {
+  const prefilled: LineItem[] | null = (() => {
     if (!job) return null;
     const estimate = estimates.find((e) => e.jobId === job.id);
     if (!estimate) return null;
@@ -71,7 +87,7 @@ export default function SendEstimatePage() {
             : item.amount.toFixed(2),
       labor: item.category === "labor" ? item.amount.toFixed(2) : "0",
     }));
-  }, [job, estimates]);
+  })();
 
   const [items, setItems] = useState<LineItem[]>([]);
   const [userEdited, setUserEdited] = useState(false);
@@ -133,10 +149,23 @@ export default function SendEstimatePage() {
           <p className="text-[11px] uppercase tracking-[0.55px] text-[#64748b]">
             Estimate Builder
             <span className="mx-1.5 text-[#cbd5e1]">›</span>
-            <span className="font-semibold normal-case text-[#111827]">Job Card #{job?.id ?? "JC-1045"}</span>
+            <span className="font-semibold normal-case text-[#111827]">Job Card #{job?.id ?? "—"}</span>
           </p>
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-[#111827]">Repair Cost Estimate</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-semibold text-[#111827]">Repair Cost Estimate</h1>
+              <select
+                value={job?.id ?? ""}
+                onChange={(e) => setJobId(e.target.value)}
+                className="rounded border border-[#e5e7eb] bg-white px-3 py-1.5 text-sm font-medium text-foreground outline-none"
+              >
+                {activeJobs.map((j) => (
+                  <option key={j.id} value={j.id}>
+                    {j.id} — {j.vehicle ? `${j.vehicle.year} ${j.vehicle.make} ${j.vehicle.model}` : "Vehicle"} ({j.status})
+                  </option>
+                ))}
+              </select>
+            </div>
             <span className="rounded-xl border border-[rgba(76,175,80,0.2)] bg-[rgba(76,175,80,0.1)] px-[13px] py-[7px] text-xs font-semibold text-[#4caf50]">
               Inspection Complete
             </span>

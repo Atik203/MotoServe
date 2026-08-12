@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   ClipboardList,
   Gauge,
-  MessageSquare,
   Package,
   Wrench,
   type LucideIcon,
@@ -48,9 +47,9 @@ const STEP_ORDER = ["received", "inspecting", "repairing", "testing", "completed
 
 const quickActions: { label: string; icon: LucideIcon; href?: string }[] = [
   { label: "Repair Progress", icon: Wrench, href: "/mechanic/jobs" },
-  { label: "Parts Request", icon: Package },
-  { label: "Diagnostic Tools", icon: Gauge },
-  { label: "Workshop Chat", icon: MessageSquare, href: "/mechanic/chat" },
+  { label: "Parts Request", icon: Package, href: "/mechanic/parts" },
+  { label: "Diagnostic Tools", icon: Gauge, href: "/mechanic/diagnostics" },
+  { label: "History", icon: ClipboardList, href: "/mechanic/history" },
 ];
 
 export default function MechanicDashboardPage() {
@@ -67,10 +66,10 @@ export default function MechanicDashboardPage() {
 
   const vehicleById = useMemo(() => new Map(vehicles.map((v) => [v.id, v])), [vehicles]);
 
-  const mechanicId = user?.id ?? "emp-002";
+  const mechanicId = user?.id;
 
   const assignedJobs = useMemo(
-    () => jobs.filter((j) => j.mechanicId === mechanicId || j.id === "JC-1044"),
+    () => jobs.filter((j) => (mechanicId ? j.mechanicId === mechanicId : j.mechanicId === null || j.status === "repairing")),
     [jobs, mechanicId],
   );
 
@@ -93,18 +92,23 @@ export default function MechanicDashboardPage() {
   }
 
   const activeIdx = activeJob ? STEP_ORDER.indexOf(activeJob.status) : -1;
+  const firstName = user?.name.split(" ")[0] ?? "Alex";
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
+  const todayLabel = new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+  const activeCount = jobs.filter((j) => !["completed", "ready"].includes(j.status)).length;
 
   return (
     <div className="bg-background min-h-screen p-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <div className="flex items-end justify-between">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold text-foreground">Good Morning, Alex</h1>
-            <p className="text-sm text-[#64748b]">Main Bay / Station 04 • 12 active jobs today</p>
+            <h1 className="text-2xl font-semibold text-foreground">{greeting}, {firstName}</h1>
+            <p className="text-sm text-[#64748b]">{user?.station ?? "Main Bay"} • {activeCount} active jobs</p>
           </div>
           <div className="flex items-center gap-1">
             <Calendar className="size-3 text-[#64748b]" />
-            <span className="text-xs font-semibold tracking-[0.24px] text-[#64748b]">Today, Aug 12</span>
+            <span className="text-xs font-semibold tracking-[0.24px] text-[#64748b]">{todayLabel}</span>
           </div>
         </div>
 
@@ -182,10 +186,10 @@ export default function MechanicDashboardPage() {
                         </Button>
                         <Button
                           size="sm"
-                          onClick={() => toast.info(`Open ${job.id} to update progress`)}
+                          asChild
                           className="rounded bg-primary-soft text-primary hover:bg-primary/10"
                         >
-                          Update Progress
+                          <Link href={`/mechanic/jobs/${job.id}`}>Update Progress</Link>
                         </Button>
                       </div>
                     </div>

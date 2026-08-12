@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { roleHome } from "@/lib/nav";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchMe } from "@/store/slices/authSlice";
 
 const NAV_LINKS = [
   { label: "Services", href: "/services" },
@@ -13,6 +17,18 @@ const NAV_LINKS = [
 
 export function PublicNavbar({ fixed = true }: { fixed?: boolean }) {
   const pathname = usePathname();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((s) => s.auth.user);
+
+  useEffect(() => {
+    if (!user) {
+      void dispatch(fetchMe());
+    }
+  }, [dispatch, user]);
+
+  const home = user ? roleHome(user.role) : "/login";
+  const bookHref = user?.role === "owner" ? "/dashboard/appointments/book" : home;
+
   return (
     <nav
       className={cn(
@@ -41,15 +57,38 @@ export function PublicNavbar({ fixed = true }: { fixed?: boolean }) {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link href="/login" className="text-xs font-semibold tracking-[0.24px] text-[#414754] transition-colors hover:text-primary">
-            Login
-          </Link>
-          <Link
-            href="/login"
-            className="flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-xs font-semibold tracking-[0.24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-colors hover:bg-primary/90"
-          >
-            Book Service
-          </Link>
+          {user ? (
+            <>
+              <Link href={home} className="hidden items-center gap-2 text-sm font-medium text-[#414754] transition-colors hover:text-primary sm:flex">
+                <span className="flex size-7 items-center justify-center rounded-full bg-primary-soft text-[11px] font-bold text-primary">
+                  {user.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .slice(0, 2)
+                    .join("")}
+                </span>
+                {user.name.split(" ")[0]}
+              </Link>
+              <Link
+                href={home}
+                className="flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-xs font-semibold tracking-[0.24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-colors hover:bg-primary/90"
+              >
+                Dashboard
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="text-xs font-semibold tracking-[0.24px] text-[#414754] transition-colors hover:text-primary">
+                Login
+              </Link>
+              <Link
+                href={bookHref}
+                className="flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-xs font-semibold tracking-[0.24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-colors hover:bg-primary/90"
+              >
+                Book Service
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>

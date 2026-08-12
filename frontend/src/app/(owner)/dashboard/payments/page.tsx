@@ -32,11 +32,13 @@ export default function PaymentInvoicePage() {
     dispatch(fetchVehicles());
   }, [dispatch]);
 
-  const invoice = invoices.find((i) => i.jobId === "JC-1045") ?? invoices[0] ?? null;
+  const invoice = invoices.find((i) => i.status === "unpaid") ?? invoices[0] ?? null;
 
   if (!invoice) {
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">Loading invoice...</div>;
   }
+
+  const vehicle = vehicles.find((v) => v.id === invoice.vehicleId) ?? null;
 
   const handlePay = async () => {
     setPaying(true);
@@ -69,8 +71,12 @@ export default function PaymentInvoicePage() {
               <div className="flex-1">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-2xl font-semibold text-foreground">2023 Ford F-150</p>
-                    <p className="text-base text-[#444651]">Plate: A9C-1234 • Job Card #JC-1045</p>
+                    <p className="text-2xl font-semibold text-foreground">
+                      {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : "Vehicle"}
+                    </p>
+                    <p className="text-base text-[#444651]">
+                      {vehicle ? `Plate: ${vehicle.regNo}` : "—"} • Job Card #{invoice.jobId}
+                    </p>
                   </div>
                   <span className="rounded-xl border border-[rgba(0,74,49,0.2)] bg-[rgba(0,74,49,0.1)] px-[13px] py-[5px] text-xs font-semibold tracking-[0.6px] text-[#004a31]">
                     Ready for Pickup
@@ -78,7 +84,9 @@ export default function PaymentInvoicePage() {
                 </div>
                 <p className="flex items-center gap-2 pt-4 text-sm text-[#444651]">
                   <CalendarDays className="size-[13.3px]" />
-                  Completed Aug 13, 2026
+                  {invoice.status === "paid"
+                    ? `Paid ${new Date(invoice.issuedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+                    : `Issued ${new Date(invoice.issuedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
                 </p>
               </div>
             </div>

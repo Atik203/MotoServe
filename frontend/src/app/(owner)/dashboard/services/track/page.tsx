@@ -6,23 +6,27 @@ import { ArrowLeft, Check, Clock, Download, FileCheck, MapPin, MessageSquare, Ph
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchJobs } from "@/store/slices/jobsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
+import { fetchEstimates } from "@/store/slices/estimatesSlice";
 import { cn } from "@/lib/utils";
 
 export default function ServiceTrackingPage() {
   const dispatch = useAppDispatch();
   const jobs = useAppSelector((s) => s.jobs.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
+  const estimates = useAppSelector((s) => s.estimates.items);
 
   useEffect(() => {
     if (jobs.length === 0) dispatch(fetchJobs());
     if (vehicles.length === 0) dispatch(fetchVehicles());
-  }, [dispatch, jobs.length, vehicles.length]);
+    if (estimates.length === 0) dispatch(fetchEstimates());
+  }, [dispatch, jobs.length, vehicles.length, estimates.length]);
 
-  const job = jobs.find((j) => j.id === "JC-1045");
+  const activeJobs = jobs.filter((j) => !["completed", "ready"].includes(j.status));
+  const job = activeJobs[0] ?? jobs[0];
   const vehicle = vehicles.find((v) => v.id === job?.vehicleId);
 
   if (!job || !vehicle) {
-    return <div className="bg-background min-h-screen p-8 text-muted-foreground">Loading tracking...</div>;
+    return <div className="bg-background min-h-screen p-8 text-muted-foreground">No active service found.</div>;
   }
 
   const doneCount = job.progress.filter((p) => p.done).length;
@@ -45,7 +49,7 @@ export default function ServiceTrackingPage() {
                 {vehicle.regNo}
               </span>
             </div>
-            <p className="text-sm text-[#424753]">Est. Completion: Today, 4:30 PM</p>
+            <p className="text-sm text-[#424753]">Job Card #{job.id} • Est. Completion: Today, 4:30 PM</p>
           </div>
           <span className="flex items-center gap-2 rounded-xl border border-[rgba(0,82,204,0.2)] bg-[rgba(0,82,204,0.1)] px-[13px] py-[7px] text-xs font-semibold tracking-[0.24px] text-primary">
             <span className="size-2 rounded-full bg-primary" />
@@ -119,10 +123,10 @@ export default function ServiceTrackingPage() {
                 <h3 className="pb-4 text-xs font-semibold tracking-[0.24px] text-[#424753]">Assigned Team</h3>
                 <div className="flex flex-col gap-6 py-3">
                   {[
-                    { name: "Sarah Jenkins", role: "Service Advisor" },
-                    { name: "Mike Ross", role: "Lead Mechanic" },
+                    { name: job.advisor?.name ?? "Service Advisor", role: "Service Advisor" },
+                    { name: job.mechanic?.name ?? "Not assigned", role: "Lead Mechanic" },
                   ].map((member) => (
-                    <div key={member.name} className="flex items-center gap-4 rounded border border-[#e1e3e4] bg-background p-[13px]">
+                    <div key={member.role} className="flex items-center gap-4 rounded border border-[#e1e3e4] bg-background p-[13px]">
                       <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-sm font-semibold text-primary shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
                         {member.name.split(" ").map((n) => n[0]).join("")}
                       </span>
@@ -166,10 +170,15 @@ export default function ServiceTrackingPage() {
                   <MessageSquare className="size-[16.7px]" />
                   Chat with Advisor
                 </Link>
-                <Link href="/dashboard/estimates/ES-3301" className="flex items-center justify-center gap-2 rounded border border-[#c2c6d5] bg-[#f8f9fa] px-[17px] py-[13px] text-xs font-semibold tracking-[0.24px] text-foreground">
-                  <FileCheck className="size-[13.3px]" />
-                  View Estimate
-                </Link>
+                {(() => {
+                  const estimate = estimates.find((e) => e.jobId === job.id);
+                  return estimate ? (
+                    <Link href={`/dashboard/estimates/${estimate.id}`} className="flex items-center justify-center gap-2 rounded border border-[#c2c6d5] bg-[#f8f9fa] px-[17px] py-[13px] text-xs font-semibold tracking-[0.24px] text-foreground">
+                      <FileCheck className="size-[13.3px]" />
+                      View Estimate
+                    </Link>
+                  ) : null;
+                })()}
                 <button type="button" className="flex items-center justify-center gap-2 rounded border border-[#c2c6d5] bg-[#f8f9fa] px-[17px] py-[13px] text-xs font-semibold tracking-[0.24px] text-foreground">
                   <Download className="size-[13.3px]" />
                   Download Invoice

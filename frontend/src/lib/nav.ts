@@ -84,7 +84,6 @@ export const roleNav: Record<Role, RoleNavConfig> = {
       { label: "History", href: "/mechanic/history", icon: History },
       { label: "Parts Request", href: "/mechanic/parts", icon: Package },
       { label: "Diagnostic Tools", href: "/mechanic/diagnostics", icon: Gauge },
-      { label: "Workshop Chat", href: "/mechanic/chat", icon: MessageSquare },
     ],
     bottomItems: [
       { label: "Help", href: "#", icon: LifeBuoy },

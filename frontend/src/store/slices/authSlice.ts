@@ -10,6 +10,9 @@ interface AuthUser {
   email: string;
   role: DemoRole;
   avatar?: string | null;
+  phone?: string | null;
+  station?: string | null;
+  specialization?: string | null;
 }
 
 interface AuthState {
