@@ -11,10 +11,15 @@ const NAV_LINKS = [
   { label: "FAQ", href: "/faqs" },
 ];
 
-export function PublicNavbar() {
+export function PublicNavbar({ fixed = true }: { fixed?: boolean }) {
   const pathname = usePathname();
   return (
-    <nav className="fixed top-0 right-0 left-0 z-40 border-b border-[#e2e8f0] bg-[rgba(248,249,250,0.8)] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] backdrop-blur-[6px]">
+    <nav
+      className={cn(
+        "top-0 right-0 left-0 z-40 border-b border-[#e2e8f0] bg-[rgba(248,249,250,0.8)] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] backdrop-blur-[6px]",
+        fixed ? "fixed" : "relative",
+      )}
+    >
       <div className="mx-auto flex h-[64px] w-full max-w-[1280px] items-center justify-between px-[32px]">
         <Link href="/" className="text-[20px] font-bold text-primary">
           MotoServe

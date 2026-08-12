@@ -33,9 +33,23 @@ export async function getVehicles(req: Request, res: Response): Promise<void> {
   res.json(vehicles.map((v) => ({ ...v, fuelType: v.fuelType.toLowerCase() })));
 }
 
+function mapJob(job: {
+  status: string;
+  priority: string;
+  progress: { step: string }[];
+  [key: string]: unknown;
+}) {
+  return {
+    ...job,
+    status: job.status.toLowerCase(),
+    priority: job.priority.toLowerCase(),
+    progress: job.progress.map((p) => ({ ...p, step: p.step.toLowerCase() })),
+  };
+}
+
 export async function getJobs(req: Request, res: Response): Promise<void> {
   const jobs = await listJobs(req.user?.role, req.user?.userId);
-  res.json(jobs);
+  res.json(jobs.map(mapJob));
 }
 
 export async function getJob(req: Request, res: Response): Promise<void> {
@@ -44,7 +58,7 @@ export async function getJob(req: Request, res: Response): Promise<void> {
     res.status(404).json({ error: "Job not found" });
     return;
   }
-  res.json(job);
+  res.json(mapJob(job));
 }
 
 export async function getAppointments(req: Request, res: Response): Promise<void> {
