@@ -20,18 +20,18 @@ export function PublicNavbar({ fixed = true }: { fixed?: boolean }) {
         fixed ? "fixed" : "relative",
       )}
     >
-      <div className="mx-auto flex h-[64px] w-full max-w-[1280px] items-center justify-between px-[32px]">
-        <Link href="/" className="text-[20px] font-bold text-primary">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-8">
+        <Link href="/" className="text-xl font-bold text-primary">
           MotoServe
         </Link>
 
-        <div className="flex items-center gap-[24px]">
+        <div className="flex items-center gap-6">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                "text-[14px] text-[#414754] transition-colors hover:text-primary",
+                "text-sm text-[#414754] transition-colors hover:text-primary",
                 pathname === link.href && "font-medium text-primary",
               )}
             >
@@ -40,13 +40,13 @@ export function PublicNavbar({ fixed = true }: { fixed?: boolean }) {
           ))}
         </div>
 
-        <div className="flex items-center gap-[16px]">
-          <Link href="/login" className="text-[12px] font-semibold tracking-[0.24px] text-[#414754] transition-colors hover:text-primary">
+        <div className="flex items-center gap-4">
+          <Link href="/login" className="text-xs font-semibold tracking-[0.24px] text-[#414754] transition-colors hover:text-primary">
             Login
           </Link>
           <Link
             href="/login"
-            className="flex h-[40px] items-center justify-center rounded-[12px] bg-primary px-[16px] text-[12px] font-semibold tracking-[0.24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-colors hover:bg-primary/90"
+            className="flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-xs font-semibold tracking-[0.24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-colors hover:bg-primary/90"
           >
             Book Service
           </Link>

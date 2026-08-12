@@ -29,7 +29,7 @@ const DURATIONS = [
   { value: "120", label: "2 hrs" },
 ];
 
-const fieldClass = "h-[38px] w-full rounded-[4px] border-[#e2e8f0] bg-[#f8f9fa] text-[14px]";
+const fieldClass = "h-[38px] w-full rounded border-[#e2e8f0] bg-[#f8f9fa] text-sm";
 
 export default function NewServicePage() {
   const router = useRouter();
@@ -47,29 +47,29 @@ export default function NewServicePage() {
   };
 
   return (
-    <div className="bg-background min-h-screen p-[32px]">
-      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-[24px]">
-        <div className="flex flex-col gap-[4px]">
-          <nav className="flex items-center gap-[8px] text-[12px] font-semibold text-[#727784]">
+    <div className="bg-background min-h-screen p-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+        <div className="flex flex-col gap-1">
+          <nav className="flex items-center gap-2 text-xs font-semibold text-[#727784]">
             <span>Services</span>
             <span>›</span>
             <span className="text-foreground">New Service</span>
           </nav>
-          <h1 className="text-[24px] font-semibold tracking-[-0.24px] text-foreground">Add New Service</h1>
+          <h1 className="text-2xl font-semibold tracking-[-0.24px] text-foreground">Add New Service</h1>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col gap-[25px] rounded-[8px] border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
+          className="flex flex-col gap-[25px] rounded-lg border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
         >
-          <div className="grid grid-cols-2 gap-[16px]">
-            <div className="flex flex-col gap-[6px]">
-              <Label className="text-[12px] font-medium text-[#64748b]">Service Name</Label>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-medium text-[#64748b]">Service Name</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Oil Change" className={fieldClass} />
             </div>
 
-            <div className="flex flex-col gap-[6px]">
-              <Label className="text-[12px] font-medium text-[#64748b]">Category</Label>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-medium text-[#64748b]">Category</Label>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className={fieldClass}>
                   <SelectValue />
@@ -84,10 +84,10 @@ export default function NewServicePage() {
               </Select>
             </div>
 
-            <div className="flex flex-col gap-[6px]">
-              <Label className="text-[12px] font-medium text-[#64748b]">Base Price</Label>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-medium text-[#64748b]">Base Price</Label>
               <div className="relative">
-                <span className="absolute top-1/2 left-[12px] -translate-y-1/2 text-[14px] text-muted-foreground">$</span>
+                <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">$</span>
                 <Input
                   type="number"
                   min="0"
@@ -95,13 +95,13 @@ export default function NewServicePage() {
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   placeholder="0.00"
-                  className={`${fieldClass} pl-[24px]`}
+                  className={`${fieldClass} pl-6`}
                 />
               </div>
             </div>
 
-            <div className="flex flex-col gap-[6px]">
-              <Label className="text-[12px] font-medium text-[#64748b]">Est. Duration</Label>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-medium text-[#64748b]">Est. Duration</Label>
               <Select value={duration} onValueChange={setDuration}>
                 <SelectTrigger className={fieldClass}>
                   <SelectValue />
@@ -116,37 +116,37 @@ export default function NewServicePage() {
               </Select>
             </div>
 
-            <div className="col-span-2 flex flex-col gap-[6px]">
-              <Label className="text-[12px] font-medium text-[#64748b]">Description</Label>
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label className="text-xs font-medium text-[#64748b]">Description</Label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe what this service includes..."
-                className="min-h-[96px] resize-none rounded-[4px] border-[#e2e8f0] bg-[#f8f9fa] text-[14px]"
+                className="min-h-24 resize-none rounded border-[#e2e8f0] bg-[#f8f9fa] text-sm"
               />
             </div>
 
-            <div className="col-span-2 flex items-center gap-[12px]">
-              <Label className="text-[12px] font-medium text-[#64748b]">Status</Label>
+            <div className="col-span-2 flex items-center gap-3">
+              <Label className="text-xs font-medium text-[#64748b]">Status</Label>
               <Switch checked={active} onCheckedChange={setActive} />
-              <span className="text-[12px] text-[#64748b]">Active</span>
+              <span className="text-xs text-[#64748b]">Active</span>
             </div>
           </div>
 
-          <div className="flex justify-end gap-[8px]">
+          <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => router.push("/admin/services")}
-              className="rounded-[4px] border-[#e2e8f0] px-[17px] py-[9px] text-[12px] font-semibold tracking-[0.24px]"
+              className="rounded border-[#e2e8f0] px-[17px] py-[9px] text-xs font-semibold tracking-[0.24px]"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               size="sm"
-              className="rounded-[4px] px-[16px] py-[9px] text-[12px] font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
+              className="rounded px-4 py-[9px] text-xs font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
             >
               Create Service
             </Button>

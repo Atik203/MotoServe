@@ -46,20 +46,20 @@ export function MonthCalendar({ selectedDate, onSelect }: MonthCalendarProps) {
 
   return (
     <div>
-      <div className="mb-[12px] flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between">
         <button type="button" onClick={prevMonth} className="text-muted-foreground hover:text-foreground" aria-label="Previous month">
-          <ChevronLeft className="size-[16px]" />
+          <ChevronLeft className="size-4" />
         </button>
-        <span className="text-[14px] font-semibold text-foreground">
+        <span className="text-sm font-semibold text-foreground">
           {MONTHS[view.month]} {view.year}
         </span>
         <button type="button" onClick={nextMonth} className="text-muted-foreground hover:text-foreground" aria-label="Next month">
-          <ChevronRight className="size-[16px]" />
+          <ChevronRight className="size-4" />
         </button>
       </div>
       <div className="grid grid-cols-7 gap-y-[4px]">
         {WEEKDAYS.map((d) => (
-          <span key={d} className="text-center text-[12px] font-medium text-muted-foreground">
+          <span key={d} className="text-center text-xs font-medium text-muted-foreground">
             {d}
           </span>
         ))}
@@ -77,7 +77,7 @@ export function MonthCalendar({ selectedDate, onSelect }: MonthCalendarProps) {
               type="button"
               onClick={() => onSelect(date)}
               className={cn(
-                "mx-auto flex size-[28px] items-center justify-center rounded-full text-[12px] transition-colors",
+                "mx-auto flex size-7 items-center justify-center rounded-full text-xs transition-colors",
                 isSelected
                   ? "bg-primary font-semibold text-white"
                   : isToday

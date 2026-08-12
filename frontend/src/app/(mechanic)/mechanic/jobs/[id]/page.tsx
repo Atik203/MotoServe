@@ -48,7 +48,7 @@ export default function RepairProgressPage() {
 
   if (!job) {
     return (
-      <div className="bg-background min-h-screen p-[32px]">
+      <div className="bg-background min-h-screen p-8">
         <p className="text-muted-foreground">Loading job card...</p>
       </div>
     );
@@ -68,14 +68,14 @@ export default function RepairProgressPage() {
   };
 
   return (
-    <div className="bg-background min-h-screen p-[32px]">
-      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-[24px]">
-        <div className="flex items-center justify-between pb-[8px]">
-          <h1 className="text-[24px] font-bold text-foreground">Repair Progress</h1>
+    <div className="bg-background min-h-screen p-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+        <div className="flex items-center justify-between pb-2">
+          <h1 className="text-2xl font-bold text-foreground">Repair Progress</h1>
           <PriorityPill priority={job.priority} />
         </div>
 
-        <section className="flex gap-[16px] rounded-[8px] border border-border bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+        <section className="flex gap-4 rounded-lg border border-border bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
           {[
             { label: "Vehicle", value: vehicleName(job.vehicleId, job) },
             { label: "Customer", value: customerName(job.customerId, job) },
@@ -83,43 +83,43 @@ export default function RepairProgressPage() {
             { label: "Advisor", value: advisorName(job.advisorId, job) },
             { label: "Station", value: job.station ?? "Not assigned" },
           ].map((f) => (
-            <div key={f.label} className="flex flex-1 flex-col gap-[4px]">
+            <div key={f.label} className="flex flex-1 flex-col gap-1">
               <span className="text-[13px] text-muted-foreground">{f.label}</span>
-              <span className={`text-[14px] font-semibold ${f.blue ? "text-primary" : "text-foreground"}`}>
+              <span className={`text-sm font-semibold ${f.blue ? "text-primary" : "text-foreground"}`}>
                 {f.value}
               </span>
             </div>
           ))}
         </section>
 
-        <section className="flex flex-col gap-[24px] rounded-[8px] border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-          <h2 className="text-[16px] font-medium text-foreground">Status</h2>
+        <section className="flex flex-col gap-6 rounded-lg border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+          <h2 className="text-base font-medium text-foreground">Status</h2>
           <ProgressStepper steps={job.progress} />
         </section>
 
-        <div className="grid grid-cols-12 items-start gap-[24px]">
-          <div className="col-span-8 flex flex-col gap-[24px]">
+        <div className="grid grid-cols-12 items-start gap-6">
+          <div className="col-span-8 flex flex-col gap-6">
             <MechanicNotes jobId={job.id} notes={job.notes} author="Alex Turner" />
             <PartsUsedTable jobId={job.id} parts={job.partsUsed} />
           </div>
 
-          <div className="col-span-4 flex flex-col gap-[24px]">
+          <div className="col-span-4 flex flex-col gap-6">
             <RepairPhotos photos={job.photos} />
-            <div className="flex flex-col gap-[8px]">
+            <div className="flex flex-col gap-2">
               <Button
                 variant="outline"
                 onClick={() => { downloadJobCardPdf(job); toast.success("Job card PDF downloaded"); }}
-                className="rounded-[4px] border-[#c2c6d5] bg-secondary text-foreground hover:bg-muted"
+                className="rounded border-[#c2c6d5] bg-secondary text-foreground hover:bg-muted"
               >
                 Download Job Card
               </Button>
-              <Button variant="outline" className="rounded-[4px] border-[#c2c6d5] bg-secondary text-foreground hover:bg-muted">
+              <Button variant="outline" className="rounded border-[#c2c6d5] bg-secondary text-foreground hover:bg-muted">
                 Save Progress
               </Button>
               <Button
                 onClick={advanceStage}
                 disabled={job.status === "completed"}
-                className="rounded-[4px] bg-[rgba(0,82,204,0.1)] text-primary hover:bg-[rgba(0,82,204,0.15)]"
+                className="rounded bg-[rgba(0,82,204,0.1)] text-primary hover:bg-[rgba(0,82,204,0.15)]"
               >
                 Mark Next Stage
               </Button>
@@ -131,7 +131,7 @@ export default function RepairProgressPage() {
                     .catch((err: Error) => toast.error(err.message));
                 }}
                 disabled={job.status === "completed"}
-                className="rounded-[4px]"
+                className="rounded"
               >
                 Complete Job
               </Button>

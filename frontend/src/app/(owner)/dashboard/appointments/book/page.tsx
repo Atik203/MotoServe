@@ -44,7 +44,7 @@ const TIMELINE_STEPS = ["Pending", "Confirmed", "In Progress", "Quality Check", 
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-[14px] font-bold tracking-[0.35px] text-foreground uppercase">{children}</h2>
+    <h2 className="text-sm font-bold tracking-[0.35px] text-foreground uppercase">{children}</h2>
   );
 }
 
@@ -142,26 +142,26 @@ export default function BookAppointmentPage() {
   };
 
   return (
-    <div className="bg-background min-h-screen p-[24px]">
-      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-[24px]">
+    <div className="bg-background min-h-screen p-6">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <div className="flex items-center justify-between">
-          <nav className="flex items-center gap-[8px] text-[14px]">
+          <nav className="flex items-center gap-2 text-sm">
             <span className="font-medium text-muted-foreground">Dashboard</span>
             <span className="font-medium text-muted-foreground">›</span>
             <span className="font-semibold text-foreground">Book Appointment</span>
           </nav>
-          <Button variant="outline" size="sm" className="h-[38px] gap-[8px] rounded-[6px] px-[17px] text-[14px] font-medium">
-            <HelpCircle className="size-[14px]" />
+          <Button variant="outline" size="sm" className="h-[38px] gap-2 rounded-md px-[17px] text-sm font-medium">
+            <HelpCircle className="size-3.5" />
             Appointment Help
           </Button>
         </div>
 
-        <div className="grid grid-cols-12 items-start gap-[24px]">
-          <div className="col-span-7 flex flex-col gap-[24px]">
-            <Card className="rounded-[12px] border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
-              <CardContent className="flex flex-col gap-[16px] p-[21px]">
+        <div className="grid grid-cols-12 items-start gap-6">
+          <div className="col-span-7 flex flex-col gap-6">
+            <Card className="rounded-xl border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
+              <CardContent className="flex flex-col gap-4 p-[21px]">
                 <SectionTitle>Select Vehicle</SectionTitle>
-                <div className="flex gap-[16px] overflow-x-auto pb-[8px]">
+                <div className="flex gap-4 overflow-x-auto pb-2">
                   {vehicles.map((v) => (
                     <VehicleCard
                       key={v.id}
@@ -175,26 +175,26 @@ export default function BookAppointmentPage() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-[12px] border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
-              <CardContent className="flex flex-col gap-[16px] p-[21px]">
+            <Card className="rounded-xl border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
+              <CardContent className="flex flex-col gap-4 p-[21px]">
                 <SectionTitle>Choose Services</SectionTitle>
                 <div className="relative">
-                  <Search className="absolute top-1/2 left-[12px] size-[14px] -translate-y-1/2 text-muted-foreground" />
+                  <Search className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search services..."
-                    className="h-[38px] rounded-[8px] pl-[37px]"
+                    className="h-[38px] rounded-lg pl-[37px]"
                   />
                 </div>
-                <div className="flex flex-wrap gap-[8px]">
+                <div className="flex flex-wrap gap-2">
                   {FILTERS.map((f) => (
                     <button
                       key={f.value}
                       type="button"
                       onClick={() => setFilter(f.value)}
                       className={cn(
-                        "rounded-full px-[13px] py-[7px] text-[12px] font-medium transition-colors",
+                        "rounded-full px-[13px] py-[7px] text-xs font-medium transition-colors",
                         filter === f.value
                           ? "bg-primary-soft text-primary ring-1 ring-primary"
                           : "border border-input bg-white text-[#4b5563] hover:border-primary/50",
@@ -217,32 +217,32 @@ export default function BookAppointmentPage() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-[12px] border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
-              <CardContent className="flex flex-col gap-[16px] p-[21px]">
+            <Card className="rounded-xl border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
+              <CardContent className="flex flex-col gap-4 p-[21px]">
                 <SectionTitle>Custom Service Request</SectionTitle>
                 <Input
                   value={customRequest}
                   onChange={(e) => setCustomRequest(e.target.value)}
                   placeholder="Enter other service or issue..."
-                  className="h-[38px] rounded-[8px]"
+                  className="h-[38px] rounded-lg"
                 />
               </CardContent>
             </Card>
           </div>
 
-          <div className="col-span-5 flex flex-col gap-[24px] lg:sticky lg:top-[88px]">
-            <Card className="rounded-[12px] border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
-              <CardContent className="flex flex-col gap-[16px] p-[21px]">
+          <div className="col-span-5 flex flex-col gap-6 lg:sticky lg:top-22">
+            <Card className="rounded-xl border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
+              <CardContent className="flex flex-col gap-4 p-[21px]">
                 <SectionTitle>Schedule</SectionTitle>
                 <MonthCalendar selectedDate={selectedDate} onSelect={setSelectedDate} />
-                <div className="grid grid-cols-3 gap-[8px]">
+                <div className="grid grid-cols-3 gap-2">
                   {TIME_SLOTS.map((t) => (
                     <button
                       key={t}
                       type="button"
                       onClick={() => setSelectedTime(t)}
                       className={cn(
-                        "rounded-[8px] border px-[8px] py-[7px] text-[12px] font-medium transition-colors",
+                        "rounded-lg border px-2 py-[7px] text-xs font-medium transition-colors",
                         selectedTime === t
                           ? "border-primary bg-primary-soft text-primary"
                           : "border-border text-muted-foreground hover:border-primary/50",
@@ -255,10 +255,10 @@ export default function BookAppointmentPage() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-[12px] border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
-              <CardContent className="flex flex-col gap-[12px] p-[21px]">
+            <Card className="rounded-xl border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
+              <CardContent className="flex flex-col gap-3 p-[21px]">
                 <SectionTitle>Estimated Cost</SectionTitle>
-                <div className="flex flex-col gap-[6px] text-[14px]">
+                <div className="flex flex-col gap-1.5 text-sm">
                   <div className="flex justify-between text-muted-foreground">
                     <span>Inspection Fee:</span>
                     <span>$0.00</span>
@@ -271,7 +271,7 @@ export default function BookAppointmentPage() {
                     <span>Tax:</span>
                     <span>${tax.toFixed(2)}</span>
                   </div>
-                  <Separator className="my-[4px]" />
+                  <Separator className="my-1" />
                   <div className="flex justify-between font-bold text-foreground">
                     <span>Estimated Total:</span>
                     <span>${total.toFixed(2)}</span>
@@ -280,51 +280,51 @@ export default function BookAppointmentPage() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-[12px] border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
-              <CardContent className="flex flex-col gap-[16px] p-[21px]">
+            <Card className="rounded-xl border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
+              <CardContent className="flex flex-col gap-4 p-[21px]">
                 <div className="flex items-center justify-between">
-                  <span className="text-[14px] font-medium text-foreground">Workshop Branch</span>
+                  <span className="text-sm font-medium text-foreground">Workshop Branch</span>
                   <Switch checked={branchOn} onCheckedChange={setBranchOn} />
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
-                  <span className="text-[14px] font-medium text-foreground">Service Advisor</span>
+                  <span className="text-sm font-medium text-foreground">Service Advisor</span>
                   <Switch checked={advisorOn} onCheckedChange={setAdvisorOn} />
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
-                  <span className="text-[14px] font-medium text-foreground">Vehicle Pickup</span>
+                  <span className="text-sm font-medium text-foreground">Vehicle Pickup</span>
                   <Switch checked={pickupOn} onCheckedChange={setPickupOn} />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="rounded-[12px] border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
-              <CardContent className="flex flex-col gap-[10px] p-[21px]">
+            <Card className="rounded-xl border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
+              <CardContent className="flex flex-col gap-2.5 p-[21px]">
                 <SectionTitle>Booking Summary</SectionTitle>
-                <div className="text-[14px]">
+                <div className="text-sm">
                   <span className="text-muted-foreground">Services: </span>
                   <span className="font-medium text-foreground">
                     {selectedServiceNames.length > 0 ? selectedServiceNames.join(", ") : "None selected"}
                   </span>
                 </div>
-                <div className="text-[14px]">
+                <div className="text-sm">
                   <span className="text-muted-foreground">Date &amp; Time: </span>
                   <span className="font-medium text-foreground">{summaryDate}</span>
                 </div>
-                <div className="text-[14px]">
+                <div className="text-sm">
                   <span className="text-muted-foreground">Branch: </span>
                   <span className="font-medium text-foreground">Main Street</span>
                 </div>
-                <div className="text-[14px]">
+                <div className="text-sm">
                   <span className="text-muted-foreground">Advisor: </span>
                   <span className="font-medium text-foreground">Sarah Jenkins</span>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="rounded-[12px] border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
-              <CardContent className="flex flex-col gap-[16px] p-[21px]">
+            <Card className="rounded-xl border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
+              <CardContent className="flex flex-col gap-4 p-[21px]">
                 <SectionTitle>Workflow Timeline</SectionTitle>
                 <div className="flex items-center">
                   {TIMELINE_STEPS.map((step, i) => (
@@ -332,15 +332,15 @@ export default function BookAppointmentPage() {
                       <div className="flex flex-col items-center">
                         <span
                           className={cn(
-                            "flex size-[14px] items-center justify-center rounded-full border-2",
+                            "flex size-3.5 items-center justify-center rounded-full border-2",
                             i === 0 ? "border-primary bg-primary" : "border-border bg-white",
                           )}
                         >
-                          {i === 0 && <span className="size-[4px] rounded-full bg-white" />}
+                          {i === 0 && <span className="size-1 rounded-full bg-white" />}
                         </span>
                         <span
                           className={cn(
-                            "mt-[6px] text-[10px] whitespace-nowrap",
+                            "mt-1.5 text-[10px] whitespace-nowrap",
                             i === 0 ? "font-semibold text-primary" : "text-muted-foreground",
                           )}
                         >
@@ -348,7 +348,7 @@ export default function BookAppointmentPage() {
                         </span>
                       </div>
                       {i < TIMELINE_STEPS.length - 1 && (
-                        <div className={cn("mx-[6px] h-[2px] flex-1", i === 0 ? "bg-primary" : "bg-border")} />
+                        <div className={cn("mx-1.5 h-0.5 flex-1", i === 0 ? "bg-primary" : "bg-border")} />
                       )}
                     </div>
                   ))}
@@ -356,7 +356,7 @@ export default function BookAppointmentPage() {
               </CardContent>
             </Card>
 
-            <div className="flex items-center justify-end gap-[12px]">
+            <div className="flex items-center justify-end gap-3">
               <Button variant="ghost" onClick={() => router.back()}>
                 Cancel
               </Button>
@@ -366,7 +366,7 @@ export default function BookAppointmentPage() {
               >
                 Save as Draft
               </Button>
-              <Button onClick={handleBook} className="rounded-[8px]">
+              <Button onClick={handleBook} className="rounded-lg">
                 Book Appointment
               </Button>
             </div>

@@ -45,13 +45,13 @@ function EmployeeAvatar({ employee }: { employee: Employee }) {
   const [broken, setBroken] = useState(!EXISTING_AVATARS.has(employee.avatar));
   if (broken) {
     return (
-      <span className="flex size-[40px] shrink-0 items-center justify-center rounded-[12px] border border-[rgba(120,49,0,0.2)] bg-[rgba(158,67,0,0.3)] text-[12px] font-bold tracking-[0.24px] text-[#783100] uppercase">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[rgba(120,49,0,0.2)] bg-[rgba(158,67,0,0.3)] text-xs font-bold tracking-[0.24px] text-[#783100] uppercase">
         {employee.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
       </span>
     );
   }
   return (
-    <span className="block size-[40px] shrink-0 overflow-hidden rounded-[12px] border border-[#e2e8f0]">
+    <span className="block size-10 shrink-0 overflow-hidden rounded-xl border border-[#e2e8f0]">
       <Image
         src={employee.avatar}
         alt={employee.name}
@@ -110,35 +110,35 @@ export default function EmployeeManagementPage() {
   const roleLabel = (e: Employee) => (e.role === "advisor" ? "Service Advisor" : "Mechanic");
 
   return (
-    <div className="bg-background min-h-screen p-[32px]">
-      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-[24px]">
-        <div className="flex flex-col gap-[4px]">
+    <div className="bg-background min-h-screen p-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+        <div className="flex flex-col gap-1">
           <p className="text-[11px] font-medium text-[#424753]">
             Dashboard
-            <span className="mx-[6px] text-[#cbd5e1]">›</span>
+            <span className="mx-1.5 text-[#cbd5e1]">›</span>
             <span className="font-semibold text-primary">Employees</span>
           </p>
           <div className="flex items-center justify-between">
-            <h1 className="text-[24px] font-semibold tracking-[-0.24px] text-foreground">Employee Management</h1>
-            <div className="flex gap-[8px]">
+            <h1 className="text-2xl font-semibold tracking-[-0.24px] text-foreground">Employee Management</h1>
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => toast.success("Employees list exported (demo)")}
-                className="gap-[4px] rounded-[4px] px-[17px] py-[9px] text-[12px] font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
+                className="gap-1 rounded px-[17px] py-[9px] text-xs font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
               >
-                <Download className="size-[12px]" />
+                <Download className="size-3" />
                 Export
               </Button>
-              <Button asChild size="sm" className="gap-[4px] rounded-[4px] px-[16px] py-[9px] text-[12px] font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <Button asChild size="sm" className="gap-1 rounded px-4 py-[9px] text-xs font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
                 <Link href="/admin/employees/advisors/new">
-                  <Plus className="size-[12px]" />
+                  <Plus className="size-3" />
                   Advisor
                 </Link>
               </Button>
-              <Button asChild size="sm" className="gap-[4px] rounded-[4px] px-[16px] py-[9px] text-[12px] font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <Button asChild size="sm" className="gap-1 rounded px-4 py-[9px] text-xs font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
                 <Link href="/admin/employees/mechanics/new">
-                  <Plus className="size-[12px]" />
+                  <Plus className="size-3" />
                   Mechanic
                 </Link>
               </Button>
@@ -146,31 +146,31 @@ export default function EmployeeManagementPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-[24px]">
+        <div className="grid grid-cols-3 gap-6">
           {kpis.map((kpi) => (
-            <div key={kpi.label} className="flex h-[128px] flex-col justify-between rounded-[8px] border border-[#e2e8f0] bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+            <div key={kpi.label} className="flex h-32 flex-col justify-between rounded-lg border border-[#e2e8f0] bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
               <div className="flex items-start justify-between">
-                <span className="text-[12px] font-semibold tracking-[0.6px] text-[#424753] uppercase">{kpi.label}</span>
+                <span className="text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">{kpi.label}</span>
                 <kpi.icon className="size-[18px] text-muted-foreground" />
               </div>
               <div className="flex items-end justify-between">
-                <span className="text-[36px] font-bold tracking-[-0.72px] text-foreground">{kpi.value}</span>
+                <span className="text-4xl font-bold tracking-[-0.72px] text-foreground">{kpi.value}</span>
                 {kpi.delta ? (
-                  <span className={cn("flex items-center gap-[4px] rounded-[12px] p-[4px] text-[11px] font-medium", kpi.delta.className)}>
+                  <span className={cn("flex items-center gap-1 rounded-xl p-1 text-[11px] font-medium", kpi.delta.className)}>
                     <TrendingUp className="size-[11px]" />
                     {kpi.delta.text}
                   </span>
                 ) : (
-                  <span className="pb-[4px] text-[14px] text-[#424753]">{kpi.sub}</span>
+                  <span className="pb-1 text-sm text-[#424753]">{kpi.sub}</span>
                 )}
               </div>
             </div>
           ))}
         </div>
 
-        <div className="overflow-hidden rounded-[8px] border border-[#e2e8f0] bg-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-          <div className="flex items-center justify-between border-b border-[#e2e8f0] px-[16px] pt-[16px] pb-[17px]">
-            <div className="flex items-center rounded-[4px] border border-[#e2e8f0] bg-[#f3f4f5] p-[5px]">
+        <div className="overflow-hidden rounded-lg border border-[#e2e8f0] bg-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+          <div className="flex items-center justify-between border-b border-[#e2e8f0] px-4 pt-4 pb-[17px]">
+            <div className="flex items-center rounded border border-[#e2e8f0] bg-[#f3f4f5] p-[5px]">
               {(
                 [
                   { key: "all", label: "All Employees" },
@@ -183,7 +183,7 @@ export default function EmployeeManagementPage() {
                   type="button"
                   onClick={() => setTab(t.key)}
                   className={cn(
-                    "rounded-[6px] px-[16px] py-[9px] text-[12px] font-semibold tracking-[0.24px] transition-colors",
+                    "rounded-md px-4 py-[9px] text-xs font-semibold tracking-[0.24px] transition-colors",
                     tab === t.key
                       ? "border border-[#e2e8f0] bg-white text-primary shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
                       : "text-[#424753] hover:text-foreground",
@@ -193,23 +193,23 @@ export default function EmployeeManagementPage() {
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-[8px]">
-              <div className="relative w-[256px]">
-                <Search className="absolute top-1/2 left-[8px] size-[15px] -translate-y-1/2 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              <div className="relative w-64">
+                <Search className="absolute top-1/2 left-2 size-[15px] -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by name, ID..."
-                  className="h-[38px] rounded-[4px] pl-[33px] text-[14px]"
+                  className="h-[38px] rounded pl-[33px] text-sm"
                 />
               </div>
               <button
                 type="button"
                 onClick={() => toast.info("Filters — coming with the backend")}
-                className="rounded-[4px] border border-[#e2e8f0] bg-white p-[9px] text-muted-foreground transition-colors hover:text-foreground"
+                className="rounded border border-[#e2e8f0] bg-white p-[9px] text-muted-foreground transition-colors hover:text-foreground"
                 aria-label="Filter employees"
               >
-                <SlidersHorizontal className="size-[14px]" />
+                <SlidersHorizontal className="size-3.5" />
               </button>
             </div>
           </div>
@@ -217,58 +217,58 @@ export default function EmployeeManagementPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-background hover:bg-background">
-                <TableHead className="w-[48px] px-[16px] py-[16px]">
+                <TableHead className="w-12 px-4 py-4">
                   <Checkbox aria-label="Select all" />
                 </TableHead>
-                <TableHead className="px-[16px] py-[16px] text-[12px] font-semibold tracking-[0.6px] text-[#424753] uppercase">Employee</TableHead>
-                <TableHead className="px-[16px] py-[16px] text-[12px] font-semibold tracking-[0.6px] text-[#424753] uppercase">Contact</TableHead>
-                <TableHead className="px-[16px] py-[16px] text-[12px] font-semibold tracking-[0.6px] text-[#424753] uppercase">Role</TableHead>
-                <TableHead className="px-[16px] py-[16px] text-[12px] font-semibold tracking-[0.6px] text-[#424753] uppercase">Status</TableHead>
-                <TableHead className="px-[16px] py-[16px] text-right text-[12px] font-semibold tracking-[0.6px] text-[#424753] uppercase">Actions</TableHead>
+                <TableHead className="px-4 py-4 text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Employee</TableHead>
+                <TableHead className="px-4 py-4 text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Contact</TableHead>
+                <TableHead className="px-4 py-4 text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Role</TableHead>
+                <TableHead className="px-4 py-4 text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Status</TableHead>
+                <TableHead className="px-4 py-4 text-right text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((employee) => (
                 <TableRow key={employee.id} className="border-t border-border transition-colors hover:bg-background">
-                  <TableCell className="px-[16px] py-[17px]">
+                  <TableCell className="px-4 py-[17px]">
                     <Checkbox aria-label={`Select ${employee.name}`} />
                   </TableCell>
-                  <TableCell className="px-[16px] py-[17px]">
-                    <div className="flex items-center gap-[16px]">
+                  <TableCell className="px-4 py-[17px]">
+                    <div className="flex items-center gap-4">
                       <EmployeeAvatar employee={employee} />
                       <div>
-                        <p className="text-[12px] font-semibold tracking-[0.24px] text-foreground">{employee.name}</p>
+                        <p className="text-xs font-semibold tracking-[0.24px] text-foreground">{employee.name}</p>
                         <p className="text-[11px] font-medium text-[#424753]">{employee.id.toUpperCase()}</p>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="px-[16px] py-[17px]">
-                    <p className="text-[14px] text-foreground">{employee.email}</p>
+                  <TableCell className="px-4 py-[17px]">
+                    <p className="text-sm text-foreground">{employee.email}</p>
                     <p className="text-[11px] font-medium text-[#424753]">{employee.phone}</p>
                   </TableCell>
-                  <TableCell className="px-[16px] py-[17px]">
-                    <p className="text-[14px] text-foreground">{roleLabel(employee)}</p>
+                  <TableCell className="px-4 py-[17px]">
+                    <p className="text-sm text-foreground">{roleLabel(employee)}</p>
                     {employee.specialization && <p className="text-[11px] font-medium text-[#424753]">{employee.specialization}</p>}
                   </TableCell>
-                  <TableCell className="px-[16px] py-[17px]">
+                  <TableCell className="px-4 py-[17px]">
                     <span
                       className={cn(
-                        "inline-flex items-center gap-[6px] rounded-[12px] border px-[9px] py-[5px] text-[11px] font-medium",
+                        "inline-flex items-center gap-1.5 rounded-xl border px-[9px] py-[5px] text-[11px] font-medium",
                         employee.status === "active"
                           ? "border-[rgba(76,175,80,0.2)] bg-[rgba(76,175,80,0.1)] text-[#4caf50]"
                           : "border-[#e2e8f0] bg-secondary text-muted-foreground",
                       )}
                     >
-                      <span className={cn("size-[6px] rounded-full", employee.status === "active" ? "bg-[#4caf50]" : "bg-muted-foreground")} />
+                      <span className={cn("size-1.5 rounded-full", employee.status === "active" ? "bg-[#4caf50]" : "bg-muted-foreground")} />
                       {employee.status === "active" ? "Active" : "Inactive"}
                     </span>
                   </TableCell>
-                  <TableCell className="px-[16px] py-[17px]">
-                    <div className="flex justify-end gap-[4px]">
+                  <TableCell className="px-4 py-[17px]">
+                    <div className="flex justify-end gap-1">
                       <button
                         type="button"
                         onClick={() => toast.info(`View ${employee.name} — coming with the backend`)}
-                        className="rounded-[6px] p-[6px] text-muted-foreground transition-colors hover:bg-[#f3f4f5] hover:text-foreground"
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-[#f3f4f5] hover:text-foreground"
                         aria-label={`View ${employee.name}`}
                       >
                         <Eye className="size-[15px]" />
@@ -276,7 +276,7 @@ export default function EmployeeManagementPage() {
                       <button
                         type="button"
                         onClick={() => toast.info(`Edit ${employee.name} — coming with the backend`)}
-                        className="rounded-[6px] p-[6px] text-muted-foreground transition-colors hover:bg-[#f3f4f5] hover:text-foreground"
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-[#f3f4f5] hover:text-foreground"
                         aria-label={`Edit ${employee.name}`}
                       >
                         <Pencil className="size-[15px]" />
@@ -284,7 +284,7 @@ export default function EmployeeManagementPage() {
                       <button
                         type="button"
                         onClick={() => toast.info(`Delete ${employee.name} — coming with the backend`)}
-                        className="rounded-[6px] p-[6px] text-muted-foreground transition-colors hover:bg-[#f3f4f5] hover:text-destructive"
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-[#f3f4f5] hover:text-destructive"
                         aria-label={`Delete ${employee.name}`}
                       >
                         <Trash2 className="size-[15px]" />
@@ -296,22 +296,22 @@ export default function EmployeeManagementPage() {
             </TableBody>
           </Table>
 
-          <div className="flex items-center justify-between border-t border-[#e2e8f0] px-[16px] pt-[17px] pb-[16px]">
+          <div className="flex items-center justify-between border-t border-[#e2e8f0] px-4 pt-[17px] pb-4">
             <p className="text-[11px] font-medium text-[#424753]">
               Showing 1 to {rows.length} of {employees.length} entries
             </p>
-            <div className="flex items-center gap-[4px]">
+            <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="rounded-[4px] border border-[#e2e8f0] bg-white p-[9px] text-[#424753] transition-colors hover:text-foreground"
+                className="rounded border border-[#e2e8f0] bg-white p-[9px] text-[#424753] transition-colors hover:text-foreground"
                 aria-label="Previous page"
               >
-                <ChevronLeft className="size-[12px]" />
+                <ChevronLeft className="size-3" />
               </button>
               {PAGE_LABELS.map((label, i) =>
                 label === "…" ? (
-                  <span key={`${label}-${i}`} className="px-[4px] text-[16px] text-[#424753]">
+                  <span key={`${label}-${i}`} className="px-1 text-base text-[#424753]">
                     …
                   </span>
                 ) : (
@@ -320,7 +320,7 @@ export default function EmployeeManagementPage() {
                     type="button"
                     onClick={() => setPage(label)}
                     className={cn(
-                      "flex size-[32px] items-center justify-center rounded-[4px] text-[12px] font-semibold tracking-[0.24px]",
+                      "flex size-8 items-center justify-center rounded text-xs font-semibold tracking-[0.24px]",
                       page === label
                         ? "bg-primary text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
                         : "border border-[#e2e8f0] bg-white text-[#191c1d] transition-colors hover:text-primary",
@@ -333,10 +333,10 @@ export default function EmployeeManagementPage() {
               <button
                 type="button"
                 onClick={() => setPage((p) => Math.min(15, p + 1))}
-                className="rounded-[4px] border border-[#e2e8f0] bg-white p-[9px] text-[#424753] transition-colors hover:text-foreground"
+                className="rounded border border-[#e2e8f0] bg-white p-[9px] text-[#424753] transition-colors hover:text-foreground"
                 aria-label="Next page"
               >
-                <ChevronRight className="size-[12px]" />
+                <ChevronRight className="size-3" />
               </button>
             </div>
           </div>

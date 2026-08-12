@@ -37,7 +37,7 @@ export default function ServicesPage() {
 
   if (services.length === 0) {
     return (
-      <div className="bg-background min-h-screen p-[32px]">
+      <div className="bg-background min-h-screen p-8">
         <p className="text-muted-foreground">Loading services...</p>
       </div>
     );
@@ -56,14 +56,14 @@ export default function ServicesPage() {
   ];
 
   return (
-    <div className="bg-background min-h-screen p-[32px]">
-      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-[24px]">
+    <div className="bg-background min-h-screen p-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <div className="flex items-end justify-between">
           <div>
-            <h1 className="text-[24px] font-semibold tracking-[-0.24px] text-foreground">Service Management</h1>
-            <p className="text-[14px] text-muted-foreground">Manage your workshop&apos;s service offerings and pricing.</p>
+            <h1 className="text-2xl font-semibold tracking-[-0.24px] text-foreground">Service Management</h1>
+            <p className="text-sm text-muted-foreground">Manage your workshop&apos;s service offerings and pricing.</p>
           </div>
-          <Button asChild size="sm" className="gap-[4px] rounded-[4px] px-[16px] py-[9px] text-[12px] font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+          <Button asChild size="sm" className="gap-1 rounded px-4 py-[9px] text-xs font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
             <Link href="/admin/services/new">
               <Plus className="size-[13.5px]" />
               New Service
@@ -71,71 +71,71 @@ export default function ServicesPage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-4 gap-[24px]">
+        <div className="grid grid-cols-4 gap-6">
           {kpis.map((kpi) => (
             <div
               key={kpi.label}
-              className="flex h-[100px] flex-col justify-between rounded-[8px] border border-[#e2e8f0] bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
+              className="flex h-[100px] flex-col justify-between rounded-lg border border-[#e2e8f0] bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
             >
-              <span className="text-[12px] font-semibold tracking-[0.24px] text-[#424753]">{kpi.label}</span>
-              <span className="text-[36px] font-bold tracking-[-0.72px] text-foreground">{kpi.value}</span>
+              <span className="text-xs font-semibold tracking-[0.24px] text-[#424753]">{kpi.label}</span>
+              <span className="text-4xl font-bold tracking-[-0.72px] text-foreground">{kpi.value}</span>
             </div>
           ))}
         </div>
 
-        <div className="overflow-hidden rounded-[12px] border border-[#e2e8f0] bg-white shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
-          <div className="flex items-center justify-between border-b border-[#e2e8f0] px-[16px] py-[16px]">
-            <h2 className="text-[20px] font-semibold text-foreground">Service Catalog</h2>
-            <button className="rounded-[2px] p-[4px] text-muted-foreground hover:text-foreground" aria-label="Service catalog options">
-              <MoreVertical className="size-[16px]" />
+        <div className="overflow-hidden rounded-xl border border-[#e2e8f0] bg-white shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
+          <div className="flex items-center justify-between border-b border-[#e2e8f0] px-4 py-4">
+            <h2 className="text-xl font-semibold text-foreground">Service Catalog</h2>
+            <button className="rounded-sm p-1 text-muted-foreground hover:text-foreground" aria-label="Service catalog options">
+              <MoreVertical className="size-4" />
             </button>
           </div>
 
           <Table>
             <TableHeader>
               <TableRow className="bg-background hover:bg-background">
-                <TableHead className="px-[16px] py-[12px] text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Service Name</TableHead>
-                <TableHead className="px-[16px] py-[12px] text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Category</TableHead>
-                <TableHead className="px-[16px] py-[12px] text-right text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Base Price</TableHead>
-                <TableHead className="px-[16px] py-[12px] text-right text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Est. Duration</TableHead>
-                <TableHead className="px-[16px] py-[12px] text-center text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Status</TableHead>
-                <TableHead className="px-[16px] py-[12px] text-right text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Actions</TableHead>
+                <TableHead className="px-4 py-3 text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Service Name</TableHead>
+                <TableHead className="px-4 py-3 text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Category</TableHead>
+                <TableHead className="px-4 py-3 text-right text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Base Price</TableHead>
+                <TableHead className="px-4 py-3 text-right text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Est. Duration</TableHead>
+                <TableHead className="px-4 py-3 text-center text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Status</TableHead>
+                <TableHead className="px-4 py-3 text-right text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((service) => (
                 <TableRow key={service.id} className="group border-t border-border">
-                  <TableCell className="px-[16px] py-[19px]">
-                    <p className={cn("line-clamp-2 max-w-[280px] text-[14px] font-medium text-foreground", !service.active && "line-through")}>
+                  <TableCell className="px-4 py-[19px]">
+                    <p className={cn("line-clamp-2 max-w-[280px] text-sm font-medium text-foreground", !service.active && "line-through")}>
                       {service.name}
                     </p>
                   </TableCell>
-                  <TableCell className="px-[16px] py-[19px] text-[14px] text-[#64748b]">{formatCategory(service.category)}</TableCell>
-                  <TableCell className="px-[16px] py-[19px] text-right text-[14px] text-foreground">
+                  <TableCell className="px-4 py-[19px] text-sm text-[#64748b]">{formatCategory(service.category)}</TableCell>
+                  <TableCell className="px-4 py-[19px] text-right text-sm text-foreground">
                     ${service.basePrice.toFixed(2)}
                   </TableCell>
-                  <TableCell className="px-[16px] py-[19px] text-right text-[14px] text-foreground">
+                  <TableCell className="px-4 py-[19px] text-right text-sm text-foreground">
                     {formatDuration(service.durationMins)}
                   </TableCell>
-                  <TableCell className="px-[16px] py-[19px]">
+                  <TableCell className="px-4 py-[19px]">
                     <span
                       className={cn(
-                        "inline-flex rounded-[12px] px-[11px] py-[3px] text-[11px] font-medium",
+                        "inline-flex rounded-xl px-[11px] py-0.75 text-[11px] font-medium",
                         service.active ? "bg-[rgba(76,175,80,0.1)] text-[#4caf50]" : "bg-[#e1e3e4] text-[#64748b]",
                       )}
                     >
                       {service.active ? "Active" : "Inactive"}
                     </span>
                   </TableCell>
-                  <TableCell className="px-[16px] py-[19px]">
-                    <div className="flex justify-end gap-[8px] opacity-0 transition-opacity group-hover:opacity-100">
+                  <TableCell className="px-4 py-[19px]">
+                    <div className="flex justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
                       <button
                         type="button"
                         aria-label={`Edit ${service.name}`}
                         onClick={() => toast.info("Edit service — coming with the backend")}
-                        className="rounded-[4px] p-[4px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                        className="rounded p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                       >
-                        <Pencil className="size-[14px]" />
+                        <Pencil className="size-3.5" />
                       </button>
                       <button
                         type="button"
@@ -148,9 +148,9 @@ export default function ServicesPage() {
                             toast.error(err instanceof Error ? err.message : "Failed to delete service");
                           }
                         }}
-                        className="rounded-[4px] p-[4px] text-muted-foreground transition-colors hover:bg-[rgba(244,67,54,0.1)] hover:text-[#f44336]"
+                        className="rounded p-1 text-muted-foreground transition-colors hover:bg-[rgba(244,67,54,0.1)] hover:text-[#f44336]"
                       >
-                        <Trash2 className="size-[14px]" />
+                        <Trash2 className="size-3.5" />
                       </button>
                     </div>
                   </TableCell>
@@ -159,28 +159,28 @@ export default function ServicesPage() {
             </TableBody>
           </Table>
 
-          <div className="flex items-center justify-between border-t border-[#e2e8f0] bg-background px-[16px] py-[12px]">
-            <span className="text-[12px] font-medium text-[#424753]">
+          <div className="flex items-center justify-between border-t border-[#e2e8f0] bg-background px-4 py-3">
+            <span className="text-xs font-medium text-[#424753]">
               {total === 0 ? "0 of 0" : `${page * PAGE_SIZE + 1}-${Math.min((page + 1) * PAGE_SIZE, total)} of ${total}`}
             </span>
-            <div className="flex gap-[4px]">
+            <div className="flex gap-1">
               <button
                 type="button"
                 aria-label="Previous page"
                 disabled={page === 0}
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
-                className="flex size-[28px] items-center justify-center rounded-[4px] border border-[#e2e8f0] bg-white text-[#424753] transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex size-7 items-center justify-center rounded border border-[#e2e8f0] bg-white text-[#424753] transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <ChevronLeft className="size-[14px]" />
+                <ChevronLeft className="size-3.5" />
               </button>
               <button
                 type="button"
                 aria-label="Next page"
                 disabled={page >= pageCount - 1}
                 onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
-                className="flex size-[28px] items-center justify-center rounded-[4px] border border-[#e2e8f0] bg-white text-[#424753] transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex size-7 items-center justify-center rounded border border-[#e2e8f0] bg-white text-[#424753] transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <ChevronRight className="size-[14px]" />
+                <ChevronRight className="size-3.5" />
               </button>
             </div>
           </div>

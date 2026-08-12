@@ -86,7 +86,7 @@ export default function MechanicDashboardPage() {
 
   if (kpiCards.length === 0 || jobs.length === 0 || vehicles.length === 0) {
     return (
-      <div className="bg-background min-h-screen p-[32px]">
+      <div className="bg-background min-h-screen p-8">
         <p className="text-muted-foreground">Loading dashboard...</p>
       </div>
     );
@@ -95,38 +95,38 @@ export default function MechanicDashboardPage() {
   const activeIdx = activeJob ? STEP_ORDER.indexOf(activeJob.status) : -1;
 
   return (
-    <div className="bg-background min-h-screen p-[32px]">
-      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-[24px]">
+    <div className="bg-background min-h-screen p-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <div className="flex items-end justify-between">
-          <div className="flex flex-col gap-[4px]">
-            <h1 className="text-[24px] font-semibold text-foreground">Good Morning, Alex</h1>
-            <p className="text-[14px] text-[#64748b]">Main Bay / Station 04 • 12 active jobs today</p>
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-semibold text-foreground">Good Morning, Alex</h1>
+            <p className="text-sm text-[#64748b]">Main Bay / Station 04 • 12 active jobs today</p>
           </div>
-          <div className="flex items-center gap-[4px]">
-            <Calendar className="size-[12px] text-[#64748b]" />
-            <span className="text-[12px] font-semibold tracking-[0.24px] text-[#64748b]">Today, Aug 12</span>
+          <div className="flex items-center gap-1">
+            <Calendar className="size-3 text-[#64748b]" />
+            <span className="text-xs font-semibold tracking-[0.24px] text-[#64748b]">Today, Aug 12</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-[24px]">
+        <div className="grid grid-cols-4 gap-6">
           {kpiCards.map((kpi) => {
             const Icon = kpiIcon[kpi.icon] ?? ClipboardList;
             return (
               <div
                 key={kpi.id}
-                className="flex h-[104px] flex-col justify-between rounded-[8px] border border-border bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
+                className="flex h-[104px] flex-col justify-between rounded-lg border border-border bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
               >
                 <div className="flex w-full items-start justify-between">
-                  <span className="text-[14px] text-[#64748b]">{kpi.label}</span>
-                  <span className={cn("flex size-[32px] items-center justify-center rounded-[8px]", kpiChip[kpi.icon])}>
-                    <Icon className="size-[16px]" />
+                  <span className="text-sm text-[#64748b]">{kpi.label}</span>
+                  <span className={cn("flex size-8 items-center justify-center rounded-lg", kpiChip[kpi.icon])}>
+                    <Icon className="size-4" />
                   </span>
                 </div>
-                <div className="flex items-end justify-between gap-[8px]">
+                <div className="flex items-end justify-between gap-2">
                   <span className="text-[32px] font-bold text-[#111827]">{kpi.value}</span>
                   <span
                     className={cn(
-                      "rounded-full px-[8px] py-[2px] text-[12px] font-medium",
+                      "rounded-full px-2 py-0.5 text-xs font-medium",
                       kpi.trend === "up"
                         ? "bg-[rgba(76,175,80,0.1)] text-[#4caf50]"
                         : "bg-[rgba(255,193,7,0.1)] text-warning",
@@ -140,50 +140,50 @@ export default function MechanicDashboardPage() {
           })}
         </div>
 
-        <div className="grid grid-cols-12 items-start gap-[24px]">
-          <div className="col-span-8 flex flex-col gap-[24px]">
-            <section className="flex flex-col gap-[16px] rounded-[8px] border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+        <div className="grid grid-cols-12 items-start gap-6">
+          <div className="col-span-8 flex flex-col gap-6">
+            <section className="flex flex-col gap-4 rounded-lg border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
               <div className="flex items-center justify-between border-b border-border pb-[9px]">
-                <h2 className="flex items-center gap-[8px] text-[20px] font-semibold text-foreground">
-                  <Wrench className="size-[20px]" />
+                <h2 className="flex items-center gap-2 text-xl font-semibold text-foreground">
+                  <Wrench className="size-5" />
                   Assigned Tasks
                 </h2>
-                <span className="text-[12px] font-semibold tracking-[0.24px] text-primary">View All</span>
+                <span className="text-xs font-semibold tracking-[0.24px] text-primary">View All</span>
               </div>
 
-              <div className="flex flex-col gap-[12px]">
+              <div className="flex flex-col gap-3">
                 {assignedJobs.map((job) => {
                   const vehicle = vehicleById.get(job.vehicleId);
                   return (
                     <div
                       key={job.id}
-                      className="flex items-center justify-between gap-[16px] rounded-[8px] border border-border p-[17px]"
+                      className="flex items-center justify-between gap-4 rounded-lg border border-border p-[17px]"
                     >
-                      <div className="flex min-w-0 items-center gap-[16px]">
-                        <span className="flex size-[48px] shrink-0 items-center justify-center rounded-[8px] bg-primary-soft text-primary">
-                          <Wrench className="size-[20px]" />
+                      <div className="flex min-w-0 items-center gap-4">
+                        <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                          <Wrench className="size-5" />
                         </span>
-                        <div className="flex min-w-0 flex-col gap-[4px]">
-                          <p className="truncate text-[14px] font-semibold text-foreground">
+                        <div className="flex min-w-0 flex-col gap-1">
+                          <p className="truncate text-sm font-semibold text-foreground">
                             {vehicle ? `${vehicle.make} ${vehicle.model}` : job.vehicleId}
                           </p>
-                          <p className="truncate text-[12px] text-[#64748b]">
+                          <p className="truncate text-xs text-[#64748b]">
                             Plate {vehicle?.regNo ?? "—"} • {job.services[0]?.name ?? job.issues}
                           </p>
-                          <div className="flex items-center gap-[8px]">
+                          <div className="flex items-center gap-2">
                             <StatusBadge status={job.status} />
                             <PriorityPill priority={job.priority} />
                           </div>
                         </div>
                       </div>
-                      <div className="flex shrink-0 gap-[8px]">
-                        <Button variant="outline" size="sm" asChild className="rounded-[4px] border-border bg-background text-foreground">
+                      <div className="flex shrink-0 gap-2">
+                        <Button variant="outline" size="sm" asChild className="rounded border-border bg-background text-foreground">
                           <Link href={`/mechanic/jobs/${job.id}`}>View Details</Link>
                         </Button>
                         <Button
                           size="sm"
                           onClick={() => toast.info(`Open ${job.id} to update progress`)}
-                          className="rounded-[4px] bg-primary-soft text-primary hover:bg-primary/10"
+                          className="rounded bg-primary-soft text-primary hover:bg-primary/10"
                         >
                           Update Progress
                         </Button>
@@ -194,29 +194,29 @@ export default function MechanicDashboardPage() {
               </div>
             </section>
 
-            <section className="flex flex-col gap-[16px] rounded-[8px] border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-              <h2 className="flex items-center gap-[8px] border-b border-border pb-[9px] text-[20px] font-semibold text-foreground">
-                <Package className="size-[20px]" />
+            <section className="flex flex-col gap-4 rounded-lg border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <h2 className="flex items-center gap-2 border-b border-border pb-[9px] text-xl font-semibold text-foreground">
+                <Package className="size-5" />
                 Parts Used Today
               </h2>
 
               <Table>
                 <TableHeader>
                   <TableRow className="border-border hover:bg-transparent">
-                    <TableHead className="text-[12px] font-medium uppercase text-muted-foreground">Part Name</TableHead>
-                    <TableHead className="text-[12px] font-medium uppercase text-muted-foreground">Qty</TableHead>
-                    <TableHead className="text-[12px] font-medium uppercase text-muted-foreground">Unit Price</TableHead>
-                    <TableHead className="text-[12px] font-medium uppercase text-muted-foreground">Status</TableHead>
+                    <TableHead className="text-xs font-medium uppercase text-muted-foreground">Part Name</TableHead>
+                    <TableHead className="text-xs font-medium uppercase text-muted-foreground">Qty</TableHead>
+                    <TableHead className="text-xs font-medium uppercase text-muted-foreground">Unit Price</TableHead>
+                    <TableHead className="text-xs font-medium uppercase text-muted-foreground">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {activeJob.partsUsed.map((part) => (
                     <TableRow key={part.id} className="border-border">
-                      <TableCell className="text-[14px] font-medium text-foreground">{part.name}</TableCell>
-                      <TableCell className="text-[14px] text-foreground">{part.qty}</TableCell>
-                      <TableCell className="text-[14px] text-foreground">${part.unitPrice.toFixed(2)}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground">{part.name}</TableCell>
+                      <TableCell className="text-sm text-foreground">{part.qty}</TableCell>
+                      <TableCell className="text-sm text-foreground">${part.unitPrice.toFixed(2)}</TableCell>
                       <TableCell>
-                        <span className="inline-flex rounded-full bg-[rgba(16,185,129,0.1)] px-[9px] py-[4px] text-[12px] font-medium text-[#047857]">
+                        <span className="inline-flex rounded-full bg-[rgba(16,185,129,0.1)] px-[9px] py-1 text-xs font-medium text-[#047857]">
                           In Stock
                         </span>
                       </TableCell>
@@ -227,19 +227,19 @@ export default function MechanicDashboardPage() {
             </section>
           </div>
 
-          <div className="col-span-4 flex flex-col gap-[24px]">
-            <section className="flex flex-col gap-[16px] rounded-[8px] border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-              <h2 className="text-[20px] font-semibold text-foreground">Quick Actions</h2>
-              <div className="grid grid-cols-2 gap-[8px]">
+          <div className="col-span-4 flex flex-col gap-6">
+            <section className="flex flex-col gap-4 rounded-lg border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <h2 className="text-xl font-semibold text-foreground">Quick Actions</h2>
+              <div className="grid grid-cols-2 gap-2">
                 {quickActions.map((action) => {
                   const content = (
                     <>
-                      <action.icon className="size-[20px] text-muted-foreground" />
-                      <span className="text-[12px] font-semibold tracking-[0.24px] text-foreground">{action.label}</span>
+                      <action.icon className="size-5 text-muted-foreground" />
+                      <span className="text-xs font-semibold tracking-[0.24px] text-foreground">{action.label}</span>
                     </>
                   );
                   const className =
-                    "flex flex-col items-center justify-center gap-[8px] rounded-[4px] border border-border bg-[#f8f9fa] py-[25px] transition-colors hover:border-primary/50";
+                    "flex flex-col items-center justify-center gap-2 rounded border border-border bg-[#f8f9fa] py-[25px] transition-colors hover:border-primary/50";
                   return action.href ? (
                     <Link key={action.label} href={action.href} className={className}>
                       {content}
@@ -258,49 +258,49 @@ export default function MechanicDashboardPage() {
               </div>
             </section>
 
-            <section className="flex flex-col gap-[24px] rounded-[8px] border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+            <section className="flex flex-col gap-6 rounded-lg border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
               <div className="flex items-center justify-between">
-                <h2 className="text-[20px] font-semibold text-foreground">Current Repair Progress</h2>
+                <h2 className="text-xl font-semibold text-foreground">Current Repair Progress</h2>
                 <span className="text-[11px] font-medium text-muted-foreground">{activeJob.id}</span>
               </div>
 
-              <div className="relative flex flex-col gap-[24px] pb-[8px] pl-[24px]">
-                <div className="absolute top-[8px] bottom-[16px] left-[11px] w-[2px] bg-border" />
+              <div className="relative flex flex-col gap-6 pb-2 pl-6">
+                <div className="absolute top-2 bottom-4 left-[11px] w-0.5 bg-border" />
                 {activeJob.progress.map((step, i) => {
                   const isDone = i < activeIdx;
                   const isActive = i === activeIdx;
                   return (
-                    <div key={step.step} className="relative flex flex-col gap-[4px]">
+                    <div key={step.step} className="relative flex flex-col gap-1">
                       <span
                         className={cn(
-                          "absolute -left-[24px] top-0 flex size-[24px] items-center justify-center rounded-full border-2",
+                          "absolute -left-6 top-0 flex size-6 items-center justify-center rounded-full border-2",
                           isDone && "border-primary bg-primary text-white",
                           isActive && "border-primary bg-white",
                           !isDone && !isActive && "border-border bg-muted",
                         )}
                       >
                         {isDone ? (
-                          <Check className="size-[12px]" />
+                          <Check className="size-3" />
                         ) : isActive ? (
-                          <span className="size-[8px] rounded-full bg-primary" />
+                          <span className="size-2 rounded-full bg-primary" />
                         ) : null}
                       </span>
                       <p
                         className={cn(
-                          "text-[12px] tracking-[0.24px]",
+                          "text-xs tracking-[0.24px]",
                           isActive ? "font-bold text-primary" : "font-semibold text-foreground",
                           !isDone && !isActive && "font-semibold text-muted-foreground",
                         )}
                       >
                         {step.label}
                       </p>
-                      {step.timestamp && <p className="text-[14px] text-muted-foreground">{step.timestamp}</p>}
+                      {step.timestamp && <p className="text-sm text-muted-foreground">{step.timestamp}</p>}
                     </div>
                   );
                 })}
               </div>
 
-              <Link href={`/mechanic/jobs/${activeJob.id}`} className="text-[12px] font-semibold text-primary">
+              <Link href={`/mechanic/jobs/${activeJob.id}`} className="text-xs font-semibold text-primary">
                 View full timeline
               </Link>
             </section>

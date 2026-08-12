@@ -45,12 +45,12 @@ function Field({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-[4px]">
-      <Label className="text-[16px] text-foreground">
+    <div className="flex flex-col gap-1">
+      <Label className="text-base text-foreground">
         {label} {isRequired && required}
       </Label>
       <div className="relative">
-        <Input type={type} placeholder={placeholder} className="h-[46px] rounded-[6px] border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-[16px]" />
+        <Input type={type} placeholder={placeholder} className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" />
         {icon && <span className="absolute top-1/2 left-[15px] -translate-y-1/2 text-muted-foreground">{icon}</span>}
       </div>
     </div>
@@ -100,89 +100,89 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-65px)] flex-col items-center gap-[48px] bg-background py-[48px]">
-      <div className="flex w-full max-w-[1152px] items-start overflow-hidden rounded-[12px] border border-border bg-white shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
-        <aside className="relative flex h-[900px] w-[460px] shrink-0 flex-col justify-between overflow-hidden border-r border-border bg-[#f3f4f5] py-[48px] pl-[48px] pr-[49px]">
-          <div className="absolute -top-[128px] right-[-64px] size-[256px] rounded-[12px] bg-[rgba(0,82,204,0.05)] blur-[32px]" />
-          <div className="absolute bottom-[-48px] left-[-48px] size-[192px] rounded-[12px] bg-[rgba(255,176,95,0.1)] blur-[20px]" />
+    <div className="flex min-h-[calc(100vh-65px)] flex-col items-center gap-12 bg-background py-12">
+      <div className="flex w-full max-w-7xl items-start overflow-hidden rounded-xl border border-border bg-white shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
+        <aside className="relative flex h-[900px] w-[460px] shrink-0 flex-col justify-between overflow-hidden border-r border-border bg-[#f3f4f5] py-12 pl-12 pr-[49px]">
+          <div className="absolute -top-32 right-[-64px] size-64 rounded-xl bg-[rgba(0,82,204,0.05)] blur-[32px]" />
+          <div className="absolute bottom-[-48px] left-[-48px] size-48 rounded-xl bg-[rgba(255,176,95,0.1)] blur-[20px]" />
           <div className="relative">
-            <span className="flex size-[48px] items-center justify-center rounded-[8px] bg-primary shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+            <span className="flex size-12 items-center justify-center rounded-lg bg-primary shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
               <Wrench className="size-[18px] text-white" />
             </span>
-            <p className="mt-[24px] text-[20px] font-semibold text-foreground">Create Your MotoServe Account</p>
-            <p className="mt-[16px] text-[16px] leading-[24px] text-[#424753]">
+            <p className="mt-6 text-xl font-semibold text-foreground">Create Your MotoServe Account</p>
+            <p className="mt-4 text-base leading-6 text-[#424753]">
               Register to manage your vehicles, book services, track repairs, approve repair estimates,
               make payments, and access your complete service history.
             </p>
           </div>
-          <div className="relative overflow-hidden rounded-[4px] border border-border bg-background shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
+          <div className="relative overflow-hidden rounded border border-border bg-background shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
             <Image src="/images/cars/ford-f150.png" alt="MotoServe workshop" width={460} height={205} className="h-auto w-full object-cover" />
           </div>
         </aside>
 
-        <div className="flex-1 p-[48px]">
-          <form className="flex flex-col gap-[32px]" onSubmit={handleSubmit}>
-            <section className="flex flex-col gap-[24px]">
-              <h2 className="flex items-center gap-[8px] border-b border-border pb-[9px] text-[16px] text-foreground">
-                <Wrench className="size-[16px]" />
+        <div className="flex-1 p-12">
+          <form className="flex flex-col gap-8" onSubmit={handleSubmit}>
+            <section className="flex flex-col gap-6">
+              <h2 className="flex items-center gap-2 border-b border-border pb-[9px] text-base text-foreground">
+                <Wrench className="size-4" />
                 Personal Information
               </h2>
 
-              <div className="flex items-center gap-[16px] pb-[8px]">
-                <span className="flex size-[64px] items-center justify-center rounded-[12px] border border-dashed border-[#727784] bg-[#edeeef]">
+              <div className="flex items-center gap-4 pb-2">
+                <span className="flex size-16 items-center justify-center rounded-xl border border-dashed border-[#727784] bg-[#edeeef]">
                   <Camera className="size-[22px] text-muted-foreground" />
                 </span>
                 <div>
-                  <p className="text-[16px] text-foreground">Profile Photo (Optional)</p>
-                  <p className="text-[16px] text-muted-foreground">JPG, PNG up to 2MB</p>
+                  <p className="text-base text-foreground">Profile Photo (Optional)</p>
+                  <p className="text-base text-muted-foreground">JPG, PNG up to 2MB</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-x-[16px] gap-y-[16px]">
-                <div className="flex flex-col gap-[4px]">
-                  <Label className="text-[16px] text-foreground">Full Name {required}</Label>
+                <div className="flex flex-col gap-1">
+                  <Label className="text-base text-foreground">Full Name {required}</Label>
                   <div className="relative">
-                    <Input value={form.name} onChange={set("name")} placeholder="John Doe" className="h-[46px] rounded-[6px] border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-[16px]" />
+                    <Input value={form.name} onChange={set("name")} placeholder="John Doe" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" />
                     <IdCard className="absolute top-1/2 left-[15px] size-[16.7px] -translate-y-1/2 text-muted-foreground" />
                   </div>
                 </div>
-                <div className="flex flex-col gap-[4px]">
-                  <Label className="text-[16px] text-foreground">Email Address {required}</Label>
+                <div className="flex flex-col gap-1">
+                  <Label className="text-base text-foreground">Email Address {required}</Label>
                   <div className="relative">
-                    <Input type="email" value={form.email} onChange={set("email")} placeholder="john@example.com" className="h-[46px] rounded-[6px] border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-[16px]" />
+                    <Input type="email" value={form.email} onChange={set("email")} placeholder="john@example.com" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" />
                     <Mail className="absolute top-1/2 left-[15px] size-[16.7px] -translate-y-1/2 text-muted-foreground" />
                   </div>
                 </div>
-                <div className="flex flex-col gap-[4px]">
-                  <Label className="text-[16px] text-foreground">Phone Number {required}</Label>
+                <div className="flex flex-col gap-1">
+                  <Label className="text-base text-foreground">Phone Number {required}</Label>
                   <div className="relative">
-                    <Input type="tel" value={form.phone} onChange={set("phone")} placeholder="+1 (555) 000-0000" className="h-[46px] rounded-[6px] border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-[16px]" />
+                    <Input type="tel" value={form.phone} onChange={set("phone")} placeholder="+1 (555) 000-0000" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" />
                     <Phone className="absolute top-1/2 left-[15px] size-[15px] -translate-y-1/2 text-muted-foreground" />
                   </div>
                 </div>
-                <div className="flex flex-col gap-[4px]">
-                  <Label className="text-[16px] text-foreground">Password {required}</Label>
+                <div className="flex flex-col gap-1">
+                  <Label className="text-base text-foreground">Password {required}</Label>
                   <div className="relative">
-                    <Input type={showPassword ? "text" : "password"} value={form.password} onChange={set("password")} placeholder="••••••••" className="h-[46px] rounded-[6px] border-[#c2c6d5] bg-[#f8f9fa] px-[41px] text-[16px]" />
+                    <Input type={showPassword ? "text" : "password"} value={form.password} onChange={set("password")} placeholder="••••••••" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] px-[41px] text-base" />
                     <KeyRound className="absolute top-1/2 left-[15px] size-[13.3px] -translate-y-1/2 text-muted-foreground" />
-                    <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute top-1/2 right-[12px] -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Toggle password">
+                    <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Toggle password">
                       {showPassword ? <EyeOff className="size-[18.3px]" /> : <Eye className="size-[18.3px]" />}
                     </button>
                   </div>
                 </div>
-                <div className="flex flex-col gap-[4px]">
-                  <Label className="text-[16px] text-foreground">Confirm Password {required}</Label>
+                <div className="flex flex-col gap-1">
+                  <Label className="text-base text-foreground">Confirm Password {required}</Label>
                   <div className="relative">
-                    <Input type="password" value={form.confirm} onChange={set("confirm")} placeholder="••••••••" className="h-[46px] rounded-[6px] border-[#c2c6d5] bg-[#f8f9fa] px-[41px] text-[16px]" />
+                    <Input type="password" value={form.confirm} onChange={set("confirm")} placeholder="••••••••" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] px-[41px] text-base" />
                     <KeyRound className="absolute top-1/2 left-[15px] size-[16.7px] -translate-y-1/2 text-muted-foreground" />
                   </div>
                 </div>
                 <Field label="Date of Birth" placeholder="mm/dd/yyyy" icon={<CalendarDays className="size-[15px]" />} />
-                <div className="flex flex-col gap-[4px]">
-                  <Label className="text-[16px] text-foreground">Gender</Label>
+                <div className="flex flex-col gap-1">
+                  <Label className="text-base text-foreground">Gender</Label>
                   <div className="relative">
-                    <Input placeholder="Select Gender" className="h-[46px] cursor-pointer rounded-[6px] border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-[16px]" readOnly />
-                    <ChevronDown className="absolute top-1/2 right-[12px] size-[12px] -translate-y-1/2 text-muted-foreground" />
+                    <Input placeholder="Select Gender" className="h-[46px] cursor-pointer rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" readOnly />
+                    <ChevronDown className="absolute top-1/2 right-3 size-3 -translate-y-1/2 text-muted-foreground" />
                   </div>
                 </div>
                 <Field label="National ID (NID)" required placeholder="Enter NID number" icon={<IdCard className="size-[16.7px]" />} />
@@ -191,8 +191,8 @@ export default function RegisterPage() {
               </div>
             </section>
 
-            <section className="flex flex-col gap-[24px]">
-              <h2 className="flex items-center gap-[8px] border-b border-border pb-[9px] text-[16px] text-foreground">
+            <section className="flex flex-col gap-6">
+              <h2 className="flex items-center gap-2 border-b border-border pb-[9px] text-base text-foreground">
                 <Home className="size-[13.3px]" />
                 Address Information
               </h2>
@@ -203,18 +203,18 @@ export default function RegisterPage() {
                 <Field label="City" required placeholder="City" icon={<MapPin className="size-[15px]" />} />
                 <Field label="District/State" required placeholder="District or State" icon={<Landmark className="size-[15px]" />} />
                 <Field label="Zip / Postal Code" placeholder="12345" icon={<Hash className="size-[15px]" />} />
-                <div className="flex flex-col gap-[4px]">
-                  <Label className="text-[16px] text-foreground">Select Country</Label>
+                <div className="flex flex-col gap-1">
+                  <Label className="text-base text-foreground">Select Country</Label>
                   <div className="relative">
-                    <Input placeholder="Country" className="h-[46px] cursor-pointer rounded-[6px] border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-[16px]" readOnly />
-                    <ChevronDown className="absolute top-1/2 right-[12px] size-[12px] -translate-y-1/2 text-muted-foreground" />
+                    <Input placeholder="Country" className="h-[46px] cursor-pointer rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" readOnly />
+                    <ChevronDown className="absolute top-1/2 right-3 size-3 -translate-y-1/2 text-muted-foreground" />
                   </div>
                 </div>
               </div>
             </section>
 
-            <section className="flex flex-col gap-[24px]">
-              <h2 className="flex items-center gap-[8px] border-b border-border pb-[9px] text-[16px] text-foreground">
+            <section className="flex flex-col gap-6">
+              <h2 className="flex items-center gap-2 border-b border-border pb-[9px] text-base text-foreground">
                 <Phone className="size-[15px]" />
                 Emergency Contact
               </h2>
@@ -225,30 +225,30 @@ export default function RegisterPage() {
               </div>
             </section>
 
-            <section className="flex flex-col gap-[24px]">
-              <h2 className="flex items-center gap-[8px] border-b border-border pb-[9px] text-[16px] text-foreground">
-                <IdCard className="size-[16px]" />
+            <section className="flex flex-col gap-6">
+              <h2 className="flex items-center gap-2 border-b border-border pb-[9px] text-base text-foreground">
+                <IdCard className="size-4" />
                 Identity Verification
               </h2>
-              <div className="flex flex-col items-center justify-center gap-[8px] rounded-[6px] border border-dashed border-[#c2c6d5] bg-[#f8f9fa] py-[48px]">
-                <Camera className="size-[24px] text-muted-foreground" />
-                <p className="text-[14px] font-medium text-muted-foreground">Click to upload or drag and drop</p>
-                <p className="text-[12px] text-muted-foreground">NID / License document — JPG, PNG or PDF up to 5MB</p>
+              <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-[#c2c6d5] bg-[#f8f9fa] py-12">
+                <Camera className="size-6 text-muted-foreground" />
+                <p className="text-sm font-medium text-muted-foreground">Click to upload or drag and drop</p>
+                <p className="text-xs text-muted-foreground">NID / License document — JPG, PNG or PDF up to 5MB</p>
               </div>
             </section>
 
-            <div className="flex items-center justify-between border-t border-border pt-[24px]">
-              <p className="text-[14px] text-muted-foreground">
+            <div className="flex items-center justify-between border-t border-border pt-6">
+              <p className="text-sm text-muted-foreground">
                 By creating an account you agree to our <span className="font-medium text-primary">Privacy Policy</span>.
               </p>
-              <div className="flex items-center gap-[12px]">
-                <span className="cursor-pointer text-[14px] font-medium text-primary hover:underline" onClick={() => router.push("/login")}>
+              <div className="flex items-center gap-3">
+                <span className="cursor-pointer text-sm font-medium text-primary hover:underline" onClick={() => router.push("/login")}>
                   Back to Login
                 </span>
                 <Button type="button" variant="outline" onClick={() => toast.info("Form reset (demo)")}>
                   Reset
                 </Button>
-                <Button type="submit" disabled={submitting} className="rounded-[6px]">
+                <Button type="submit" disabled={submitting} className="rounded-md">
                   {submitting ? "Creating account..." : "Create Account"}
                 </Button>
               </div>

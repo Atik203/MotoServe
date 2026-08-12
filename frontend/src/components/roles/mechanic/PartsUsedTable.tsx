@@ -36,14 +36,14 @@ export function PartsUsedTable({ jobId, parts }: PartsUsedTableProps) {
   };
 
   return (
-    <section className="flex flex-col gap-[16px] rounded-[8px] border border-border bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+    <section className="flex flex-col gap-4 rounded-lg border border-border bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
       <div className="flex items-center justify-between">
-        <h2 className="flex items-center gap-[8px] text-[16px] font-medium text-foreground">
-          <Package className="size-[20px]" />
+        <h2 className="flex items-center gap-2 text-base font-medium text-foreground">
+          <Package className="size-5" />
           Parts Used
         </h2>
-        <Button variant="outline" size="sm" onClick={addPart} className="gap-[8px] rounded-[6px]">
-          <Plus className="size-[12px]" />
+        <Button variant="outline" size="sm" onClick={addPart} className="gap-2 rounded-md">
+          <Plus className="size-3" />
           Add Part
         </Button>
       </div>
@@ -51,38 +51,38 @@ export function PartsUsedTable({ jobId, parts }: PartsUsedTableProps) {
       <Table>
         <TableHeader>
           <TableRow className="border-border hover:bg-transparent">
-            <TableHead className="text-[12px] font-medium uppercase text-muted-foreground">Part Name</TableHead>
-            <TableHead className="text-[12px] font-medium uppercase text-muted-foreground">Qty</TableHead>
-            <TableHead className="text-[12px] font-medium uppercase text-muted-foreground">Unit Price</TableHead>
-            <TableHead className="text-[12px] font-medium uppercase text-muted-foreground">Supplier</TableHead>
-            <TableHead className="text-right text-[12px] font-medium uppercase text-muted-foreground">Subtotal</TableHead>
+            <TableHead className="text-xs font-medium uppercase text-muted-foreground">Part Name</TableHead>
+            <TableHead className="text-xs font-medium uppercase text-muted-foreground">Qty</TableHead>
+            <TableHead className="text-xs font-medium uppercase text-muted-foreground">Unit Price</TableHead>
+            <TableHead className="text-xs font-medium uppercase text-muted-foreground">Supplier</TableHead>
+            <TableHead className="text-right text-xs font-medium uppercase text-muted-foreground">Subtotal</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {parts.map((part) => (
             <TableRow key={part.id} className="border-border">
-              <TableCell className="text-[14px] font-medium text-foreground">{part.name}</TableCell>
-              <TableCell className="text-[14px] text-foreground">{part.qty}</TableCell>
-              <TableCell className="text-[14px] text-foreground">${part.unitPrice.toFixed(2)}</TableCell>
-              <TableCell className="text-[14px] text-foreground">{part.supplier}</TableCell>
-              <TableCell className="text-right text-[14px] font-medium text-foreground">
+              <TableCell className="text-sm font-medium text-foreground">{part.name}</TableCell>
+              <TableCell className="text-sm text-foreground">{part.qty}</TableCell>
+              <TableCell className="text-sm text-foreground">${part.unitPrice.toFixed(2)}</TableCell>
+              <TableCell className="text-sm text-foreground">{part.supplier}</TableCell>
+              <TableCell className="text-right text-sm font-medium text-foreground">
                 ${part.subtotal.toFixed(2)}
               </TableCell>
             </TableRow>
           ))}
           {parts.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="py-[24px] text-center text-[14px] text-muted-foreground">
+              <TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
                 No additional parts
               </TableCell>
             </TableRow>
           )}
           {parts.length > 0 && (
             <TableRow className="border-border bg-muted/50 hover:bg-muted/50">
-              <TableCell colSpan={4} className="text-[14px] font-semibold text-foreground">
+              <TableCell colSpan={4} className="text-sm font-semibold text-foreground">
                 Total
               </TableCell>
-              <TableCell className="text-right text-[14px] font-semibold text-foreground">
+              <TableCell className="text-right text-sm font-semibold text-foreground">
                 ${total.toFixed(2)}
               </TableCell>
             </TableRow>

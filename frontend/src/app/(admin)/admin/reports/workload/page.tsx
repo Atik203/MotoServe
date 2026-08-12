@@ -31,7 +31,7 @@ export default function WorkloadReportsPage() {
 
   if (!reports || employees.length === 0) {
     return (
-      <div className="bg-background min-h-screen p-[32px]">
+      <div className="bg-background min-h-screen p-8">
         <p className="text-muted-foreground">Loading workload reports...</p>
       </div>
     );
@@ -50,45 +50,45 @@ export default function WorkloadReportsPage() {
   ];
 
   return (
-    <div className="bg-background min-h-screen p-[32px]">
-      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-[24px]">
+    <div className="bg-background min-h-screen p-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <div className="flex items-end justify-between">
           <div>
-            <h1 className="text-[24px] font-semibold tracking-[-0.24px] text-foreground">Workload Reports</h1>
-            <p className="text-[14px] text-muted-foreground">Mechanic utilization and job distribution.</p>
+            <h1 className="text-2xl font-semibold tracking-[-0.24px] text-foreground">Workload Reports</h1>
+            <p className="text-sm text-muted-foreground">Mechanic utilization and job distribution.</p>
           </div>
           <Button
             size="sm"
             onClick={() => toast.success("Report exported (demo)")}
-            className="gap-[4px] rounded-[4px] px-[16px] py-[9px] text-[12px] font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
+            className="gap-1 rounded px-4 py-[9px] text-xs font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
           >
-            <Download className="size-[12px]" />
+            <Download className="size-3" />
             Export Report
           </Button>
         </div>
 
-        <div className="grid grid-cols-12 items-start gap-[24px]">
-          <section className="col-span-8 flex flex-col gap-[16px] rounded-[8px] border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-            <h2 className="text-[20px] font-semibold text-foreground">Mechanic Workload</h2>
+        <div className="grid grid-cols-12 items-start gap-6">
+          <section className="col-span-8 flex flex-col gap-4 rounded-lg border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+            <h2 className="text-xl font-semibold text-foreground">Mechanic Workload</h2>
             <Table>
               <TableHeader>
                 <TableRow className="bg-[#f3f4f5] hover:bg-[#f3f4f5]">
-                  <TableHead className="px-[16px] py-[12px] text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">
+                  <TableHead className="px-4 py-3 text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">
                     Mechanic
                   </TableHead>
-                  <TableHead className="px-[16px] py-[12px] text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">
+                  <TableHead className="px-4 py-3 text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">
                     Role
                   </TableHead>
-                  <TableHead className="px-[16px] py-[12px] text-center text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">
+                  <TableHead className="px-4 py-3 text-center text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">
                     Active Jobs
                   </TableHead>
-                  <TableHead className="px-[16px] py-[12px] text-center text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">
+                  <TableHead className="px-4 py-3 text-center text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">
                     Completed
                   </TableHead>
-                  <TableHead className="px-[16px] py-[12px] text-center text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">
+                  <TableHead className="px-4 py-3 text-center text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">
                     Avg Hours
                   </TableHead>
-                  <TableHead className="px-[16px] py-[12px] text-right text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">
+                  <TableHead className="px-4 py-3 text-right text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">
                     Utilization
                   </TableHead>
                 </TableRow>
@@ -96,31 +96,31 @@ export default function WorkloadReportsPage() {
               <TableBody>
                 {mechanics.map((m, i) => (
                   <TableRow key={m.mechanic} className="border-t border-border">
-                    <TableCell className="px-[16px] py-[17px]">
-                      <div className="flex items-center gap-[12px]">
-                        <span className="flex size-[32px] items-center justify-center rounded-[12px] bg-[rgba(0,68,146,0.2)] text-[12px] font-bold text-[#004492]">
+                    <TableCell className="px-4 py-[17px]">
+                      <div className="flex items-center gap-3">
+                        <span className="flex size-8 items-center justify-center rounded-xl bg-[rgba(0,68,146,0.2)] text-xs font-bold text-[#004492]">
                           {m.mechanic.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                         </span>
-                        <span className="text-[14px] font-medium text-foreground">{m.mechanic}</span>
+                        <span className="text-sm font-medium text-foreground">{m.mechanic}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="px-[16px] py-[17px] text-[14px] text-muted-foreground">{m.role}</TableCell>
-                    <TableCell className="px-[16px] py-[17px] text-center text-[14px] font-semibold text-foreground">
+                    <TableCell className="px-4 py-[17px] text-sm text-muted-foreground">{m.role}</TableCell>
+                    <TableCell className="px-4 py-[17px] text-center text-sm font-semibold text-foreground">
                       {m.active}
                     </TableCell>
-                    <TableCell className="px-[16px] py-[17px] text-center text-[14px] text-foreground">{m.completed}</TableCell>
-                    <TableCell className="px-[16px] py-[17px] text-center text-[14px] text-foreground">
+                    <TableCell className="px-4 py-[17px] text-center text-sm text-foreground">{m.completed}</TableCell>
+                    <TableCell className="px-4 py-[17px] text-center text-sm text-foreground">
                       {m.avgHoursPerJob ? `${m.avgHoursPerJob}h` : "—"}
                     </TableCell>
-                    <TableCell className="px-[16px] py-[17px]">
-                      <div className="flex items-center justify-end gap-[8px]">
-                        <div className="h-[8px] w-[80px] overflow-hidden rounded-[12px] bg-[#e1e3e4]">
+                    <TableCell className="px-4 py-[17px]">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="h-2 w-20 overflow-hidden rounded-xl bg-[#e1e3e4]">
                           <div
-                            className="h-full rounded-[12px] bg-[#4caf50]"
+                            className="h-full rounded-xl bg-[#4caf50]"
                             style={{ width: `${utilizations[i]}%` }}
                           />
                         </div>
-                        <span className="w-[36px] text-right text-[12px] text-muted-foreground">{utilizations[i]}%</span>
+                        <span className="w-9 text-right text-xs text-muted-foreground">{utilizations[i]}%</span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -129,29 +129,29 @@ export default function WorkloadReportsPage() {
             </Table>
           </section>
 
-          <section className="col-span-4 flex flex-col gap-[16px] rounded-[8px] border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-            <h2 className="text-[20px] font-semibold text-foreground">Summary</h2>
-            <div className="flex flex-col gap-[14px]">
+          <section className="col-span-4 flex flex-col gap-4 rounded-lg border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+            <h2 className="text-xl font-semibold text-foreground">Summary</h2>
+            <div className="flex flex-col gap-3.5">
               {summary.map((s) => (
                 <div key={s.label} className="flex items-center justify-between">
-                  <span className="flex items-center gap-[8px] text-[14px] text-muted-foreground">
+                  <span className="flex items-center gap-2 text-sm text-muted-foreground">
                     <s.icon className="size-[15px]" />
                     {s.label}
                   </span>
-                  <span className="text-[18px] font-bold text-foreground">{s.value}</span>
+                  <span className="text-lg font-bold text-foreground">{s.value}</span>
                 </div>
               ))}
             </div>
-            <div className="flex flex-col gap-[10px] border-t border-[#e2e8f0] pt-[16px]">
-              <span className="flex items-center gap-[8px] text-[14px] text-muted-foreground">
+            <div className="flex flex-col gap-2.5 border-t border-[#e2e8f0] pt-4">
+              <span className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Clock className="size-[15px]" />
                 Peak Hours
               </span>
-              <div className="flex flex-wrap gap-[8px]">
+              <div className="flex flex-wrap gap-2">
                 {PEAK_HOURS.map((hours) => (
                   <span
                     key={hours}
-                    className="rounded-[12px] bg-[rgba(255,193,7,0.1)] px-[10px] py-[4px] text-[11px] font-medium text-warning"
+                    className="rounded-xl bg-[rgba(255,193,7,0.1)] px-2.5 py-1 text-[11px] font-medium text-warning"
                   >
                     {hours}
                   </span>

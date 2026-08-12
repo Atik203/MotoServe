@@ -31,20 +31,20 @@ export function MechanicNotes({ jobId, notes, author }: MechanicNotesProps) {
   };
 
   return (
-    <section className="flex flex-col gap-[8px] rounded-[8px] border border-border bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-      <h2 className="flex items-center gap-[8px] text-[16px] font-medium text-foreground">
-        <Save className="size-[16px]" />
+    <section className="flex flex-col gap-2 rounded-lg border border-border bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+      <h2 className="flex items-center gap-2 text-base font-medium text-foreground">
+        <Save className="size-4" />
         Mechanic Notes
       </h2>
 
-      <div className="flex flex-col gap-[8px]">
+      <div className="flex flex-col gap-2">
         {notes.map((note) => (
-          <div key={note.id} className="flex flex-col gap-[4px] rounded-[4px] border border-border bg-secondary p-[9px]">
+          <div key={note.id} className="flex flex-col gap-1 rounded border border-border bg-secondary p-[9px]">
             <div className="flex items-center justify-between">
-              <span className="text-[12px] text-muted-foreground">{note.time}</span>
+              <span className="text-xs text-muted-foreground">{note.time}</span>
               <MoreVertical className="size-[10.5px] text-muted-foreground" />
             </div>
-            <p className="text-[14px] leading-[22px] text-foreground">{note.text}</p>
+            <p className="text-sm leading-[22px] text-foreground">{note.text}</p>
           </div>
         ))}
       </div>
@@ -53,11 +53,11 @@ export function MechanicNotes({ jobId, notes, author }: MechanicNotesProps) {
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         placeholder="Enter detailed repair notes, diagnostic findings, or specific procedures followed..."
-        className="h-[136px] resize-none rounded-[4px] border-[#c2c6d5] bg-[#f8f9fa]"
+        className="h-[136px] resize-none rounded border-[#c2c6d5] bg-[#f8f9fa]"
       />
 
       <div className="flex justify-end pt-[7px]">
-        <Button onClick={saveNote} className="gap-[4px] rounded-[4px] px-[16px] py-[6px]">
+        <Button onClick={saveNote} className="gap-1 rounded px-4 py-1.5">
           <Save className="size-[13.5px]" />
           Save Note
         </Button>

@@ -99,100 +99,100 @@ export default function AssignMechanicPage() {
   };
 
   return (
-    <div className="bg-background min-h-screen p-[32px]">
-      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-[24px]">
-        <div className="flex flex-col gap-[4px]">
-          <nav className="flex items-center gap-[8px] text-[12px] font-semibold text-[#727784]">
+    <div className="bg-background min-h-screen p-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+        <div className="flex flex-col gap-1">
+          <nav className="flex items-center gap-2 text-xs font-semibold text-[#727784]">
             <span>Dashboard</span>
             <span>›</span>
             <span>Job Cards</span>
             <span>›</span>
             <span className="text-foreground">Assign Mechanic</span>
           </nav>
-          <h1 className="text-[36px] font-bold text-foreground">Assign Mechanic</h1>
-          <p className="text-[14px] text-[#424753]">Select an available technician for Job #{job?.id ?? JOB_ID}</p>
+          <h1 className="text-4xl font-bold text-foreground">Assign Mechanic</h1>
+          <p className="text-sm text-[#424753]">Select an available technician for Job #{job?.id ?? JOB_ID}</p>
         </div>
 
-        <div className="grid grid-cols-12 items-start gap-[24px]">
-          <div className="col-span-8 flex flex-col gap-[24px]">
-            <section className="relative overflow-hidden rounded-[8px] border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
-              <span className="absolute -top-[64px] -right-[64px] size-[128px] rounded-full bg-[rgba(0,82,204,0.06)]" />
+        <div className="grid grid-cols-12 items-start gap-6">
+          <div className="col-span-8 flex flex-col gap-6">
+            <section className="relative overflow-hidden rounded-lg border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
+              <span className="absolute -top-16 -right-16 size-32 rounded-full bg-[rgba(0,82,204,0.06)]" />
 
-              <div className="relative flex items-center justify-between gap-[16px]">
-                <div className="flex items-center gap-[16px]">
-                  <span className="flex size-[40px] shrink-0 items-center justify-center rounded-[4px] bg-[#f3f4f5]">
-                    <Car className="size-[20px] text-[#191c1d]" />
+              <div className="relative flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded bg-[#f3f4f5]">
+                    <Car className="size-5 text-[#191c1d]" />
                   </span>
-                  <div className="flex flex-col gap-[4px]">
-                    <span className="text-[20px] font-semibold text-foreground">2023 Ford F-150</span>
-                    <span className="flex items-center gap-[6px] text-[11px] text-[#424753]">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xl font-semibold text-foreground">2023 Ford F-150</span>
+                    <span className="flex items-center gap-1.5 text-[11px] text-[#424753]">
                       <span>Customer: John Doe</span>
                       <span>•</span>
                       <span>Plate:</span>
-                      <span className="rounded-[4px] bg-[#edeeef] px-[6px] py-[2px] font-mono text-[11px] font-medium text-[#191c1d]">
+                      <span className="rounded bg-[#edeeef] px-1.5 py-0.5 font-mono text-[11px] font-medium text-[#191c1d]">
                         A9C-1234
                       </span>
                     </span>
                   </div>
                 </div>
-                <span className="flex shrink-0 items-center gap-[6px] rounded-full bg-[rgba(186,26,26,0.1)] px-[10px] py-[4px] text-[11px] font-semibold text-[#ba1a1a]">
-                  <span className="size-[6px] rounded-full bg-[#ba1a1a]" />
+                <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-[rgba(186,26,26,0.1)] px-2.5 py-1 text-[11px] font-semibold text-[#ba1a1a]">
+                  <span className="size-1.5 rounded-full bg-[#ba1a1a]" />
                   High Priority
                 </span>
               </div>
 
-              <div className="my-[16px] h-px bg-[#e5e7eb]" />
+              <div className="my-4 h-px bg-[#e5e7eb]" />
 
-              <div className="relative grid grid-cols-4 gap-[16px]">
-                <div className="flex flex-col gap-[4px]">
+              <div className="relative grid grid-cols-4 gap-4">
+                <div className="flex flex-col gap-1">
                   <span className="text-[11px] text-[#727784]">Requested Services</span>
-                  <span className="text-[14px] font-medium text-foreground">Oil Change, Brake Insp.</span>
+                  <span className="text-sm font-medium text-foreground">Oil Change, Brake Insp.</span>
                 </div>
-                <div className="flex flex-col gap-[4px]">
+                <div className="flex flex-col gap-1">
                   <span className="text-[11px] text-[#727784]">Est. Time</span>
-                  <span className="flex items-center gap-[6px] text-[14px] font-medium text-foreground">
-                    <Clock className="size-[14px] text-[#727784]" />
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                    <Clock className="size-3.5 text-[#727784]" />
                     2.5 hrs
                   </span>
                 </div>
-                <div className="flex flex-col gap-[4px]">
+                <div className="flex flex-col gap-1">
                   <span className="text-[11px] text-[#727784]">Arrival</span>
-                  <span className="text-[14px] font-medium text-foreground">09:00 AM Today</span>
+                  <span className="text-sm font-medium text-foreground">09:00 AM Today</span>
                 </div>
-                <div className="flex flex-col gap-[4px]">
+                <div className="flex flex-col gap-1">
                   <span className="text-[11px] text-[#727784]">Job Status</span>
-                  <span className="self-start rounded-full bg-[rgba(255,193,7,0.1)] px-[10px] py-[3px] text-[12px] font-semibold text-[#6a3c00]">
+                  <span className="self-start rounded-full bg-[rgba(255,193,7,0.1)] px-2.5 py-0.75 text-xs font-semibold text-[#6a3c00]">
                     Awaiting Assignment
                   </span>
                 </div>
               </div>
             </section>
 
-            <section className="flex flex-col gap-[16px]">
+            <section className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-[20px] font-semibold text-foreground">Available Mechanics</h2>
-                <div className="flex items-center gap-[8px]">
+                <h2 className="text-xl font-semibold text-foreground">Available Mechanics</h2>
+                <div className="flex items-center gap-2">
                   <div className="relative">
-                    <Search className="absolute top-1/2 left-[10px] size-[14px] -translate-y-1/2 text-[#727784]" />
+                    <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-[#727784]" />
                     <Input
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Search names..."
-                      className="h-[38px] w-[192px] rounded-[8px] border-[#e5e7eb] pl-[30px] text-[13px]"
+                      className="h-[38px] w-48 rounded-lg border-[#e5e7eb] pl-[30px] text-[13px]"
                     />
                   </div>
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-[38px] gap-[8px] rounded-[8px] border-[#e5e7eb] bg-white px-[14px] text-[13px] font-medium text-[#191c1d]"
+                    className="h-[38px] gap-2 rounded-lg border-[#e5e7eb] bg-white px-3.5 text-[13px] font-medium text-[#191c1d]"
                   >
-                    <Filter className="size-[14px]" />
+                    <Filter className="size-3.5" />
                     Filter
                   </Button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-[16px]">
+              <div className="grid grid-cols-2 gap-4">
                 {filteredMechanics.map((m) => {
                   const workload = workloadOf(m);
                   const unavailable = workload >= WORKLOAD_LIMIT;
@@ -207,7 +207,7 @@ export default function AssignMechanicPage() {
                       disabled={unavailable}
                       onClick={() => setSelectedId(selected ? null : m.id)}
                       className={cn(
-                        "relative flex flex-col gap-[14px] rounded-[8px] border bg-white p-[18px] text-left shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors",
+                        "relative flex flex-col gap-3.5 rounded-lg border bg-white p-[18px] text-left shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors",
                         selected
                           ? "border-2 border-primary p-[17px]"
                           : "border-[#e5e7eb] hover:border-primary/40",
@@ -215,47 +215,47 @@ export default function AssignMechanicPage() {
                       )}
                     >
                       {selected && (
-                        <span className="absolute top-[14px] right-[14px] flex size-[20px] items-center justify-center rounded-full bg-primary">
-                          <Check className="size-[12px] text-white" />
+                        <span className="absolute top-3.5 right-3.5 flex size-5 items-center justify-center rounded-full bg-primary">
+                          <Check className="size-3 text-white" />
                         </span>
                       )}
 
-                      <div className="flex items-center gap-[14px]">
+                      <div className="flex items-center gap-3.5">
                         <div className="relative shrink-0">
-                          <Avatar className="size-[48px] rounded-[12px] after:rounded-[12px]">
+                          <Avatar className="size-12 rounded-xl after:rounded-xl">
                             <AvatarImage
                               src={m.avatar}
                               alt={m.name}
-                              className="rounded-[12px]"
+                              className="rounded-xl"
                             />
-                            <AvatarFallback className="rounded-[12px] bg-[#eff6ff] text-[14px] font-semibold text-primary">
+                            <AvatarFallback className="rounded-xl bg-[#eff6ff] text-sm font-semibold text-primary">
                               {initials(m.name)}
                             </AvatarFallback>
                           </Avatar>
                           <span
                             className={cn(
-                              "absolute right-0 bottom-0 size-[12px] rounded-full ring-2 ring-white",
+                              "absolute right-0 bottom-0 size-3 rounded-full ring-2 ring-white",
                               unavailable ? "bg-[#ba1a1a]" : workload >= 2 ? "bg-[#ffc107]" : "bg-[#4caf50]",
                             )}
                           />
                         </div>
-                        <div className="flex min-w-0 flex-col gap-[2px]">
-                          <span className="truncate text-[20px] font-semibold text-foreground">{m.name}</span>
-                          <span className="truncate text-[12px] text-[#727784]">
+                        <div className="flex min-w-0 flex-col gap-0.5">
+                          <span className="truncate text-xl font-semibold text-foreground">{m.name}</span>
+                          <span className="truncate text-xs text-[#727784]">
                             ID: {m.id}
                             {m.specialization ? ` • ${m.specialization}` : ""}
                           </span>
                         </div>
                       </div>
 
-                      <div className="flex items-end justify-between gap-[12px]">
-                        <div className="flex flex-col gap-[6px]">
+                      <div className="flex items-end justify-between gap-3">
+                        <div className="flex flex-col gap-1.5">
                           <span className="text-[11px] text-[#727784]">Current Workload</span>
-                          <div className="flex items-center gap-[8px]">
-                            <span className="text-[14px] font-semibold text-foreground">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-foreground">
                               {workload}/{WORKLOAD_LIMIT} jobs
                             </span>
-                            <span className="h-[6px] w-[64px] overflow-hidden rounded-full bg-[#edeeef]">
+                            <span className="h-1.5 w-16 overflow-hidden rounded-full bg-[#edeeef]">
                               <span
                                 className="block h-full rounded-full"
                                 style={{ width: `${fillPct}%`, backgroundColor: fillColor }}
@@ -265,7 +265,7 @@ export default function AssignMechanicPage() {
                         </div>
                         <span
                           className={cn(
-                            "shrink-0 rounded-full px-[10px] py-[3px] text-[11px] font-semibold",
+                            "shrink-0 rounded-full px-2.5 py-0.75 text-[11px] font-semibold",
                             availability.className,
                           )}
                         >
@@ -279,25 +279,25 @@ export default function AssignMechanicPage() {
             </section>
           </div>
 
-          <div className="col-span-4 flex flex-col gap-[24px] lg:sticky lg:top-[88px]">
-            <section className="flex flex-col gap-[12px] rounded-[8px] border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
-              <h2 className="text-[20px] font-semibold text-foreground">Assignment Notes</h2>
+          <div className="col-span-4 flex flex-col gap-6 lg:sticky lg:top-22">
+            <section className="flex flex-col gap-3 rounded-lg border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
+              <h2 className="text-xl font-semibold text-foreground">Assignment Notes</h2>
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Add internal notes about this assignment..."
-                className="min-h-[96px] rounded-[8px] border-[#e5e7eb] text-[13px]"
+                className="min-h-24 rounded-lg border-[#e5e7eb] text-[13px]"
               />
             </section>
 
-            <section className="flex flex-col gap-[14px] rounded-[8px] border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
-              <div className="flex flex-col gap-[4px]">
+            <section className="flex flex-col gap-3.5 rounded-lg border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
+              <div className="flex flex-col gap-1">
                 <span className="text-[11px] text-[#727784]">Job</span>
-                <span className="text-[14px] font-semibold text-foreground">#{job?.id ?? JOB_ID}</span>
+                <span className="text-sm font-semibold text-foreground">#{job?.id ?? JOB_ID}</span>
               </div>
-              <div className="flex flex-col gap-[4px]">
+              <div className="flex flex-col gap-1">
                 <span className="text-[11px] text-[#727784]">Selected Mechanic</span>
-                <span className={cn("text-[14px]", selectedMechanic ? "font-semibold text-foreground" : "font-medium text-[#727784]")}>
+                <span className={cn("text-sm", selectedMechanic ? "font-semibold text-foreground" : "font-medium text-[#727784]")}>
                   {selectedMechanic?.name ?? "None selected"}
                 </span>
               </div>
@@ -305,7 +305,7 @@ export default function AssignMechanicPage() {
                 type="button"
                 onClick={() => void handleConfirm()}
                 disabled={!selectedMechanic || submitting}
-                className="h-[40px] rounded-[8px] text-[14px] font-semibold"
+                className="h-10 rounded-lg text-sm font-semibold"
               >
                 {submitting ? "Assigning..." : "Confirm Assignment"}
               </Button>

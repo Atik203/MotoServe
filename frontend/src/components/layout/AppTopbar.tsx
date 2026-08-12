@@ -17,34 +17,34 @@ export function AppTopbar({
   showChat = false,
 }: AppTopbarProps) {
   return (
-    <header className="bg-white border-b border-border fixed top-0 right-0 left-[256px] z-20 flex h-[64px] items-center justify-between px-[24px]">
+    <header className="bg-white border-b border-border fixed top-0 right-0 left-64 z-20 flex h-16 items-center justify-between px-6">
       {links ? (
-        <nav className="flex items-center gap-[24px]">
+        <nav className="flex items-center gap-6">
           {links.map((label) => (
-            <span key={label} className="text-[14px] font-medium text-muted-foreground">
+            <span key={label} className="text-sm font-medium text-muted-foreground">
               {label}
             </span>
           ))}
         </nav>
       ) : (
-        <div className="relative w-full max-w-[448px]">
-          <Search className="absolute top-1/2 left-[12px] size-[16px] -translate-y-1/2 text-muted-foreground" />
+        <div className="relative w-full max-w-md">
+          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             placeholder={searchPlaceholder}
-            className="h-[38px] w-full rounded-[8px] border border-border bg-background pr-[13px] pl-[41px] text-[14px] text-muted-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
+            className="h-[38px] w-full rounded-lg border border-border bg-background pr-[13px] pl-[41px] text-sm text-muted-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
           />
         </div>
       )}
-      <div className="flex items-center gap-[16px]">
+      <div className="flex items-center gap-4">
         {showChat && (
           <button className="flex items-center justify-center" aria-label="Workshop chat">
-            <MessageSquare className="h-[20px] w-[20px] text-muted-foreground" />
+            <MessageSquare className="h-5 w-5 text-muted-foreground" />
           </button>
         )}
         <button className="relative flex items-center justify-center" aria-label="Notifications">
-          <Bell className="h-[20px] w-[17.5px] text-muted-foreground" />
-          <span className="absolute top-0 right-0 size-[8px] rounded-full bg-destructive ring-2 ring-white" />
+          <Bell className="h-5 w-[17.5px] text-muted-foreground" />
+          <span className="absolute top-0 right-0 size-2 rounded-full bg-destructive ring-2 ring-white" />
         </button>
         <Image
           src={avatar}

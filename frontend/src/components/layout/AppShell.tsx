@@ -31,7 +31,7 @@ export function AppShell({
         links={topbarLinks}
         showChat={topbarShowChat}
       />
-      <main className="ml-[256px] pt-[64px]">{children}</main>
+      <main className="ml-64 pt-16">{children}</main>
     </div>
   );
 }
