@@ -11,6 +11,25 @@ export interface RegisterBody {
   email: string;
   phone?: string;
   password: string;
+  dateOfBirth?: Date;
+  gender?: string;
+  nid?: string;
+  drivingLicense?: string;
+  occupation?: string;
+  street?: string;
+  city?: string;
+  district?: string;
+  zip?: string;
+  country?: string;
+}
+
+export interface ForgotPasswordBody {
+  email: string;
+}
+
+export interface ResetPasswordBody {
+  token: string;
+  password: string;
 }
 
 export interface RegisterResultDto {

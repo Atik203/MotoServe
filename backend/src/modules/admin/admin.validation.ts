@@ -20,3 +20,29 @@ export const verifyOwnerSchema = z.object({
     decision: z.enum(["approved", "rejected"]),
   }),
 });
+
+export const createEmployeeSchema = z.object({
+  body: z.object({
+    name: z.string().min(2),
+    email: z.string().email(),
+    password: z.string().min(6),
+    role: z.enum(["advisor", "mechanic"]),
+    phone: z.string().optional(),
+    station: z.string().optional(),
+    specialization: z.string().optional(),
+    avatar: z.string().optional(),
+  }),
+});
+
+export const updateEmployeeSchema = z.object({
+  body: z.object({
+    name: z.string().min(2).optional(),
+    email: z.string().email().optional(),
+    password: z.string().min(6).optional(),
+    phone: z.string().optional(),
+    station: z.string().optional(),
+    specialization: z.string().optional(),
+    avatar: z.string().nullable().optional(),
+    status: z.enum(["active", "inactive"]).optional(),
+  }),
+});

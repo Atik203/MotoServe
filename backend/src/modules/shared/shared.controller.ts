@@ -14,6 +14,7 @@ import {
   listVehicles,
   findJobById,
   mapCustomerStatus,
+  updateAppointment,
 } from "./shared.service.js";
 import { getIo } from "../../lib/socket.js";
 import { prisma } from "../../lib/prisma.js";
@@ -65,6 +66,17 @@ export async function getAppointments(req: Request, res: Response): Promise<void
   const ownerId = req.user?.role === "OWNER" ? req.user.userId : undefined;
   const appointments = await listAppointments(ownerId);
   res.json(appointments.map((a) => ({ ...a, status: a.status.toLowerCase() })));
+}
+
+export async function updateAppointmentController(req: Request, res: Response): Promise<void> {
+  const { status } = req.body.body as { status: string };
+  const appointment = await updateAppointment(
+    req.params.id as string,
+    status,
+    req.user?.role,
+    req.user?.userId,
+  );
+  res.json({ ...appointment, status: appointment.status.toLowerCase() });
 }
 
 export async function getEmployees(req: Request, res: Response): Promise<void> {

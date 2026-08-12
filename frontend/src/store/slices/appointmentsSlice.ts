@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { api } from "@/lib/api";
 import type { Appointment } from "@/types";
 
@@ -25,18 +25,17 @@ export const addAppointment = createAsyncThunk(
   },
 );
 
+export const updateAppointmentStatus = createAsyncThunk(
+  "appointments/updateStatus",
+  async ({ id, status }: { id: string; status: "confirmed" | "cancelled" }) => {
+    return await api.patch<Appointment>(`/appointments/${id}`, { status });
+  },
+);
+
 const appointmentsSlice = createSlice({
   name: "appointments",
   initialState,
-  reducers: {
-    updateAppointmentStatus(
-      state,
-      action: PayloadAction<{ id: string; status: Appointment["status"] }>,
-    ) {
-      const appt = state.items.find((a) => a.id === action.payload.id);
-      if (appt) appt.status = action.payload.status;
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchAppointments.pending, (state) => {
@@ -52,9 +51,12 @@ const appointmentsSlice = createSlice({
       })
       .addCase(addAppointment.fulfilled, (state, action) => {
         state.items.unshift(action.payload);
+      })
+      .addCase(updateAppointmentStatus.fulfilled, (state, action) => {
+        const appt = state.items.find((a) => a.id === action.payload.id);
+        if (appt) appt.status = action.payload.status;
       });
   },
 });
 
-export const { updateAppointmentStatus } = appointmentsSlice.actions;
 export default appointmentsSlice.reducer;

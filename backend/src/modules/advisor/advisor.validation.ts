@@ -4,7 +4,6 @@ export const createJobCardSchema = z.object({
   body: z.object({
     vehicleId: z.string(),
     customerId: z.string(),
-    advisorId: z.string(),
     issues: z.string().min(1),
     priority: z.enum(["low", "medium", "high"]).optional(),
     station: z.string().optional(),

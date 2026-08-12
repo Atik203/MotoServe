@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { UserPlus } from "lucide-react";
+import { KeyRound, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { useAppDispatch } from "@/store/hooks";
+import { createEmployee } from "@/store/slices/employeesSlice";
 
 const fieldLabel = "text-xs font-semibold tracking-[0.24px] text-[#424753]";
 const inputBase =
@@ -19,6 +21,7 @@ interface AdvisorForm {
   fullName: string;
   email: string;
   phone: string;
+  password: string;
   desk: string;
   team: string;
   languages: string;
@@ -26,26 +29,50 @@ interface AdvisorForm {
 
 export default function AddServiceAdvisorPage() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [form, setForm] = useState<AdvisorForm>({
     fullName: "",
     email: "",
     phone: "",
+    password: "",
     desk: "",
     team: "",
     languages: "",
   });
   const [active, setActive] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   const set = (key: keyof AdvisorForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
-  const submit = () => {
-    if (!form.fullName || !form.email || !form.phone) {
+  const submit = async () => {
+    if (!form.fullName || !form.email || !form.phone || !form.password) {
       toast.error("Please complete all required fields");
       return;
     }
-    toast.success("Service advisor profile created");
-    router.push("/admin/employees");
+    if (form.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await dispatch(
+        createEmployee({
+          name: form.fullName.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          password: form.password,
+          role: "advisor",
+          station: form.desk || undefined,
+          specialization: form.team || undefined,
+        }),
+      ).unwrap();
+      toast.success("Service advisor profile created");
+      router.push("/admin/employees");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create advisor");
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -77,8 +104,23 @@ export default function AddServiceAdvisorPage() {
               <Input value={form.phone} onChange={set("phone")} placeholder="+1 (555) 000-0000" className={inputBase} />
             </label>
             <label className="flex flex-col gap-1.5">
+              <span className={fieldLabel}>
+                Temporary Password <span className="text-[#f44336]">*</span>
+              </span>
+              <div className="relative">
+                <Input
+                  value={form.password}
+                  onChange={set("password")}
+                  type="password"
+                  placeholder="Minimum 6 characters"
+                  className={cn(inputBase, "pl-9")}
+                />
+                <KeyRound className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              </div>
+            </label>
+            <label className="flex flex-col gap-1.5">
               <span className={fieldLabel}>Employee ID</span>
-              <Input value="EMP-006" readOnly className={cn(inputBase, "bg-[#f3f4f5] text-[#424753]")} />
+              <Input value="Auto-generated" readOnly className={cn(inputBase, "bg-[#f3f4f5] text-[#424753]")} />
             </label>
             <label className="flex flex-col gap-1.5">
               <span className={fieldLabel}>Assigned Desk</span>
@@ -126,11 +168,12 @@ export default function AddServiceAdvisorPage() {
           </Button>
           <Button
             size="sm"
-            onClick={submit}
+            onClick={() => void submit()}
+            disabled={submitting}
             className="h-[34px] gap-1 rounded px-4 text-xs font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
           >
             <UserPlus className="size-3" />
-            Create Advisor
+            {submitting ? "Creating..." : "Create Advisor"}
           </Button>
         </div>
       </div>

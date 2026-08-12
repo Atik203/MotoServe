@@ -1,9 +1,9 @@
 import type { Request, Response } from "express";
-import { COOKIE_NAME, cookieOptions, signToken } from "../../lib/auth.js";
+import { COOKIE_NAME, cookieOptions, signToken, verifyToken } from "../../lib/auth.js";
 import { ApiError } from "../../middleware/error.js";
-import { findUserById } from "../shared/shared.service.js";
-import { createOwner, verifyCredentials } from "./auth.service.js";
-import type { RegisterBody } from "./auth.types.js";
+import { findUserByEmail, findUserById } from "../shared/shared.service.js";
+import { createOwner, updatePassword, verifyCredentials } from "./auth.service.js";
+import type { ForgotPasswordBody, RegisterBody, ResetPasswordBody } from "./auth.types.js";
 
 export async function login(req: Request, res: Response): Promise<void> {
   const { email, password } = req.body.body as { email: string; password: string };
@@ -37,5 +37,24 @@ export async function me(req: Request, res: Response): Promise<void> {
 
 export function logout(_req: Request, res: Response): void {
   res.clearCookie(COOKIE_NAME, { path: "/" });
+  res.json({ ok: true });
+}
+
+export async function forgotPassword(req: Request, res: Response): Promise<void> {
+  const { email } = req.body.body as ForgotPasswordBody;
+  const user = await findUserByEmail(email);
+  if (!user) {
+    res.json({ ok: true });
+    return;
+  }
+  const resetToken = signToken({ userId: user.id, role: user.role, name: user.name, purpose: "password-reset" }, "15m");
+  res.json({ ok: true, resetToken });
+}
+
+export async function resetPassword(req: Request, res: Response): Promise<void> {
+  const { token, password } = req.body.body as ResetPasswordBody;
+  const payload = verifyToken(token);
+  if (payload.purpose !== "password-reset") throw new ApiError(400, "Invalid reset token");
+  await updatePassword(payload.userId, password);
   res.json({ ok: true });
 }

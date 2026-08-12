@@ -6,3 +6,9 @@ export const sendMessageSchema = z.object({
     text: z.string().min(1),
   }),
 });
+
+export const updateAppointmentSchema = z.object({
+  body: z.object({
+    status: z.enum(["confirmed", "cancelled"]),
+  }),
+});

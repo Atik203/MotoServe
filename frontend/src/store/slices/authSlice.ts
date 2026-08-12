@@ -30,11 +30,37 @@ export const loginUser = createAsyncThunk("auth/login", async ({ email, password
 
 export const registerUser = createAsyncThunk(
   "auth/register",
-  async ({ name, email, phone, password }: { name: string; email: string; phone?: string; password: string }) => {
+  async (data: {
+    name: string;
+    email: string;
+    phone?: string;
+    password: string;
+    dateOfBirth?: string;
+    gender?: string;
+    nid?: string;
+    drivingLicense?: string;
+    occupation?: string;
+    street?: string;
+    city?: string;
+    district?: string;
+    zip?: string;
+    country?: string;
+  }) => {
     return await api.post<{ id: string; name: string; email: string; role: string; status: string }>(
       "/auth/register",
-      { name, email, phone, password },
+      data,
     );
+  },
+);
+
+export const forgotPassword = createAsyncThunk("auth/forgotPassword", async (email: string) => {
+  return await api.post<{ ok: boolean; resetToken?: string }>("/auth/forgot-password", { email });
+});
+
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async ({ token, password }: { token: string; password: string }) => {
+    return await api.post<{ ok: boolean }>("/auth/reset-password", { token, password });
   },
 );
 

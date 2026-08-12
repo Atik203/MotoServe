@@ -7,10 +7,33 @@ import { ArrowLeft, KeyRound, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAppDispatch } from "@/store/hooks";
+import { forgotPassword } from "@/store/slices/authSlice";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      toast.error("Please enter your email address");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await dispatch(forgotPassword(email.trim())).unwrap();
+      toast.success("Reset link sent — check your inbox");
+      if (res.resetToken) {
+        router.push(`/reset-password?token=${encodeURIComponent(res.resetToken)}`);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send reset link");
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex min-h-[calc(100vh-65px)] items-center justify-center bg-background px-8">
@@ -28,17 +51,7 @@ export default function ForgotPasswordPage() {
             </p>
           </div>
 
-          <form
-            className="flex flex-col gap-6"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!email.trim()) {
-                toast.error("Please enter your email address");
-                return;
-              }
-              toast.success("Reset link sent — check your inbox (demo)");
-            }}
-          >
+          <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-2">
               <Label className="text-xs font-semibold tracking-[0.24px] text-foreground">Email Address</Label>
               <div className="relative">
@@ -54,8 +67,8 @@ export default function ForgotPasswordPage() {
             </div>
 
             <div className="flex flex-col gap-4 pt-2">
-              <Button type="submit" className="h-10 rounded-xl shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-                Send Reset Link
+              <Button type="submit" disabled={submitting} className="h-10 rounded-xl shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+                {submitting ? "Sending..." : "Send Reset Link"}
               </Button>
               <button
                 type="button"

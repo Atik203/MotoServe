@@ -1,7 +1,8 @@
 import { prisma } from "../../lib/prisma.js";
+import { ApiError } from "../../middleware/error.js";
 import type { AssignMechanicBody, CreateEstimateBody, CreateJobCardBody } from "./advisor.types.js";
 
-export async function createJobCard(body: CreateJobCardBody) {
+export async function createJobCard(advisorId: string, body: CreateJobCardBody) {
   const count = await prisma.jobCard.count();
   const id = `JC-${1040 + count + 1}`;
   const job = await prisma.jobCard.create({
@@ -9,7 +10,7 @@ export async function createJobCard(body: CreateJobCardBody) {
       id,
       vehicleId: body.vehicleId,
       customerId: body.customerId,
-      advisorId: body.advisorId,
+      advisorId,
       issues: body.issues,
       priority: (body.priority ?? "medium").toUpperCase() as never,
       station: body.station,
@@ -35,15 +36,17 @@ export function assignMechanic(id: string, body: AssignMechanicBody) {
   });
 }
 
-export async function createEstimate(body: CreateEstimateBody) {
+export async function createEstimate(advisorId: string, body: CreateEstimateBody) {
+  const job = await prisma.jobCard.findUnique({ where: { id: body.jobId }, select: { customerId: true } });
+  if (!job) throw new ApiError(404, "Job not found");
   const count = await prisma.estimate.count();
   const total = body.items.reduce((sum, i) => sum + i.amount, 0);
   return prisma.estimate.create({
     data: {
       id: `ES-${3300 + count + 1}`,
       jobCardId: body.jobId,
-      customerId: "cus-001",
-      advisorId: "emp-001",
+      customerId: job.customerId,
+      advisorId,
       summary: body.summary ?? "",
       total,
       items: {

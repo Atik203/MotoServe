@@ -18,14 +18,20 @@ export async function verifyCredentials(email: string, password: string) {
 export async function createOwner(data: RegisterBody) {
   const existing = await findUserByEmail(data.email);
   if (existing) throw new ApiError(409, "Email already registered");
+  const { password, ...profile } = data;
   return prisma.user.create({
     data: {
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      passwordHash: await bcrypt.hash(data.password, 10),
+      ...profile,
+      passwordHash: await bcrypt.hash(password, 10),
       role: "OWNER",
       status: "PENDING",
     },
+  });
+}
+
+export async function updatePassword(userId: string, password: string) {
+  return prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash: await bcrypt.hash(password, 10) },
   });
 }

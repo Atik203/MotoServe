@@ -38,7 +38,7 @@ export const fetchJob = createAsyncThunk("jobs/fetchOne", async (id: string) => 
 
 export const createJobCard = createAsyncThunk(
   "jobs/create",
-  async (data: { vehicleId: string; customerId: string; advisorId: string; issues: string; priority?: string; station?: string }) => {
+  async (data: { vehicleId: string; customerId: string; issues: string; priority?: string; station?: string }) => {
     return await api.post<{ id: string }>("/jobs", data);
   },
 );

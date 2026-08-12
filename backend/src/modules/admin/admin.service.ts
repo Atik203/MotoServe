@@ -1,5 +1,8 @@
+import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma.js";
-import type { CreateServiceBody, ReportDto } from "./admin.types.js";
+import { ApiError } from "../../middleware/error.js";
+import { findUserByEmail } from "../shared/shared.service.js";
+import type { CreateEmployeeBody, CreateServiceBody, ReportDto, UpdateEmployeeBody } from "./admin.types.js";
 
 export function createService(data: CreateServiceBody) {
   return prisma.service.create({
@@ -23,6 +26,36 @@ export function verifyCustomerStatus(id: string, decision: "approved" | "rejecte
     where: { id },
     data: { status: decision === "approved" ? "ACTIVE" : "REJECTED", verifiedAt: decision === "approved" ? new Date() : null },
   });
+}
+
+export async function createEmployee(data: CreateEmployeeBody) {
+  const existing = await findUserByEmail(data.email);
+  if (existing) throw new ApiError(409, "Email already registered");
+  const { password, role, ...profile } = data;
+  return prisma.user.create({
+    data: {
+      ...profile,
+      passwordHash: await bcrypt.hash(password, 10),
+      role: role.toUpperCase() as never,
+      status: "ACTIVE",
+    },
+  });
+}
+
+export function updateEmployee(id: string, data: UpdateEmployeeBody) {
+  const { password, status, ...rest } = data;
+  return prisma.user.update({
+    where: { id },
+    data: {
+      ...rest,
+      ...(password ? { passwordHash: bcrypt.hashSync(password, 10) } : {}),
+      ...(status ? { status: status.toUpperCase() as never } : {}),
+    },
+  });
+}
+
+export function deactivateEmployee(id: string) {
+  return prisma.user.update({ where: { id }, data: { status: "INACTIVE" } });
 }
 
 export async function getReportData(): Promise<ReportDto> {

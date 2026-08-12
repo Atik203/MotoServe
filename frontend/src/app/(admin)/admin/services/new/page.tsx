@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useAppDispatch } from "@/store/hooks";
+import { createService } from "@/store/slices/servicesSlice";
 import {
   Select,
   SelectContent,
@@ -33,17 +35,39 @@ const fieldClass = "h-[38px] w-full rounded border-[#e2e8f0] bg-[#f8f9fa] text-s
 
 export default function NewServicePage() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [name, setName] = useState("");
   const [category, setCategory] = useState("maintenance");
   const [price, setPrice] = useState("");
   const [duration, setDuration] = useState("30");
   const [description, setDescription] = useState("");
   const [active, setActive] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Service created");
-    router.push("/admin/services");
+    if (!name.trim() || !price || Number(price) <= 0) {
+      toast.error("Service name and a valid price are required");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await dispatch(
+        createService({
+          name: name.trim(),
+          category: category as "maintenance" | "repairs" | "inspections",
+          basePrice: Number(price),
+          durationMins: Number(duration),
+          description: description.trim(),
+          active,
+        }),
+      ).unwrap();
+      toast.success("Service created");
+      router.push("/admin/services");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create service");
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -146,9 +170,10 @@ export default function NewServicePage() {
             <Button
               type="submit"
               size="sm"
+              disabled={submitting}
               className="rounded px-4 py-[9px] text-xs font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
             >
-              Create Service
+              {submitting ? "Creating..." : "Create Service"}
             </Button>
           </div>
         </form>

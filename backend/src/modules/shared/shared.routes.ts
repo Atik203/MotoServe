@@ -17,8 +17,9 @@ import {
   getThreads,
   getVehicles,
   sendMessage,
+  updateAppointmentController,
 } from "./shared.controller.js";
-import { sendMessageSchema } from "./shared.validation.js";
+import { sendMessageSchema, updateAppointmentSchema } from "./shared.validation.js";
 
 export const router = Router();
 
@@ -29,6 +30,7 @@ router.get("/services", getServices);
 router.get("/vehicles", requireAuth, getVehicles);
 
 router.get("/appointments", requireAuth, getAppointments);
+router.patch("/appointments/:id", requireAuth, requireRole("owner", "advisor", "admin"), validate(updateAppointmentSchema), updateAppointmentController);
 
 router.get("/jobs", requireAuth, getJobs);
 router.get("/jobs/:id", requireAuth, getJob);

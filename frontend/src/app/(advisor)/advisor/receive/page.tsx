@@ -65,7 +65,6 @@ export default function ReceiveVehiclePage() {
         createJobCard({
           vehicleId: job.vehicleId,
           customerId: job.customerId,
-          advisorId: job.advisorId,
           issues: problems.trim(),
           priority,
           station: "Main Bay / Station 04",

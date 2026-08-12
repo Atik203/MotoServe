@@ -31,18 +31,58 @@ import { Label } from "@/components/ui/label";
 
 const required = <span className="text-[#f44336]">*</span>;
 
+interface FormState {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirm: string;
+  dateOfBirth: string;
+  gender: string;
+  nid: string;
+  drivingLicense: string;
+  occupation: string;
+  street: string;
+  city: string;
+  district: string;
+  zip: string;
+  country: string;
+}
+
+const initialForm: FormState = {
+  name: "",
+  email: "",
+  phone: "",
+  password: "",
+  confirm: "",
+  dateOfBirth: "",
+  gender: "",
+  nid: "",
+  drivingLicense: "",
+  occupation: "",
+  street: "",
+  city: "",
+  district: "",
+  zip: "",
+  country: "",
+};
+
 function Field({
   label,
   required: isRequired,
   placeholder,
   type = "text",
   icon,
+  value,
+  onChange,
 }: {
   label: string;
   required?: boolean;
   placeholder: string;
   type?: string;
   icon?: React.ReactNode;
+  value: string;
+  onChange: (v: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-1">
@@ -50,7 +90,7 @@ function Field({
         {label} {isRequired && required}
       </Label>
       <div className="relative">
-        <Input type={type} placeholder={placeholder} className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" />
+        <Input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" />
         {icon && <span className="absolute top-1/2 left-[15px] -translate-y-1/2 text-muted-foreground">{icon}</span>}
       </div>
     </div>
@@ -62,14 +102,23 @@ export default function RegisterPage() {
   const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
+  const [form, setForm] = useState<FormState>(initialForm);
 
-  const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const set = (key: keyof FormState) => (v: string) => setForm((f) => ({ ...f, [key]: v }));
+  const setEvent = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  const parseDate = (value: string): string | null => {
+    const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value.trim());
+    if (!match) return null;
+    const [mm, dd, yyyy] = [Number(match[1]), Number(match[2]), Number(match[3])];
+    if (mm < 1 || mm > 12 || dd < 1 || dd > 31 || yyyy < 1900 || yyyy > new Date().getFullYear()) return null;
+    return `${yyyy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.email.trim() || !form.password) {
+    if (!form.name.trim() || !form.email.trim() || !form.phone.trim() || !form.password || !form.nid.trim() || !form.drivingLicense.trim() || !form.street.trim() || !form.city.trim() || !form.district.trim()) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -81,14 +130,29 @@ export default function RegisterPage() {
       toast.error("Passwords do not match");
       return;
     }
+    const dateOfBirth = form.dateOfBirth.trim() ? parseDate(form.dateOfBirth) : undefined;
+    if (form.dateOfBirth.trim() && !dateOfBirth) {
+      toast.error("Date of birth must be in mm/dd/yyyy format");
+      return;
+    }
     setSubmitting(true);
     try {
       await dispatch(
         registerUser({
           name: form.name.trim(),
           email: form.email.trim(),
-          phone: form.phone.trim() || undefined,
+          phone: form.phone.trim(),
           password: form.password,
+          dateOfBirth: dateOfBirth ?? undefined,
+          gender: form.gender.trim() || undefined,
+          nid: form.nid.trim(),
+          drivingLicense: form.drivingLicense.trim(),
+          occupation: form.occupation.trim() || undefined,
+          street: form.street.trim(),
+          city: form.city.trim(),
+          district: form.district.trim(),
+          zip: form.zip.trim() || undefined,
+          country: form.country.trim() || undefined,
         }),
       ).unwrap();
       toast.success("Account created — verification pending. You can log in once approved.");
@@ -142,28 +206,28 @@ export default function RegisterPage() {
                 <div className="flex flex-col gap-1">
                   <Label className="text-base text-foreground">Full Name {required}</Label>
                   <div className="relative">
-                    <Input value={form.name} onChange={set("name")} placeholder="John Doe" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" />
+                    <Input value={form.name} onChange={setEvent("name")} placeholder="John Doe" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" />
                     <IdCard className="absolute top-1/2 left-[15px] size-[16.7px] -translate-y-1/2 text-muted-foreground" />
                   </div>
                 </div>
                 <div className="flex flex-col gap-1">
                   <Label className="text-base text-foreground">Email Address {required}</Label>
                   <div className="relative">
-                    <Input type="email" value={form.email} onChange={set("email")} placeholder="john@example.com" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" />
+                    <Input type="email" value={form.email} onChange={setEvent("email")} placeholder="john@example.com" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" />
                     <Mail className="absolute top-1/2 left-[15px] size-[16.7px] -translate-y-1/2 text-muted-foreground" />
                   </div>
                 </div>
                 <div className="flex flex-col gap-1">
                   <Label className="text-base text-foreground">Phone Number {required}</Label>
                   <div className="relative">
-                    <Input type="tel" value={form.phone} onChange={set("phone")} placeholder="+1 (555) 000-0000" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" />
+                    <Input type="tel" value={form.phone} onChange={setEvent("phone")} placeholder="+1 (555) 000-0000" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" />
                     <Phone className="absolute top-1/2 left-[15px] size-[15px] -translate-y-1/2 text-muted-foreground" />
                   </div>
                 </div>
                 <div className="flex flex-col gap-1">
                   <Label className="text-base text-foreground">Password {required}</Label>
                   <div className="relative">
-                    <Input type={showPassword ? "text" : "password"} value={form.password} onChange={set("password")} placeholder="••••••••" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] px-[41px] text-base" />
+                    <Input type={showPassword ? "text" : "password"} value={form.password} onChange={setEvent("password")} placeholder="••••••••" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] px-[41px] text-base" />
                     <KeyRound className="absolute top-1/2 left-[15px] size-[13.3px] -translate-y-1/2 text-muted-foreground" />
                     <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Toggle password">
                       {showPassword ? <EyeOff className="size-[18.3px]" /> : <Eye className="size-[18.3px]" />}
@@ -173,21 +237,33 @@ export default function RegisterPage() {
                 <div className="flex flex-col gap-1">
                   <Label className="text-base text-foreground">Confirm Password {required}</Label>
                   <div className="relative">
-                    <Input type="password" value={form.confirm} onChange={set("confirm")} placeholder="••••••••" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] px-[41px] text-base" />
+                    <Input type="password" value={form.confirm} onChange={setEvent("confirm")} placeholder="••••••••" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] px-[41px] text-base" />
                     <KeyRound className="absolute top-1/2 left-[15px] size-[16.7px] -translate-y-1/2 text-muted-foreground" />
                   </div>
                 </div>
-                <Field label="Date of Birth" placeholder="mm/dd/yyyy" icon={<CalendarDays className="size-[15px]" />} />
+                <Field label="Date of Birth" placeholder="mm/dd/yyyy" icon={<CalendarDays className="size-[15px]" />} value={form.dateOfBirth} onChange={set("dateOfBirth")} />
                 <div className="flex flex-col gap-1">
                   <Label className="text-base text-foreground">Gender</Label>
                   <div className="relative">
-                    <Input placeholder="Select Gender" className="h-[46px] cursor-pointer rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" readOnly />
-                    <ChevronDown className="absolute top-1/2 right-3 size-3 -translate-y-1/2 text-muted-foreground" />
+                    <select
+                      value={form.gender}
+                      onChange={(e) => set("gender")(e.target.value)}
+                      className="h-[46px] w-full cursor-pointer appearance-none rounded-md border border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base text-foreground outline-none"
+                    >
+                      <option value="" disabled>
+                        Select Gender
+                      </option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                      <option value="prefer-not-to-say">Prefer not to say</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-3 -translate-y-1/2 text-muted-foreground" />
                   </div>
                 </div>
-                <Field label="National ID (NID)" required placeholder="Enter NID number" icon={<IdCard className="size-[16.7px]" />} />
-                <Field label="Driving License Number" required placeholder="Enter license number" icon={<IdCard className="size-[15px]" />} />
-                <Field label="Occupation (Optional)" placeholder="E.g. Software Engineer" icon={<Briefcase className="size-[16.7px]" />} />
+                <Field label="National ID (NID)" required placeholder="Enter NID number" icon={<IdCard className="size-[16.7px]" />} value={form.nid} onChange={set("nid")} />
+                <Field label="Driving License Number" required placeholder="Enter license number" icon={<IdCard className="size-[15px]" />} value={form.drivingLicense} onChange={set("drivingLicense")} />
+                <Field label="Occupation (Optional)" placeholder="E.g. Software Engineer" icon={<Briefcase className="size-[16.7px]" />} value={form.occupation} onChange={set("occupation")} />
               </div>
             </section>
 
@@ -198,18 +274,12 @@ export default function RegisterPage() {
               </h2>
               <div className="grid grid-cols-2 gap-x-[16px] gap-y-[16px]">
                 <div className="col-span-2">
-                  <Field label="Street Address" required placeholder="123 Main St, Apt 4B" icon={<Home className="size-[13.3px]" />} />
+                  <Field label="Street Address" required placeholder="123 Main St, Apt 4B" icon={<Home className="size-[13.3px]" />} value={form.street} onChange={set("street")} />
                 </div>
-                <Field label="City" required placeholder="City" icon={<MapPin className="size-[15px]" />} />
-                <Field label="District/State" required placeholder="District or State" icon={<Landmark className="size-[15px]" />} />
-                <Field label="Zip / Postal Code" placeholder="12345" icon={<Hash className="size-[15px]" />} />
-                <div className="flex flex-col gap-1">
-                  <Label className="text-base text-foreground">Select Country</Label>
-                  <div className="relative">
-                    <Input placeholder="Country" className="h-[46px] cursor-pointer rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" readOnly />
-                    <ChevronDown className="absolute top-1/2 right-3 size-3 -translate-y-1/2 text-muted-foreground" />
-                  </div>
-                </div>
+                <Field label="City" required placeholder="City" icon={<MapPin className="size-[15px]" />} value={form.city} onChange={set("city")} />
+                <Field label="District/State" required placeholder="District or State" icon={<Landmark className="size-[15px]" />} value={form.district} onChange={set("district")} />
+                <Field label="Zip / Postal Code" placeholder="12345" icon={<Hash className="size-[15px]" />} value={form.zip} onChange={set("zip")} />
+                <Field label="Country" placeholder="Country" icon={<MapPin className="size-[15px]" />} value={form.country} onChange={set("country")} />
               </div>
             </section>
 
@@ -219,9 +289,9 @@ export default function RegisterPage() {
                 Emergency Contact
               </h2>
               <div className="grid grid-cols-2 gap-x-[16px] gap-y-[16px]">
-                <Field label="Contact Name" required placeholder="Jane Doe" icon={<User className="size-[15px]" />} />
-                <Field label="Relationship" placeholder="e.g. Spouse, Parent" icon={<HeartHandshake className="size-[15px]" />} />
-                <Field label="Contact Phone" required type="tel" placeholder="+1 (555) 000-0000" icon={<Phone className="size-[15px]" />} />
+                <Field label="Contact Name" required placeholder="Jane Doe" icon={<User className="size-[15px]" />} value="" onChange={() => {}} />
+                <Field label="Relationship" placeholder="e.g. Spouse, Parent" icon={<HeartHandshake className="size-[15px]" />} value="" onChange={() => {}} />
+                <Field label="Contact Phone" required type="tel" placeholder="+1 (555) 000-0000" icon={<Phone className="size-[15px]" />} value="" onChange={() => {}} />
               </div>
             </section>
 
@@ -245,7 +315,7 @@ export default function RegisterPage() {
                 <span className="cursor-pointer text-sm font-medium text-primary hover:underline" onClick={() => router.push("/login")}>
                   Back to Login
                 </span>
-                <Button type="button" variant="outline" onClick={() => toast.info("Form reset (demo)")}>
+                <Button type="button" variant="outline" onClick={() => setForm(initialForm)}>
                   Reset
                 </Button>
                 <Button type="submit" disabled={submitting} className="rounded-md">

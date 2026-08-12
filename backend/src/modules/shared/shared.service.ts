@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import { ApiError } from "../../middleware/error.js";
 import type { CustomerStatus } from "./shared.types.js";
 
 export function findUserByEmail(email: string) {
@@ -59,6 +60,21 @@ export function listAppointments(ownerId?: string) {
     include: { vehicle: true, owner: { select: { id: true, name: true } } },
     orderBy: [{ date: "desc" }, { time: "desc" }],
   });
+}
+
+export async function updateAppointment(
+  id: string,
+  status: string,
+  role: string | undefined,
+  userId: string | undefined,
+) {
+  const appointment = await prisma.appointment.findUnique({ where: { id } });
+  if (!appointment) throw new ApiError(404, "Appointment not found");
+  if (role === "OWNER") {
+    if (appointment.ownerId !== userId) throw new ApiError(403, "Insufficient permissions");
+    if (status !== "cancelled") throw new ApiError(403, "Owners can only cancel appointments");
+  }
+  return prisma.appointment.update({ where: { id }, data: { status: status.toUpperCase() as never } });
 }
 
 export function listEmployees(role?: string) {
