@@ -1,8 +1,5 @@
 import type { Request, Response } from "express";
-import { prisma } from "../lib/prisma.js";
 import {
-  findJobById,
-  getDashboardStats,
   listAppointments,
   listCustomers,
   listEmployees,
@@ -15,7 +12,15 @@ import {
   listTestimonials,
   listThreads,
   listVehicles,
-} from "../services/query.service.js";
+  findJobById,
+  mapCustomerStatus,
+} from "./shared.service.js";
+import { getIo } from "../../lib/socket.js";
+import { prisma } from "../../lib/prisma.js";
+
+export function getHealth(_req: Request, res: Response): void {
+  res.json({ status: "ok", db: "pending" });
+}
 
 export async function getServices(_req: Request, res: Response): Promise<void> {
   const services = await listServices();
@@ -53,13 +58,6 @@ export async function getEmployees(req: Request, res: Response): Promise<void> {
   const employees = await listEmployees(role);
   res.json(employees.map((e) => ({ ...e, role: e.role.toLowerCase(), status: e.status.toLowerCase() })));
 }
-
-const mapCustomerStatus = (status: string): string => {
-  if (status === "ACTIVE") return "approved";
-  if (status === "REJECTED") return "rejected";
-  if (status === "PENDING") return "pending";
-  return "inactive";
-};
 
 export async function getCustomers(_req: Request, res: Response): Promise<void> {
   const customers = await listCustomers();
@@ -101,6 +99,19 @@ export async function getThreads(req: Request, res: Response): Promise<void> {
   );
 }
 
+export async function sendMessage(req: Request, res: Response): Promise<void> {
+  const { threadId, text } = req.body.body as { threadId: string; text: string };
+  const sender: "ADVISOR" | "OWNER" = req.user?.role === "OWNER" ? "OWNER" : "ADVISOR";
+  const message = await prisma.message.create({ data: { threadId, sender, text } });
+  await prisma.chatThread.update({
+    where: { id: threadId },
+    data: { lastMessageAt: new Date() },
+  });
+  const payload = { ...message, sender: message.sender.toLowerCase() };
+  getIo().to(threadId).emit("message:new", payload);
+  res.status(201).json(payload);
+}
+
 export async function getParts(_req: Request, res: Response): Promise<void> {
   res.json(await listParts());
 }
@@ -111,74 +122,4 @@ export async function getRatings(_req: Request, res: Response): Promise<void> {
 
 export async function getTestimonials(_req: Request, res: Response): Promise<void> {
   res.json(await listTestimonials());
-}
-
-export async function getReports(_req: Request, res: Response): Promise<void> {
-  const [stats, jobsByStatus, mechanics, activityLog, jobCards] = await Promise.all([
-    getDashboardStats(),
-    prisma.jobCard.groupBy({ by: ["status"], _count: true }),
-    prisma.user.findMany({
-      where: { role: "MECHANIC" },
-      include: { _count: { select: { jobCardsAssigned: true } } },
-    }),
-    listAuditLogsSafe(),
-    prisma.jobCard.findMany({ select: { mechanicId: true, status: true, services: true } }),
-  ]);
-
-  const completedByMechanic = jobCards
-    .filter((j) => j.status === "COMPLETED" && j.mechanicId)
-    .reduce<Record<string, number>>((map, j) => {
-      map[j.mechanicId!] = (map[j.mechanicId!] ?? 0) + 1;
-      return map;
-    }, {});
-
-  const serviceCount = new Map<string, number>();
-  for (const job of jobCards) {
-    const services = (job.services ?? []) as { name?: string }[];
-    for (const s of services) {
-      if (!s.name) continue;
-      serviceCount.set(s.name, (serviceCount.get(s.name) ?? 0) + 1);
-    }
-  }
-  const serviceTotal = [...serviceCount.values()].reduce((sum, n) => sum + n, 0);
-  const fallbackCategories = await prisma.service.groupBy({ by: ["category"], _count: true });
-  const fallbackTotal = fallbackCategories.reduce((sum, c) => sum + c._count, 0);
-  const serviceDistribution =
-    serviceTotal > 0
-      ? [...serviceCount.entries()]
-          .map(([name, count]) => ({ name, pct: Math.round((count / serviceTotal) * 100) }))
-          .sort((a, b) => b.pct - a.pct)
-          .slice(0, 4)
-      : fallbackCategories.map((c) => ({
-          name: c.category.charAt(0) + c.category.slice(1).toLowerCase(),
-          pct: fallbackTotal > 0 ? Math.round((c._count / fallbackTotal) * 100) : 0,
-        }));
-
-  res.json({
-    ...stats,
-    revenueByMonth: stats.revenueByMonth,
-    jobsByStatus: jobsByStatus.map((j) => ({ status: j.status.toLowerCase(), count: j._count })),
-    workloadByMechanic: mechanics.map((m) => ({
-      mechanic: m.name,
-      role: m.specialization ?? "Technician",
-      active: m._count.jobCardsAssigned,
-      completed: completedByMechanic[m.id] ?? 0,
-      avgHoursPerJob: 0,
-    })),
-    serviceDistribution,
-    activityLog: activityLog.map((a) => ({ id: a.id, user: a.user, action: a.action, time: a.time })),
-  });
-}
-
-async function listAuditLogsSafe() {
-  return prisma.auditLog.findMany({ orderBy: { time: "desc" }, take: 50 });
-}
-
-export async function verifyOwner(req: Request, res: Response): Promise<void> {
-  const { decision } = req.body.body as { decision: string };
-  const user = await prisma.user.update({
-    where: { id: req.params.id as string },
-    data: { status: decision === "approved" ? "ACTIVE" : "REJECTED", verifiedAt: decision === "approved" ? new Date() : null },
-  });
-  res.json({ id: user.id, status: mapCustomerStatus(user.status) });
 }

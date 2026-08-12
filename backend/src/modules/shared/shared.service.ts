@@ -1,4 +1,5 @@
-import { prisma } from "../lib/prisma.js";
+import { prisma } from "../../lib/prisma.js";
+import type { CustomerStatus } from "./shared.types.js";
 
 export function findUserByEmail(email: string) {
   return prisma.user.findUnique({ where: { email } });
@@ -67,6 +68,10 @@ export function listEmployees(role?: string) {
   });
 }
 
+export function listCustomers() {
+  return prisma.user.findMany({ where: { role: "OWNER" }, orderBy: { createdAt: "desc" } });
+}
+
 export function listEstimates(customerId?: string) {
   return prisma.estimate.findMany({
     where: { customerId: customerId ?? undefined },
@@ -102,10 +107,6 @@ export function listParts() {
   return prisma.part.findMany({ orderBy: { name: "asc" } });
 }
 
-export function listCustomers() {
-  return prisma.user.findMany({ where: { role: "OWNER" }, orderBy: { createdAt: "desc" } });
-}
-
 export function listRatings() {
   return prisma.rating.findMany({ include: { job: true }, orderBy: { date: "desc" } });
 }
@@ -114,35 +115,9 @@ export function listTestimonials() {
   return prisma.testimonial.findMany({ orderBy: { date: "desc" } });
 }
 
-export function listAuditLogs() {
-  return prisma.auditLog.findMany({ orderBy: { time: "desc" }, take: 50 });
-}
-
-export async function getDashboardStats() {
-  const [activeJobs, totalRevenue, revenueByMonthRaw, customers, employees] = await Promise.all([
-    prisma.jobCard.count({ where: { status: { notIn: ["COMPLETED", "READY"] } } }),
-    prisma.invoice.aggregate({ _sum: { total: true }, where: { status: "PAID" } }),
-    prisma.invoice.findMany({ select: { issuedAt: true, total: true } }),
-    prisma.user.count({ where: { role: "OWNER" } }),
-    prisma.user.count({ where: { role: { in: ["ADVISOR", "MECHANIC"] }, status: "ACTIVE" } }),
-  ]);
-
-  const revenueByMonth = Array.from(
-    revenueByMonthRaw
-      .filter((i) => i.issuedAt.getFullYear() === new Date().getFullYear())
-      .reduce((map, i) => {
-        const key = i.issuedAt.toLocaleString("en-US", { month: "short" });
-        map.set(key, (map.get(key) ?? 0) + i.total);
-        return map;
-      }, new Map<string, number>()),
-    ([month, revenue]) => ({ month, revenue: Math.round(revenue) }),
-  );
-
-  return {
-    totalRevenue: totalRevenue._sum.total ?? 0,
-    activeJobs,
-    registeredCustomers: customers,
-    activeEmployees: employees,
-    revenueByMonth,
-  };
+export function mapCustomerStatus(status: string): CustomerStatus {
+  if (status === "ACTIVE") return "approved";
+  if (status === "REJECTED") return "rejected";
+  if (status === "PENDING") return "pending";
+  return "inactive";
 }

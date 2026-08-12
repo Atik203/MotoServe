@@ -1,7 +1,7 @@
 import { Server } from "socket.io";
 import type { Server as HttpServer } from "node:http";
 import { COOKIE_NAME, verifyToken } from "./auth.js";
-import { listThreads } from "../services/query.service.js";
+import { listThreads } from "../modules/shared/shared.service.js";
 
 let io: Server | null = null;
 

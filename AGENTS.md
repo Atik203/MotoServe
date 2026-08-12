@@ -64,7 +64,7 @@ pnpm db:seed       # node prisma/seed.ts
 
 - Express 5: async handlers throw; central error middleware returns `{ error }`. No try/catch noise in controllers.
 - Prisma 7: client generated to `backend/src/generated/prisma` (generator `prisma-client`, output `../src/generated/prisma`), instantiated once in `src/lib/prisma.ts` with `PrismaPg` adapter. `prisma.config.ts` at backend root; env via `dotenv` (`.env` gitignored, `.env.example` committed).
-- Routes: `src/routes/*.router.ts` → `src/controllers/*.controller.ts` → `src/services/*.service.ts`. Zod schemas in `src/validation/`, validated in a `validate` middleware.
+- Routes: modular vertical slices in `src/modules/` — one folder per domain (`auth`, `admin`, `owner`, `advisor`, `mechanic`, `shared`), each with `<name>.routes.ts` → `<name>.controller.ts` → `<name>.service.ts`, zod schemas in `<name>.validation.ts`, DTOs in `<name>.types.ts`. Cross-cutting reads live in `modules/shared/`. Mounted from `src/app.ts`; middleware in `src/middleware/` (auth, error, validate), infra in `src/lib/` (prisma, auth, socket).
 - Auth: JWT (httpOnly cookie) + `requireRole("admin"|"advisor"|"mechanic"|"owner")` middleware.
 - Every public API response shape MUST match the demo JSON shape so the frontend swap is seamless.
 - API request bodies are sent RAW (no `{body: ...}` wrapper) — the `validate` middleware wraps internally. Demo accounts: admin@motorserve.com/admin123, john.doe@example.com/password123, alex.turner@motorserve.com/password123, sarah.jenkins@motorserve.com/password123.

@@ -1,0 +1,31 @@
+import bcrypt from "bcryptjs";
+import { prisma } from "../../lib/prisma.js";
+import { ApiError } from "../../middleware/error.js";
+import { findUserByEmail } from "../shared/shared.service.js";
+import type { RegisterBody } from "./auth.types.js";
+
+export async function verifyCredentials(email: string, password: string) {
+  const user = await findUserByEmail(email);
+  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+    throw new ApiError(401, "Invalid email or password");
+  }
+  if (user.status === "REJECTED" || user.status === "PENDING") {
+    throw new ApiError(403, "Account not approved yet");
+  }
+  return user;
+}
+
+export async function createOwner(data: RegisterBody) {
+  const existing = await findUserByEmail(data.email);
+  if (existing) throw new ApiError(409, "Email already registered");
+  return prisma.user.create({
+    data: {
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      passwordHash: await bcrypt.hash(data.password, 10),
+      role: "OWNER",
+      status: "PENDING",
+    },
+  });
+}
