@@ -32,7 +32,7 @@ export function AppTopbar({
           />
         </div>
       )}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 pr-2">
         <button className="relative flex items-center justify-center" aria-label="Notifications">
           <Bell className="h-5 w-[17.5px] text-muted-foreground" />
           <span className="absolute top-0 right-0 size-2 rounded-full bg-destructive ring-2 ring-white" />
