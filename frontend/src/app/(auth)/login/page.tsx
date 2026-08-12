@@ -91,14 +91,6 @@ export default function LoginPage() {
         <div className="absolute -top-[10%] right-[60%] bottom-[60%] -left-[10%] rounded-xl bg-[rgba(0,82,204,0.05)] blur-[32px]" />
         <div className="absolute top-1/2 -right-[10%] -bottom-[10%] left-[50%] rounded-xl bg-[rgba(0,91,191,0.1)] blur-[32px]" />
 
-        <div className="relative flex items-center gap-2">
-          <span className="flex size-8 items-center justify-center rounded bg-primary shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-            <WrenchSmall />
-          </span>
-          <span className="w-[146px] text-2xl font-semibold tracking-[-0.6px] text-primary">
-            MotoServe
-          </span>
-        </div>
 
         <div className="relative flex max-w-lg flex-col gap-4">
           <h1 className="text-4xl font-bold tracking-[-0.72px] text-foreground">
