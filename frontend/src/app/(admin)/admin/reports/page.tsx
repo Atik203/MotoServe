@@ -3,13 +3,10 @@
 import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import {
-  BadgeDollarSign,
   Calendar,
   Clock,
   Download,
-  FileBarChart,
   Star,
-  Users,
   Wallet,
   Wrench,
 } from "lucide-react";
@@ -31,13 +28,6 @@ const kpis = [
   { label: "Active Jobs", value: "18", delta: "+3 today", positive: true, icon: Wrench },
   { label: "Avg. Job Time", value: "1.9h", delta: "+0.2h", positive: false, icon: Clock },
   { label: "Customer Satisfaction", value: "4.8", delta: "+0.3", positive: true, icon: Star },
-];
-
-const quickActions = [
-  { label: "Generate Report", icon: FileBarChart },
-  { label: "Manage Services", icon: Wrench },
-  { label: "Employees", icon: Users },
-  { label: "Pricing", icon: BadgeDollarSign },
 ];
 
 export default function AdminReportsPage() {
@@ -208,23 +198,6 @@ export default function AdminReportsPage() {
                       {status.count}
                     </span>
                   </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-4 rounded-lg border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-              <h2 className="text-xl font-semibold text-foreground">Quick Actions</h2>
-              <div className="grid grid-cols-2 gap-2">
-                {quickActions.map((action) => (
-                  <button
-                    key={action.label}
-                    type="button"
-                    onClick={() => toast.info(`${action.label} — coming with the backend`)}
-                    className="flex flex-col items-center justify-center gap-2 rounded border border-[#e2e8f0] bg-[#f8f9fa] py-[25px] transition-colors hover:border-primary/50"
-                  >
-                    <action.icon className="size-5 text-muted-foreground" />
-                    <span className="text-xs font-semibold tracking-[0.24px] text-foreground">{action.label}</span>
-                  </button>
                 ))}
               </div>
             </section>

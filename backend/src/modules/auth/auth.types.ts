@@ -21,6 +21,7 @@ export interface RegisterBody {
   district?: string;
   zip?: string;
   country?: string;
+  documentUrl?: string;
 }
 
 export interface ForgotPasswordBody {

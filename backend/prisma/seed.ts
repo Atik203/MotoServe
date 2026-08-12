@@ -76,6 +76,7 @@ async function main() {
         drivingLicense: c.drivingLicense,
         status: status as never,
         verifiedAt: c.verifiedAt ? new Date(c.verifiedAt) : null,
+        documentUrl: status === "PENDING" ? "/uploads/demo-nid.png" : null,
       },
       create: {
         id: c.id,
@@ -86,6 +87,7 @@ async function main() {
         drivingLicense: c.drivingLicense,
         status: status as never,
         verifiedAt: c.verifiedAt ? new Date(c.verifiedAt) : null,
+        documentUrl: status === "PENDING" ? "/uploads/demo-nid.png" : null,
         role: "OWNER",
         passwordHash: await bcrypt.hash("password123", 10),
       },

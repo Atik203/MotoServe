@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Briefcase,
@@ -24,7 +24,8 @@ import {
   Wrench,
 } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
-import { registerUser } from "@/store/slices/authSlice";
+import { registerUser, uploadDocument } from "@/store/slices/authSlice";
+import { API_ORIGIN } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -102,7 +103,10 @@ export default function RegisterPage() {
   const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [document, setDocument] = useState<{ name: string; url: string } | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState<FormState>(initialForm);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const set = (key: keyof FormState) => (v: string) => setForm((f) => ({ ...f, [key]: v }));
   const setEvent = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -153,6 +157,7 @@ export default function RegisterPage() {
           district: form.district.trim(),
           zip: form.zip.trim() || undefined,
           country: form.country.trim() || undefined,
+          documentUrl: document?.url ?? undefined,
         }),
       ).unwrap();
       toast.success("Account created — verification pending. You can log in once approved.");
@@ -161,6 +166,36 @@ export default function RegisterPage() {
       toast.error(err instanceof Error ? err.message : "Registration failed");
       setSubmitting(false);
     }
+  };
+
+  const handleDocumentPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!["image/png", "image/jpeg", "application/pdf"].includes(file.type)) {
+      toast.error("Only JPG, PNG or PDF documents are allowed");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Document exceeds 5MB limit");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const raw = String(reader.result ?? "");
+      const base64 = raw.includes(",") ? raw.slice(raw.indexOf(",") + 1) : raw;
+      setUploading(true);
+      try {
+        const res = await dispatch(uploadDocument({ fileName: file.name, data: base64 })).unwrap();
+        setDocument({ name: file.name, url: res.url });
+        toast.success("Document uploaded for verification");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Upload failed");
+      } finally {
+        setUploading(false);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -300,11 +335,48 @@ export default function RegisterPage() {
                 <IdCard className="size-4" />
                 Identity Verification
               </h2>
-              <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-[#c2c6d5] bg-[#f8f9fa] py-12">
-                <Camera className="size-6 text-muted-foreground" />
-                <p className="text-sm font-medium text-muted-foreground">Click to upload or drag and drop</p>
-                <p className="text-xs text-muted-foreground">NID / License document — JPG, PNG or PDF up to 5MB</p>
-              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,application/pdf"
+                className="hidden"
+                onChange={handleDocumentPick}
+              />
+              {document ? (
+                <div className="flex items-center gap-4 rounded-md border border-[#c2c6d5] bg-[#f8f9fa] px-4 py-3">
+                  {document.name.toLowerCase().endsWith(".pdf") ? (
+                    <span className="flex size-10 items-center justify-center rounded bg-[rgba(0,82,204,0.1)]">
+                      <IdCard className="size-5 text-primary" />
+                    </span>
+                  ) : (
+                    <img src={`${API_ORIGIN}${document.url}`} alt="Identity document" className="size-10 rounded object-cover" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{document.name}</p>
+                    <p className="text-xs text-muted-foreground">Uploaded — visible to the admin for verification</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDocument(null)}
+                    className="rounded border border-border px-3 py-1.5 text-xs font-semibold text-[#ba1a1a]"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={uploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-[#c2c6d5] bg-[#f8f9fa] py-12 transition-colors hover:border-primary/50"
+                >
+                  <Camera className="size-6 text-muted-foreground" />
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {uploading ? "Uploading..." : "Click to upload or drag and drop"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">NID / License document — JPG, PNG or PDF up to 5MB</p>
+                </button>
+              )}
             </section>
 
             <div className="flex items-center justify-between border-t border-border pt-6">

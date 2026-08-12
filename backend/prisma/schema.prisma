@@ -104,6 +104,7 @@ model User {
   country        String?
   dateOfBirth    DateTime?
   gender         String?
+  documentUrl    String?
   verifiedAt     DateTime?
   joinedAt       DateTime  @default(now())
 

@@ -38,6 +38,7 @@ backend/    Express API  ->  src/{routes,controllers,services,middleware,validat
 - Sidebar 256px · Topbar 64px · active nav item = `#0052cc` bg, white text, radius 6px; single shared `AppSidebar`/`AppTopbar` system for ALL roles — nav items per role in `src/lib/nav.ts` (owner/advisor/mechanic/admin), active state derived from `usePathname`. No profile card in sidebar (any role) — identity lives in the topbar.
 - **UserMenu** (`src/components/layout/UserMenu.tsx`): 32px circular avatar (photo or initials) top-right in every role topbar + public navbar when logged in. Click → dropdown: name/email/role header, Dashboard (role home), Profile (`/profile`), Logout. Logout calls `POST /auth/logout` then navigates to `/login`.
 - **Profile page** `/profile`: shared client layout that renders `AppShell` with the logged-in user's role; proxy-gated (auth required). Edit name/phone via `PATCH /auth/me`; shows role/station/specialization.
+- **Owner verification docs**: registration "Identity Verification" dropzone uploads JPG/PNG/PDF (≤5MB) via `POST /api/auth/upload-document` → stored in `backend/uploads/` (gitignored, demo asset `demo-nid.png` committed), served at `/uploads/*`. `documentUrl` saved on User. Admin detail `/admin/verifications/[id]` shows full profile + inline document preview (image or PDF iframe) + approve/reject. `GET /customers` selects safe fields (no passwordHash).
 - Admin dashboard accents: green `#4caf50` (positive delta), amber `#ffc107` (warning delta), red `#ba1a1a` (negative delta), each on 10% bg pill; border `#e2e8f0`; headings 20px semibold.
 - Inter 400/500/600/700; headings bold 14px uppercase w/ 0.35px tracking (owner side sections)
 
@@ -111,6 +112,7 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 | 41 | Parts Inventory | `/mechanic/parts` | — (no Figma ref) | ✅ |
 | 43 | Reset Password | `/reset-password` | — (no Figma ref) | ✅ |
 | 44 | Profile (all roles) | `/profile` | — (no Figma ref) | ✅ |
+| 45 | Owner Verification Detail | `/admin/verifications/[id]` | — (no Figma ref) | ✅ |
 
 ## Design notes (captured per screen — extend, don't re-fetch)
 

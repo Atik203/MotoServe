@@ -29,6 +29,10 @@ next-env.d.ts
 # prisma generated client
 backend/src/generated/
 
+# backend uploads (user files ignored, demo asset committed)
+backend/uploads/*
+!backend/uploads/demo-nid.png
+
 # backend build
 backend/dist/
 

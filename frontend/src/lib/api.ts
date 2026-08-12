@@ -1,4 +1,10 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+export const API_ORIGIN = BASE_URL.replace(/\/api\/?$/, "");
+
+export function resolveFileUrl(url: string): string {
+  if (!url) return url;
+  return url.startsWith("/uploads/") ? `${API_ORIGIN}${url}` : url;
+}
 
 export class ApiError extends Error {
   status: number;

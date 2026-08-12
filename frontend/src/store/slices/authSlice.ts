@@ -48,6 +48,7 @@ export const registerUser = createAsyncThunk(
     district?: string;
     zip?: string;
     country?: string;
+    documentUrl?: string;
   }) => {
     return await api.post<{ id: string; name: string; email: string; role: string; status: string }>(
       "/auth/register",
@@ -71,6 +72,13 @@ export const updateProfile = createAsyncThunk(
   "auth/updateProfile",
   async (data: { name?: string; phone?: string | null; avatar?: string | null }) => {
     return await api.patch<AuthUser>("/auth/me", data);
+  },
+);
+
+export const uploadDocument = createAsyncThunk(
+  "auth/uploadDocument",
+  async ({ fileName, data }: { fileName: string; data: string }) => {
+    return await api.post<{ url: string; name: string }>("/auth/upload-document", { fileName, data });
   },
 );
 

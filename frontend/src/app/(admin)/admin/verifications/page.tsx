@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Download, RefreshCw, Search, ShieldCheck, UserCheck, UserX, Users } from "lucide-react";
@@ -168,6 +169,12 @@ export default function VerificationPage() {
                   </TableCell>
                   <TableCell className="px-4 py-[19px]">
                     <div className="flex justify-end gap-2">
+                      <Link
+                        href={`/admin/verifications/${customer.id}`}
+                        className="rounded border border-[rgba(0,82,204,0.2)] bg-[rgba(0,82,204,0.1)] px-[13px] py-[5px] text-xs font-semibold tracking-[0.24px] text-primary transition-colors hover:bg-[rgba(0,82,204,0.2)]"
+                      >
+                        Review
+                      </Link>
                       {customer.status !== "approved" && (
                         <button
                           type="button"

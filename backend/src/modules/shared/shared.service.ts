@@ -85,7 +85,31 @@ export function listEmployees(role?: string) {
 }
 
 export function listCustomers() {
-  return prisma.user.findMany({ where: { role: "OWNER" }, orderBy: { createdAt: "desc" } });
+  return prisma.user.findMany({
+    where: { role: "OWNER" },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      nid: true,
+      drivingLicense: true,
+      occupation: true,
+      street: true,
+      city: true,
+      district: true,
+      zip: true,
+      country: true,
+      dateOfBirth: true,
+      gender: true,
+      avatar: true,
+      documentUrl: true,
+      status: true,
+      verifiedAt: true,
+      joinedAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
 }
 
 export function listEstimates(customerId?: string) {

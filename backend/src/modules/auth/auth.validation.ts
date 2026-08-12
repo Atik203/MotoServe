@@ -23,6 +23,7 @@ export const registerSchema = z.object({
     district: z.string().optional(),
     zip: z.string().optional(),
     country: z.string().optional(),
+    documentUrl: z.string().optional(),
   }),
 });
 
@@ -44,5 +45,12 @@ export const updateProfileSchema = z.object({
     name: z.string().min(2).optional(),
     phone: z.string().optional(),
     avatar: z.string().nullable().optional(),
+  }),
+});
+
+export const uploadDocumentSchema = z.object({
+  body: z.object({
+    fileName: z.string().min(1).max(255),
+    data: z.string().min(1),
   }),
 });

@@ -44,6 +44,17 @@ export interface Customer {
   drivingLicense: string;
   status: "pending" | "approved" | "rejected";
   verifiedAt: string | null;
+  occupation?: string | null;
+  street?: string | null;
+  city?: string | null;
+  district?: string | null;
+  zip?: string | null;
+  country?: string | null;
+  dateOfBirth?: string | null;
+  gender?: string | null;
+  avatar?: string | null;
+  documentUrl?: string | null;
+  joinedAt?: string;
 }
 
 export type EmployeeRole = "advisor" | "mechanic";
