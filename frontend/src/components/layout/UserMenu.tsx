@@ -31,18 +31,19 @@ export function UserMenu() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
   const [open, setOpen] = useState(false);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   if (!user) return null;
 
-  const openMenu = () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    setOpen(true);
-  };
+  const openMenu = () => setOpen(true);
 
-  const scheduleClose = () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    closeTimer.current = setTimeout(() => setOpen(false), 250);
+  const handleLeave = () => {
+    requestAnimationFrame(() => {
+      if (!wrapperRef.current?.matches(":hover") && !contentRef.current?.matches(":hover")) {
+        setOpen(false);
+      }
+    });
   };
 
   const handleLogout = async () => {
@@ -57,8 +58,9 @@ export function UserMenu() {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <div
+        ref={wrapperRef}
         onMouseEnter={openMenu}
-        onMouseLeave={scheduleClose}
+        onMouseLeave={handleLeave}
         className="-mb-2 flex items-center pb-2"
       >
         <DropdownMenuTrigger asChild>
@@ -76,11 +78,12 @@ export function UserMenu() {
         </DropdownMenuTrigger>
       </div>
       <DropdownMenuContent
+        ref={contentRef}
         align="end"
         sideOffset={8}
         className="w-56 rounded-lg"
         onMouseEnter={openMenu}
-        onMouseLeave={scheduleClose}
+        onMouseLeave={handleLeave}
       >
         <DropdownMenuLabel className="flex flex-col gap-0.5 px-3 py-2.5">
           <span className="text-sm font-semibold text-foreground">{user.name}</span>
