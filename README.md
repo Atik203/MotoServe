@@ -13,7 +13,7 @@ Vehicle workshop & servicing management system. Customers book appointments, tra
 Two independent folders — no shared workspace:
 
 ```
-frontend/   Next.js app (port 3000)
+frontend/   Next.js app (port 3500)
 backend/    Express API (port 4000)
 ```
 
@@ -36,7 +36,7 @@ pnpm db:migrate
 pnpm db:seed
 
 # 4. run
-cd ../frontend && pnpm dev   # http://localhost:3000
+cd ../frontend && pnpm dev   # http://localhost:3500
 cd ../backend  && pnpm dev   # http://localhost:4000
 ```
 

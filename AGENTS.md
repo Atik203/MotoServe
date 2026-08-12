@@ -30,7 +30,7 @@ root        AGENTS.md · README.md · blueprint.md (source of truth for screens/
 
 ```bash
 # frontend (from frontend/)
-pnpm dev           # dev server (port 3000)
+pnpm dev           # dev server (port 3500)
 pnpm build && pnpm start
 pnpm lint          # eslint
 pnpm typecheck     # tsc --noEmit

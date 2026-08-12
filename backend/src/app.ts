@@ -12,7 +12,7 @@ import { router as mechanicRoutes } from "./modules/mechanic/mechanic.routes.js"
 export function createApp(): express.Express {
   const app = express();
 
-  app.use(cors({ origin: process.env.CLIENT_URL ?? "http://localhost:3000", credentials: true }));
+  app.use(cors({ origin: process.env.CLIENT_URL ?? "http://localhost:3500", credentials: true }));
   app.use(express.json());
   app.use(cookieParser());
 

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { roleHome } from "@/lib/nav";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchMe } from "@/store/slices/authSlice";
 import { UserMenu } from "./UserMenu";
@@ -26,9 +25,6 @@ export function PublicNavbar({ fixed = true }: { fixed?: boolean }) {
       void dispatch(fetchMe());
     }
   }, [dispatch, user]);
-
-  const home = user ? roleHome(user.role) : "/login";
-  const bookHref = user?.role === "owner" ? "/dashboard/appointments/book" : home;
 
   return (
     <nav
@@ -59,27 +55,14 @@ export function PublicNavbar({ fixed = true }: { fixed?: boolean }) {
 
         <div className="flex items-center gap-4">
           {user ? (
-            <>
-              <Link
-                href={home}
-                className="flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-xs font-semibold tracking-[0.24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-colors hover:bg-primary/90"
-              >
-                Dashboard
-              </Link>
-              <UserMenu />
-            </>
+            <UserMenu />
           ) : (
-            <>
-              <Link href="/login" className="text-xs font-semibold tracking-[0.24px] text-[#414754] transition-colors hover:text-primary">
-                Login
-              </Link>
-              <Link
-                href={bookHref}
-                className="flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-xs font-semibold tracking-[0.24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-colors hover:bg-primary/90"
-              >
-                Book Service
-              </Link>
-            </>
+            <Link
+              href="/login"
+              className="flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-xs font-semibold tracking-[0.24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-colors hover:bg-primary/90"
+            >
+              Login
+            </Link>
           )}
         </div>
       </div>

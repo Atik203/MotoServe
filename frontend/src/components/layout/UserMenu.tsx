@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 import { LayoutDashboard, LogOut, User } from "lucide-react";
 import {
   DropdownMenu,
@@ -29,8 +30,20 @@ export function UserMenu() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
+  const [open, setOpen] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   if (!user) return null;
+
+  const openMenu = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setOpen(true);
+  };
+
+  const scheduleClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => setOpen(false), 150);
+  };
 
   const handleLogout = async () => {
     try {
@@ -42,21 +55,33 @@ export function UserMenu() {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label="Account menu"
-          className="relative flex size-8 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-border bg-primary-soft text-[11px] font-bold text-primary transition-shadow hover:shadow-[0_0_0_3px_rgba(0,82,204,0.15)]"
-        >
-          {user.avatar ? (
-            <Image src={user.avatar} alt={user.name} fill className="object-cover" />
-          ) : (
-            userInitials(user.name)
-          )}
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={8} className="w-56 rounded-lg">
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <div
+        onMouseEnter={openMenu}
+        onMouseLeave={scheduleClose}
+        className="flex items-center"
+      >
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            aria-label="Account menu"
+            className="relative flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-border bg-primary-soft text-xs font-bold text-primary transition-shadow hover:shadow-[0_0_0_3px_rgba(0,82,204,0.15)]"
+          >
+            {user.avatar ? (
+              <Image src={user.avatar} alt={user.name} fill className="object-cover" />
+            ) : (
+              userInitials(user.name)
+            )}
+          </button>
+        </DropdownMenuTrigger>
+      </div>
+      <DropdownMenuContent
+        align="end"
+        sideOffset={8}
+        className="w-56 rounded-lg"
+        onMouseEnter={openMenu}
+        onMouseLeave={scheduleClose}
+      >
         <DropdownMenuLabel className="flex flex-col gap-0.5 px-3 py-2.5">
           <span className="text-sm font-semibold text-foreground">{user.name}</span>
           <span className="text-xs font-normal text-muted-foreground">{user.email}</span>
