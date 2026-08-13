@@ -7,22 +7,34 @@ import { toast } from "sonner";
 import { AlertTriangle, Car, Check, Clock, HelpCircle, MessageSquare, X } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchEstimates, decideEstimate } from "@/store/slices/estimatesSlice";
+import { fetchEmployees } from "@/store/slices/employeesSlice";
 import { Button } from "@/components/ui/button";
 
 export default function EstimateApprovalPage() {
   const params = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const estimates = useAppSelector((s) => s.estimates.items);
+  const employees = useAppSelector((s) => s.employees.items);
 
   useEffect(() => {
     if (estimates.length === 0) dispatch(fetchEstimates());
-  }, [dispatch, estimates.length]);
+    if (employees.length === 0) dispatch(fetchEmployees());
+  }, [dispatch, estimates.length, employees.length]);
 
   const estimate = estimates.find((e) => e.id === params.id) ?? null;
 
   if (!estimate) {
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">Loading estimate...</div>;
   }
+
+  const advisor = employees.find((emp) => emp.id === estimate.advisorId) ?? null;
+  const advisorInitials =
+    (advisor?.name ?? "SJ")
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
 
   const subtotal = estimate.total / 1.085;
   const tax = estimate.total - subtotal;
@@ -129,18 +141,17 @@ export default function EstimateApprovalPage() {
               <h2 className="text-xl font-bold text-foreground">Advisor Information</h2>
               <div className="flex items-center gap-4">
                 <span className="flex size-10 items-center justify-center rounded-xl bg-primary-soft text-xs font-semibold text-primary">
-                  SJ
+                  {advisorInitials}
                 </span>
                 <div>
-                  <p className="text-xs font-bold tracking-[0.24px] text-foreground">Sarah Jenkins</p>
+                  <p className="text-xs font-bold tracking-[0.24px] text-foreground">{advisor?.name ?? "Sarah Jenkins"}</p>
                   <p className="text-[11px] text-[#424753]">Service Advisor</p>
                 </div>
               </div>
               <div className="relative rounded bg-[#edeeef] px-4 py-6">
                 <p className="text-sm leading-5 text-foreground">
-                  &quot;Hi John, our inspection revealed the front brakes are significantly worn. We recommend
-                  replacing the pads and rotors now to ensure safety and prevent further damage to the calipers.
-                  - Sarah&quot;
+                  &quot;Hi {estimate.customerId === "cus-001" ? "John" : "there"}, our inspection revealed the following work is
+                  needed. Please review the estimate and let us know if you have any questions. - {advisor?.name?.split(" ")[0] ?? "Your advisor"}&quot;
                 </p>
               </div>
               <div className="flex items-center gap-3 rounded border border-[rgba(0,82,204,0.1)] bg-[rgba(0,82,204,0.05)] p-[13px]">

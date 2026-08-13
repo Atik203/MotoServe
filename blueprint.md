@@ -165,7 +165,8 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 - **Phase 2** ✅ backend: Prisma schema+seed → auth → REST endpoints (auth/services/vehicles/appointments/jobs/employees/estimates/invoices/chat/parts/ratings/reports) → frontend RTK swap (all non-marketing pages on live API) → socket.io chat → jspdf PDFs
 - **Phase 3** ✅ route protection (Next 16 `proxy.ts` role guard + client fallback), real logout, API-backed forms (employee CRUD, forgot/reset password, register profile fields, create job card, appointment confirm/cancel), hardcoded-key cleanup, public navbar auth-aware
 - **Phase 4** ✅ missing sidebar pages (owner vehicles/appointments/estimates/services lists; mechanic jobs/history/parts/diagnostics)
-- **Phase 5** 🔨 polish: /health db check ✅, ratings role-scoping ✅, missing assets ✅ (honda-civic, repair-photos, 3 avatars), blueprint update 🔨
+- **Phase 5** ✅ polish: /health db check, ratings role-scoping, missing assets (honda-civic, repair-photos, 3 avatars), blueprint update
+- **Phase 6** ✅ dynamic overhaul: chat redesign (per-party unread + shared CommunicationCenter + new-conversation), job→invoice auto-generation, advisor dashboard real schedule/estimates/messages, admin employee/service edit dialogs + CSV exports, owner rating flow + history details, receive job selector, repair photos via S3, vehicle edit/delete
 
 ## API conventions (backend)
 

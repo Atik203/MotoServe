@@ -2,16 +2,34 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect } from "react";
-import { CalendarPlus, History, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { CalendarPlus, History, Pencil, Plus, Trash2 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchVehicles } from "@/store/slices/vehiclesSlice";
+import { fetchVehicles, updateVehicle, deleteVehicle } from "@/store/slices/vehiclesSlice";
 import { fetchJobs } from "@/store/slices/jobsSlice";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import type { FuelType, Vehicle } from "@/types";
+
+const FUEL_TYPES: FuelType[] = ["gasoline", "diesel", "hybrid", "electric"];
 
 export default function MyVehiclesPage() {
   const dispatch = useAppDispatch();
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const jobs = useAppSelector((s) => s.jobs.items);
+  const [editing, setEditing] = useState<Vehicle | null>(null);
+  const [deleting, setDeleting] = useState<Vehicle | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (vehicles.length === 0) dispatch(fetchVehicles());
@@ -19,6 +37,34 @@ export default function MyVehiclesPage() {
   }, [dispatch, vehicles.length, jobs.length]);
 
   const jobsByVehicle = (vehicleId: string) => jobs.filter((j) => j.vehicleId === vehicleId);
+
+  const handleSave = async (data: Partial<Omit<Vehicle, "id" | "ownerId">>) => {
+    if (!editing) return;
+    setSaving(true);
+    try {
+      await dispatch(updateVehicle({ id: editing.id, data })).unwrap();
+      toast.success("Vehicle updated");
+      setEditing(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleting) return;
+    setSaving(true);
+    try {
+      await dispatch(deleteVehicle(deleting.id)).unwrap();
+      toast.success("Vehicle removed");
+      setDeleting(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="bg-background min-h-screen p-8">
@@ -95,6 +141,22 @@ export default function MyVehiclesPage() {
                         <History className="size-3.5" />
                         History ({vehicleJobs.length})
                       </Link>
+                      <button
+                        type="button"
+                        onClick={() => setEditing(vehicle)}
+                        className="flex items-center justify-center rounded border border-border p-2 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+                        aria-label={`Edit ${vehicle.make} ${vehicle.model}`}
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleting(vehicle)}
+                        className="flex items-center justify-center rounded border border-border p-2 text-muted-foreground transition-colors hover:border-[#ba1a1a]/40 hover:text-[#ba1a1a]"
+                        aria-label={`Delete ${vehicle.make} ${vehicle.model}`}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
                     </div>
                     {activeJob && (
                       <Link
@@ -111,6 +173,118 @@ export default function MyVehiclesPage() {
           </div>
         )}
       </div>
+
+      <Dialog open={editing !== null} onOpenChange={(open) => !open && setEditing(null)}>
+        <DialogContent className="max-w-md rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-foreground">Edit Vehicle</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              {editing?.year} {editing?.make} {editing?.model} • {editing?.regNo}
+            </DialogDescription>
+          </DialogHeader>
+          <EditVehicleForm vehicle={editing} saving={saving} onSave={handleSave} onClose={() => setEditing(null)} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
+        <DialogContent className="max-w-sm rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-foreground">Remove {deleting?.make} {deleting?.model}?</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              This vehicle will be removed from your garage. Past service records are kept.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleting(null)} className="rounded-lg">
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={() => void handleDelete()} disabled={saving} className="rounded-lg">
+              {saving ? "Removing..." : "Remove Vehicle"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+function EditVehicleForm({
+  vehicle,
+  saving,
+  onSave,
+  onClose,
+}: {
+  vehicle: Vehicle | null;
+  saving: boolean;
+  onSave: (data: Partial<Omit<Vehicle, "id" | "ownerId">>) => void;
+  onClose: () => void;
+}) {
+  const [make, setMake] = useState(vehicle?.make ?? "");
+  const [model, setModel] = useState(vehicle?.model ?? "");
+  const [year, setYear] = useState(vehicle ? String(vehicle.year) : "");
+  const [regNo, setRegNo] = useState(vehicle?.regNo ?? "");
+  const [fuelType, setFuelType] = useState<FuelType>(vehicle?.fuelType ?? "gasoline");
+  const [mileage, setMileage] = useState(vehicle ? String(vehicle.mileage) : "");
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!make.trim() || !model.trim() || !regNo.trim()) return;
+    onSave({
+      make: make.trim(),
+      model: model.trim(),
+      year: Number(year),
+      regNo: regNo.trim(),
+      fuelType,
+      mileage: Number(mileage),
+    });
+  };
+
+  return (
+    <form onSubmit={submit} className="flex flex-col gap-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs font-semibold text-foreground">Make</Label>
+          <Input value={make} onChange={(e) => setMake(e.target.value)} className="h-10 rounded-lg border-border bg-white" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs font-semibold text-foreground">Model</Label>
+          <Input value={model} onChange={(e) => setModel(e.target.value)} className="h-10 rounded-lg border-border bg-white" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs font-semibold text-foreground">Year</Label>
+          <Input type="number" min="1950" max="2100" value={year} onChange={(e) => setYear(e.target.value)} className="h-10 rounded-lg border-border bg-white" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs font-semibold text-foreground">Registration No.</Label>
+          <Input value={regNo} onChange={(e) => setRegNo(e.target.value)} className="h-10 rounded-lg border-border bg-white" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs font-semibold text-foreground">Fuel Type</Label>
+          <select
+            value={fuelType}
+            onChange={(e) => setFuelType(e.target.value as FuelType)}
+            className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-foreground outline-none focus:border-primary"
+          >
+            {FUEL_TYPES.map((f) => (
+              <option key={f} value={f}>
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs font-semibold text-foreground">Mileage (mi)</Label>
+          <Input type="number" min="0" value={mileage} onChange={(e) => setMileage(e.target.value)} className="h-10 rounded-lg border-border bg-white" />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onClose} className="rounded-lg">
+          Cancel
+        </Button>
+        <Button type="submit" disabled={saving} className="rounded-lg">
+          {saving ? "Saving..." : "Save Changes"}
+        </Button>
+      </DialogFooter>
+    </form>
   );
 }

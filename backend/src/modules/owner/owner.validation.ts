@@ -15,6 +15,21 @@ export const createVehicleSchema = z.object({
   }),
 });
 
+export const updateVehicleSchema = z.object({
+  body: z.object({
+    make: z.string().min(1).optional(),
+    model: z.string().min(1).optional(),
+    year: z.number().int().min(1950).max(2100).optional(),
+    regNo: z.string().min(2).optional(),
+    fuelType: z.enum(["gasoline", "diesel", "hybrid", "electric"]).optional(),
+    mileage: z.number().int().nonnegative().optional(),
+    vin: z.string().optional(),
+    color: z.string().optional(),
+    transmission: z.string().optional(),
+    image: z.string().optional(),
+  }),
+});
+
 export const bookAppointmentSchema = z.object({
   body: z.object({
     vehicleId: z.string(),

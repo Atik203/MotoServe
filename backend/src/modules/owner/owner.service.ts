@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import { ApiError } from "../../middleware/error.js";
 import type {
   BookAppointmentBody,
   CreateVehicleBody,
@@ -11,6 +12,27 @@ export function createVehicle(ownerId: string, body: CreateVehicleBody) {
   return prisma.vehicle.create({
     data: { ...body, ownerId, fuelType: body.fuelType.toUpperCase() as never },
   });
+}
+
+export async function updateVehicle(ownerId: string, id: string, body: Partial<CreateVehicleBody>) {
+  const vehicle = await prisma.vehicle.findUnique({ where: { id } });
+  if (!vehicle) throw new ApiError(404, "Vehicle not found");
+  if (vehicle.ownerId !== ownerId) throw new ApiError(403, "Insufficient permissions");
+  const { fuelType, ...rest } = body;
+  return prisma.vehicle.update({
+    where: { id },
+    data: {
+      ...rest,
+      ...(fuelType ? { fuelType: fuelType.toUpperCase() as never } : {}),
+    },
+  });
+}
+
+export async function deleteVehicle(ownerId: string, id: string) {
+  const vehicle = await prisma.vehicle.findUnique({ where: { id } });
+  if (!vehicle) throw new ApiError(404, "Vehicle not found");
+  if (vehicle.ownerId !== ownerId) throw new ApiError(403, "Insufficient permissions");
+  await prisma.vehicle.delete({ where: { id } });
 }
 
 export function bookAppointment(ownerId: string, body: BookAppointmentBody) {

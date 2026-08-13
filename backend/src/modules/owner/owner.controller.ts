@@ -6,8 +6,10 @@ import {
   createChatThread,
   createVehicle,
   decideEstimate,
+  deleteVehicle,
   payInvoice,
   rateJob,
+  updateVehicle,
 } from "./owner.service.js";
 import type {
   BookAppointmentBody,
@@ -22,6 +24,18 @@ export async function createVehicleController(req: Request, res: Response): Prom
   if (!req.user) throw new ApiError(401, "Authentication required");
   const vehicle = await createVehicle(req.user.userId, req.body.body as CreateVehicleBody);
   res.status(201).json({ ...vehicle, fuelType: vehicle.fuelType.toLowerCase() });
+}
+
+export async function updateVehicleController(req: Request, res: Response): Promise<void> {
+  if (!req.user) throw new ApiError(401, "Authentication required");
+  const vehicle = await updateVehicle(req.user.userId, req.params.id as string, req.body.body as Partial<CreateVehicleBody>);
+  res.json({ ...vehicle, fuelType: vehicle.fuelType.toLowerCase() });
+}
+
+export async function deleteVehicleController(req: Request, res: Response): Promise<void> {
+  if (!req.user) throw new ApiError(401, "Authentication required");
+  await deleteVehicle(req.user.userId, req.params.id as string);
+  res.json({ ok: true });
 }
 
 export async function bookAppointmentController(req: Request, res: Response): Promise<void> {

@@ -6,8 +6,10 @@ import {
   createThreadController,
   createVehicleController,
   decideEstimateController,
+  deleteVehicleController,
   payInvoiceController,
   rateJobController,
+  updateVehicleController,
 } from "./owner.controller.js";
 import {
   bookAppointmentSchema,
@@ -16,11 +18,14 @@ import {
   decideEstimateSchema,
   payInvoiceSchema,
   rateJobSchema,
+  updateVehicleSchema,
 } from "./owner.validation.js";
 
 export const router = Router();
 
 router.post("/vehicles", requireAuth, requireRole("owner"), validate(createVehicleSchema), createVehicleController);
+router.patch("/vehicles/:id", requireAuth, requireRole("owner"), validate(updateVehicleSchema), updateVehicleController);
+router.delete("/vehicles/:id", requireAuth, requireRole("owner"), deleteVehicleController);
 
 router.post("/appointments", requireAuth, requireRole("owner"), validate(bookAppointmentSchema), bookAppointmentController);
 

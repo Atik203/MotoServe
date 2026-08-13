@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo } from "react";
 import Link from "next/link";
-import { toast } from "sonner";
 import {
   Calendar,
   Check,
@@ -233,30 +232,16 @@ export default function MechanicDashboardPage() {
             <section className="flex flex-col gap-4 rounded-lg border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
               <h2 className="text-xl font-semibold text-foreground">Quick Actions</h2>
               <div className="grid grid-cols-3 gap-2">
-                {quickActions.map((action) => {
-                  const content = (
-                    <>
-                      <action.icon className="size-5 text-muted-foreground" />
-                      <span className="text-xs font-semibold tracking-[0.24px] text-foreground">{action.label}</span>
-                    </>
-                  );
-                  const className =
-                    "flex flex-col items-center justify-center gap-2 rounded border border-border bg-[#f8f9fa] py-[25px] transition-colors hover:border-primary/50";
-                  return action.href ? (
-                    <Link key={action.label} href={action.href} className={className}>
-                      {content}
-                    </Link>
-                  ) : (
-                    <button
-                      key={action.label}
-                      type="button"
-                      onClick={() => toast.info(`${action.label} — coming with the backend`)}
-                      className={className}
-                    >
-                      {content}
-                    </button>
-                  );
-                })}
+                {quickActions.map((action) => (
+                  <Link
+                    key={action.label}
+                    href={action.href ?? "/mechanic"}
+                    className="flex flex-col items-center justify-center gap-2 rounded border border-border bg-[#f8f9fa] py-[25px] transition-colors hover:border-primary/50"
+                  >
+                    <action.icon className="size-5 text-muted-foreground" />
+                    <span className="text-xs font-semibold tracking-[0.24px] text-foreground">{action.label}</span>
+                  </Link>
+                ))}
               </div>
             </section>
 

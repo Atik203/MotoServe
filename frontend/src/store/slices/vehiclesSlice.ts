@@ -27,6 +27,18 @@ export const addVehicle = createAsyncThunk(
   },
 );
 
+export const updateVehicle = createAsyncThunk(
+  "vehicles/update",
+  async ({ id, data }: { id: string; data: Partial<Omit<Vehicle, "id" | "ownerId">> }) => {
+    return await api.patch<Vehicle>(`/vehicles/${id}`, data);
+  },
+);
+
+export const deleteVehicle = createAsyncThunk("vehicles/delete", async (id: string) => {
+  await api.delete<{ ok: boolean }>(`/vehicles/${id}`);
+  return id;
+});
+
 const vehiclesSlice = createSlice({
   name: "vehicles",
   initialState,
@@ -50,6 +62,14 @@ const vehiclesSlice = createSlice({
       })
       .addCase(addVehicle.fulfilled, (state, action) => {
         state.items.push(action.payload);
+      })
+      .addCase(updateVehicle.fulfilled, (state, action) => {
+        const i = state.items.findIndex((v) => v.id === action.payload.id);
+        if (i !== -1) state.items[i] = action.payload;
+      })
+      .addCase(deleteVehicle.fulfilled, (state, action) => {
+        state.items = state.items.filter((v) => v.id !== action.payload);
+        if (state.selectedVehicleId === action.payload) state.selectedVehicleId = null;
       });
   },
 });
