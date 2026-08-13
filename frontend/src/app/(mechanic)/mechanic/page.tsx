@@ -14,6 +14,7 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchJobs } from "@/store/slices/jobsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
+import { fetchParts } from "@/store/slices/partsSlice";
 import { buildKpis } from "@/lib/kpis";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -52,14 +53,15 @@ const quickActions: { label: string; icon: LucideIcon; href?: string }[] = [
 export default function MechanicDashboardPage() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
+  const jobs = useAppSelector((s) => s.jobs.items);
+  const vehicles = useAppSelector((s) => s.vehicles.items);
+  const parts = useAppSelector((s) => s.parts.items);
 
   useEffect(() => {
     dispatch(fetchJobs());
     dispatch(fetchVehicles());
-  }, [dispatch]);
-
-  const jobs = useAppSelector((s) => s.jobs.items);
-  const vehicles = useAppSelector((s) => s.vehicles.items);
+    if (parts.length === 0) dispatch(fetchParts());
+  }, [dispatch, parts.length]);
 
   const vehicleById = useMemo(() => new Map(vehicles.map((v) => [v.id, v])), [vehicles]);
 
@@ -211,18 +213,28 @@ export default function MechanicDashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {activeJob.partsUsed.map((part) => (
-                    <TableRow key={part.id} className="border-border">
-                      <TableCell className="text-sm font-medium text-foreground">{part.name}</TableCell>
-                      <TableCell className="text-sm text-foreground">{part.qty}</TableCell>
-                      <TableCell className="text-sm text-foreground">${part.unitPrice.toFixed(2)}</TableCell>
-                      <TableCell>
-                        <span className="inline-flex rounded-full bg-[rgba(16,185,129,0.1)] px-[9px] py-1 text-xs font-medium text-[#047857]">
-                          In Stock
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {activeJob.partsUsed.map((part) => {
+                    const catalog = parts.find((p) => p.name.toLowerCase() === part.name.toLowerCase());
+                    const stock = catalog?.stock ?? 0;
+                    const pill =
+                      stock <= 0
+                        ? { label: "Out of Stock", className: "bg-[rgba(186,26,26,0.1)] text-[#ba1a1a]" }
+                        : stock <= 10
+                          ? { label: "Low Stock", className: "bg-[rgba(255,193,7,0.1)] text-[#8b5000]" }
+                          : { label: "In Stock", className: "bg-[rgba(16,185,129,0.1)] text-[#047857]" };
+                    return (
+                      <TableRow key={part.id} className="border-border">
+                        <TableCell className="text-sm font-medium text-foreground">{part.name}</TableCell>
+                        <TableCell className="text-sm text-foreground">{part.qty}</TableCell>
+                        <TableCell className="text-sm text-foreground">${part.unitPrice.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <span className={cn("inline-flex rounded-full px-[9px] py-1 text-xs font-medium", pill.className)}>
+                            {pill.label}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </section>

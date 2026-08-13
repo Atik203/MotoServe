@@ -8,6 +8,7 @@ import { CalendarDays, CreditCard, Info, Landmark, ReceiptText, ShieldCheck, Wal
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createCheckoutSession, fetchInvoices, payInvoice } from "@/store/slices/invoicesSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
+import { fetchJobs } from "@/store/slices/jobsSlice";
 import { downloadInvoicePdf } from "@/lib/pdf";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -22,13 +23,15 @@ export default function PaymentInvoicePage() {
   const dispatch = useAppDispatch();
   const invoices = useAppSelector((s) => s.invoices.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
+  const jobs = useAppSelector((s) => s.jobs.items);
   const [method, setMethod] = useState("card");
   const [paying, setPaying] = useState(false);
 
   useEffect(() => {
     dispatch(fetchInvoices());
     dispatch(fetchVehicles());
-  }, [dispatch]);
+    if (jobs.length === 0) dispatch(fetchJobs());
+  }, [dispatch, jobs.length]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -50,6 +53,13 @@ export default function PaymentInvoicePage() {
   }
 
   const vehicle = vehicles.find((v) => v.id === invoice.vehicleId) ?? null;
+  const job = jobs.find((j) => j.id === invoice.jobId) ?? null;
+  const pickupBadge =
+    job?.status === "ready"
+      ? { label: "Ready for Pickup", className: "border-[rgba(0,74,49,0.2)] bg-[rgba(0,74,49,0.1)] text-[#004a31]" }
+      : job?.status === "completed"
+        ? { label: "Completed", className: "border-[rgba(76,175,80,0.2)] bg-[rgba(76,175,80,0.1)] text-[#4caf50]" }
+        : { label: "In Service", className: "border-[rgba(255,193,7,0.2)] bg-[rgba(255,193,7,0.1)] text-[#8b5000]" };
 
   const handlePay = async () => {
     setPaying(true);
@@ -94,8 +104,8 @@ export default function PaymentInvoicePage() {
                       {vehicle ? `Plate: ${vehicle.regNo}` : "—"} • Job Card #{invoice.jobId}
                     </p>
                   </div>
-                  <span className="rounded-xl border border-[rgba(0,74,49,0.2)] bg-[rgba(0,74,49,0.1)] px-[13px] py-[5px] text-xs font-semibold tracking-[0.6px] text-[#004a31]">
-                    Ready for Pickup
+                  <span className={cn("rounded-xl border px-[13px] py-[5px] text-xs font-semibold tracking-[0.6px]", pickupBadge.className)}>
+                    {pickupBadge.label}
                   </span>
                 </div>
                 <p className="flex items-center gap-2 pt-4 text-sm text-[#444651]">

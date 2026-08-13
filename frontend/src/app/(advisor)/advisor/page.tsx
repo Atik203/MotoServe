@@ -255,12 +255,12 @@ export default function AdvisorDashboardPage() {
                 </TableBody>
               </Table>
 
-              <button
-                type="button"
-                className="flex w-full items-center justify-center border-t border-[#e5e7eb] bg-[#f8f9fa] px-2 pt-[14.5px] pb-2.5 text-xs font-semibold tracking-[0.24px] text-primary"
+              <Link
+                href="/advisor/job-cards/assign"
+                className="flex w-full items-center justify-center border-t border-[#e5e7eb] bg-[#f8f9fa] px-2 pt-[14.5px] pb-2.5 text-xs font-semibold tracking-[0.24px] text-primary hover:underline"
               >
                 View All Active Jobs
-              </button>
+              </Link>
             </section>
 
             <section className="flex flex-col gap-4 rounded-lg border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">

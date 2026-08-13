@@ -167,6 +167,7 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 - **Phase 4** ✅ missing sidebar pages (owner vehicles/appointments/estimates/services lists; mechanic jobs/history/parts/diagnostics)
 - **Phase 5** ✅ polish: /health db check, ratings role-scoping, missing assets (honda-civic, repair-photos, 3 avatars), blueprint update
 - **Phase 6** ✅ dynamic overhaul: chat redesign (per-party unread + shared CommunicationCenter + new-conversation), job→invoice auto-generation, advisor dashboard real schedule/estimates/messages, admin employee/service edit dialogs + CSV exports, owner rating flow + history details, receive job selector, repair photos via S3, vehicle edit/delete
+- **Phase 7** ✅ final polish: parts add dialog, dynamic dashboard appointment card, appointment PDF, history filters, CSV exports everywhere, JobCard intake fields (mileage/fuel/keys/accessories), owner emergency contact, real AuditLog writes, parts stock pills, chat-unread bell
 
 ## API conventions (backend)
 

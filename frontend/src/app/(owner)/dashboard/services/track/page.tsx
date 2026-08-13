@@ -149,7 +149,9 @@ export default function ServiceTrackingPage() {
             <section className="flex flex-col gap-6 rounded-lg border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-foreground">Recent Updates</h2>
-                <span className="text-xs font-semibold tracking-[0.24px] text-primary">View All</span>
+                <Link href="/dashboard/services" className="text-xs font-semibold tracking-[0.24px] text-primary hover:underline">
+                  View All
+                </Link>
               </div>
               <div className="flex flex-col border-l-2 border-[#edeeef]">
                 {job.notes.length === 0 ? (
@@ -205,10 +207,10 @@ export default function ServiceTrackingPage() {
                 <div className="h-[17px] py-2">
                   <div className="h-px w-full bg-[#e2e8f0]" />
                 </div>
-                <button type="button" className="flex items-center justify-center gap-2 rounded bg-[#edeeef] px-4 py-3 text-xs font-semibold tracking-[0.24px] text-[#424753]">
+                <a href="tel:+15550198" className="flex items-center justify-center gap-2 rounded bg-[#edeeef] px-4 py-3 text-xs font-semibold tracking-[0.24px] text-[#424753]">
                   <Phone className="size-[15px]" />
                   Call Workshop
-                </button>
+                </a>
               </div>
               <div className="flex gap-3 rounded border border-border bg-[#f8f9fa] px-[17px] pt-[25px] pb-[17px]">
                 <MapPin className="size-5 shrink-0 text-primary" />
