@@ -24,7 +24,71 @@ export async function updateJobStatus(id: string, status: UpdateJobStatusBody["s
       },
     });
   }
+  if (status.toUpperCase() === "COMPLETED") {
+    await ensureInvoiceForJob(job.id);
+  }
   return updated;
+}
+
+export async function ensureInvoiceForJob(jobId: string) {
+  const existing = await prisma.invoice.findFirst({ where: { jobId } });
+  if (existing) return existing;
+
+  const job = await prisma.jobCard.findUniqueOrThrow({
+    where: { id: jobId },
+    include: { partsUsed: true },
+  });
+  const services = (job.services ?? []) as { id?: string; name: string; price: number }[];
+  const estimate = await prisma.estimate.findFirst({
+    where: { jobCardId: jobId },
+    include: { items: true },
+  });
+
+  const laborTotal = estimate?.items.filter((i) => i.category === "LABOR").reduce((sum, i) => sum + i.amount, 0) ?? 0;
+  const servicesTotal = services.reduce((sum, sv) => sum + sv.price, 0);
+  const partsTotal = job.partsUsed.reduce((sum, p) => sum + p.subtotal, 0);
+  const subtotal = servicesTotal + partsTotal + laborTotal;
+  const tax = subtotal * 0.085;
+  const total = subtotal + tax;
+
+  const year = new Date().getFullYear();
+  const rows = await prisma.invoice.findMany({ select: { id: true } });
+  const maxNum = rows.reduce((max, row) => {
+    const match = new RegExp(`^INV-${year}-(\\d+)$`).exec(row.id);
+    return match ? Math.max(max, parseInt(match[1], 10)) : max;
+  }, 0);
+  const id = `INV-${year}-${String(maxNum + 1).padStart(4, "0")}`;
+
+  const items = [
+    ...services.map((sv) => ({
+      id: sv.id ?? `svc-${crypto.randomUUID().slice(0, 8)}`,
+      description: sv.name,
+      category: "service",
+      amount: sv.price,
+    })),
+    ...job.partsUsed.map((p) => ({
+      id: p.id,
+      description: p.name,
+      category: "parts",
+      amount: p.subtotal,
+    })),
+  ];
+
+  return prisma.invoice.create({
+    data: {
+      id,
+      jobId: job.id,
+      customerId: job.customerId,
+      vehicleId: job.vehicleId,
+      items,
+      laborTotal,
+      partsTotal,
+      subtotal,
+      tax,
+      total,
+      status: "UNPAID",
+    },
+  });
 }
 
 export function addJobNote(id: string, body: AddJobNoteBody) {

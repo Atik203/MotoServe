@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import { toast } from "sonner";
 import { ArrowLeft, Check, Clock, Download, FileCheck, MapPin, MessageSquare, Phone, Wrench } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchJobs } from "@/store/slices/jobsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchEstimates } from "@/store/slices/estimatesSlice";
+import { fetchInvoices } from "@/store/slices/invoicesSlice";
+import { downloadInvoicePdf } from "@/lib/pdf";
 import { cn } from "@/lib/utils";
 
 export default function ServiceTrackingPage() {
@@ -14,12 +17,14 @@ export default function ServiceTrackingPage() {
   const jobs = useAppSelector((s) => s.jobs.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const estimates = useAppSelector((s) => s.estimates.items);
+  const invoices = useAppSelector((s) => s.invoices.items);
 
   useEffect(() => {
     if (jobs.length === 0) dispatch(fetchJobs());
     if (vehicles.length === 0) dispatch(fetchVehicles());
     if (estimates.length === 0) dispatch(fetchEstimates());
-  }, [dispatch, jobs.length, vehicles.length, estimates.length]);
+    if (invoices.length === 0) dispatch(fetchInvoices());
+  }, [dispatch, jobs.length, vehicles.length, estimates.length, invoices.length]);
 
   const activeJobs = jobs.filter((j) => !["completed", "ready"].includes(j.status));
   const job = activeJobs[0] ?? jobs[0];
@@ -179,10 +184,22 @@ export default function ServiceTrackingPage() {
                     </Link>
                   ) : null;
                 })()}
-                <button type="button" className="flex items-center justify-center gap-2 rounded border border-[#c2c6d5] bg-[#f8f9fa] px-[17px] py-[13px] text-xs font-semibold tracking-[0.24px] text-foreground">
-                  <Download className="size-[13.3px]" />
-                  Download Invoice
-                </button>
+                {(() => {
+                  const invoice = invoices.find((i) => i.jobId === job.id);
+                  return invoice ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        downloadInvoicePdf(invoice, vehicle);
+                        toast.success("Invoice PDF downloaded");
+                      }}
+                      className="flex items-center justify-center gap-2 rounded border border-[#c2c6d5] bg-[#f8f9fa] px-[17px] py-[13px] text-xs font-semibold tracking-[0.24px] text-foreground"
+                    >
+                      <Download className="size-[13.3px]" />
+                      Download Invoice
+                    </button>
+                  ) : null;
+                })()}
                 <div className="h-[17px] py-2">
                   <div className="h-px w-full bg-[#e2e8f0]" />
                 </div>

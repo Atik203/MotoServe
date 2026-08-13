@@ -2,9 +2,20 @@ import { prisma } from "../../lib/prisma.js";
 import { ApiError } from "../../middleware/error.js";
 import type { AssignMechanicBody, CreateEstimateBody, CreateJobCardBody } from "./advisor.types.js";
 
+type IdRow = { id: string };
+type FindManyIds = (args: { select: { id: true } }) => Promise<IdRow[]>;
+
+async function nextSequentialId(prefix: string, base: number, findMany: FindManyIds): Promise<number> {
+  const rows = await findMany({ select: { id: true } });
+  return rows.reduce((max, row) => {
+    const match = new RegExp(`^${prefix.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}(\\d+)$`).exec(row.id);
+    return match ? Math.max(max, parseInt(match[1], 10)) : max;
+  }, base);
+}
+
 export async function createJobCard(advisorId: string, body: CreateJobCardBody) {
-  const count = await prisma.jobCard.count();
-  const id = `JC-${1040 + count + 1}`;
+  const maxNum = await nextSequentialId("JC-", 1040, prisma.jobCard.findMany);
+  const id = `JC-${maxNum + 1}`;
   const job = await prisma.jobCard.create({
     data: {
       id,
@@ -39,11 +50,11 @@ export function assignMechanic(id: string, body: AssignMechanicBody) {
 export async function createEstimate(advisorId: string, body: CreateEstimateBody) {
   const job = await prisma.jobCard.findUnique({ where: { id: body.jobId }, select: { customerId: true } });
   if (!job) throw new ApiError(404, "Job not found");
-  const count = await prisma.estimate.count();
+  const maxNum = await nextSequentialId("ES-", 3300, prisma.estimate.findMany);
   const total = body.items.reduce((sum, i) => sum + i.amount, 0);
   return prisma.estimate.create({
     data: {
-      id: `ES-${3300 + count + 1}`,
+      id: `ES-${maxNum + 1}`,
       jobCardId: body.jobId,
       customerId: job.customerId,
       advisorId,
