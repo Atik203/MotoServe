@@ -166,8 +166,8 @@ export default function SendEstimatePage() {
                 ))}
               </select>
             </div>
-            <span className="rounded-xl border border-[rgba(76,175,80,0.2)] bg-[rgba(76,175,80,0.1)] px-[13px] py-[7px] text-xs font-semibold text-[#4caf50]">
-              Inspection Complete
+            <span className="rounded-xl border border-[rgba(76,175,80,0.2)] bg-[rgba(76,175,80,0.1)] px-[13px] py-[7px] text-xs font-semibold capitalize text-[#4caf50]">
+              {job ? `${job.status.replace("_", " ")}` : "No job selected"}
             </span>
           </div>
         </header>
@@ -189,7 +189,9 @@ export default function SendEstimatePage() {
               <span className="rounded border border-[#d5d6d8] bg-[#e7e8e9] px-2 py-0.5 font-mono text-xs font-medium text-[#111827]">
                 {vehicle?.regNo ?? "A9C-1234"}
               </span>
-              <span className="text-[13px] text-[#64748b]">VIN: 1FTFW1ED4PFA...</span>
+              {vehicle?.vin && (
+                <span className="text-[13px] text-[#64748b]">VIN: {vehicle.vin}</span>
+              )}
             </div>
           </section>
 

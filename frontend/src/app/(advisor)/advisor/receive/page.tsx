@@ -145,11 +145,15 @@ export default function ReceiveVehiclePage() {
                 <h2 className="text-xl font-semibold text-[#191c1d]">
                   {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : "2023 Ford F-150"}
                 </h2>
-                <span className="rounded-xl bg-[rgba(0,82,204,0.1)] px-2.5 py-0.75 text-xs font-medium whitespace-nowrap text-primary">
-                  XLT Fleet
-                </span>
+                {vehicle && (
+                  <span className="rounded-xl bg-[rgba(0,82,204,0.1)] px-2.5 py-0.75 text-xs font-medium whitespace-nowrap capitalize text-primary">
+                    {vehicle.fuelType}
+                  </span>
+                )}
               </div>
-              <p className="text-sm text-[#64748b]">VIN: 1FTFW1ED...</p>
+              <p className="text-sm text-[#64748b]">
+                {vehicle?.vin ? `VIN: ${vehicle.vin}` : `Mileage: ${vehicle?.mileage?.toLocaleString() ?? "—"} mi`}
+              </p>
             </section>
 
             <section className={card}>

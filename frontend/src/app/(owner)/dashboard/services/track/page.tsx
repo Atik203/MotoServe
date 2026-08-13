@@ -120,7 +120,10 @@ export default function ServiceTrackingPage() {
                   </div>
                 </div>
                 <p className="pt-4 text-sm">
-                  Time Remaining: <span className="font-medium text-primary">1h 30m</span>
+                  Steps Remaining:{" "}
+                  <span className="font-medium text-primary">
+                    {job.progress.filter((p) => !p.done).length} of {job.progress.length}
+                  </span>
                 </p>
               </section>
 

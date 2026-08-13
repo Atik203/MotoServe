@@ -107,7 +107,7 @@ export default function AppointmentConfirmationPage() {
                     <span className="flex size-8 items-center justify-center rounded-xl border border-[#e2e8f0] bg-secondary">
                       <User className="size-3.5 text-muted-foreground" />
                     </span>
-                    <span className="text-sm font-medium text-foreground">Sarah Jenkins</span>
+                    <span className="text-sm font-medium text-foreground">Assigned at intake</span>
                   </div>
                 </div>
               </div>

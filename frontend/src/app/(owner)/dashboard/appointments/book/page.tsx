@@ -318,7 +318,7 @@ export default function BookAppointmentPage() {
                 </div>
                 <div className="text-sm">
                   <span className="text-muted-foreground">Advisor: </span>
-                  <span className="font-medium text-foreground">Sarah Jenkins</span>
+                  <span className="font-medium text-foreground">Assigned at intake</span>
                 </div>
               </CardContent>
             </Card>

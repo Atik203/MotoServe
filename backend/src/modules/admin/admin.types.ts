@@ -45,7 +45,7 @@ export interface ReportDto {
     role: string;
     active: number;
     completed: number;
-    avgHoursPerJob: number;
+    avgHoursPerJob?: number;
   }[];
   serviceDistribution: { name: string; pct: number }[];
   activityLog: { id: string; user: string; action: string; time: Date }[];

@@ -123,7 +123,6 @@ export async function getReportData(): Promise<ReportDto> {
       role: m.specialization ?? "Technician",
       active: m._count.jobCardsAssigned,
       completed: completedByMechanic[m.id] ?? 0,
-      avgHoursPerJob: 0,
     })),
     serviceDistribution,
     activityLog: activityLog.map((a) => ({ id: a.id, user: a.user, action: a.action, time: a.time })),

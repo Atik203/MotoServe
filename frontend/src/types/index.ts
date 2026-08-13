@@ -33,6 +33,9 @@ export interface Vehicle {
   fuelType: FuelType;
   mileage: number;
   image: string;
+  vin?: string | null;
+  color?: string | null;
+  transmission?: string | null;
 }
 
 export interface Customer {

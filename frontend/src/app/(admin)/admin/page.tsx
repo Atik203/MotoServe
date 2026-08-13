@@ -247,8 +247,10 @@ export default function AdminDashboardPage() {
                   style={{ background: `conic-gradient(${gradientStops})`, mask: "radial-gradient(circle, transparent 56%, black 57%)", WebkitMask: "radial-gradient(circle, transparent 56%, black 57%)" }}
                 >
                   <div className="flex flex-col items-center bg-white px-3">
-                    <span className="text-xl font-bold text-foreground">128</span>
-                    <span className="text-[11px] font-medium text-muted-foreground">Total</span>
+                    <span className="text-xl font-bold text-foreground">
+                      {reports.jobsByStatus.reduce((sum, j) => sum + j.count, 0)}
+                    </span>
+                    <span className="text-[11px] font-medium text-muted-foreground">Jobs</span>
                   </div>
                 </div>
               </div>
