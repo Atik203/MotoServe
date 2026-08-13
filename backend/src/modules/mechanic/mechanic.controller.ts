@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { addJobNote, addPartUsed, updateJobStatus } from "./mechanic.service.js";
+import { addJobNote, addJobPhoto, addPartUsed, updateJobStatus } from "./mechanic.service.js";
 import type { AddJobNoteBody, AddPartUsedBody, UpdateJobStatusBody } from "./mechanic.types.js";
 
 export async function updateJobStatusController(req: Request, res: Response): Promise<void> {
@@ -16,4 +16,10 @@ export async function addJobNoteController(req: Request, res: Response): Promise
 export async function addPartUsedController(req: Request, res: Response): Promise<void> {
   const part = await addPartUsed(req.params.id as string, req.body.body as AddPartUsedBody);
   res.status(201).json(part);
+}
+
+export async function addJobPhotoController(req: Request, res: Response): Promise<void> {
+  const { key } = req.body.body as { key: string };
+  const job = await addJobPhoto(req.params.id as string, key);
+  res.status(201).json({ photos: job.photos });
 }

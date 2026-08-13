@@ -107,3 +107,12 @@ export function addPartUsed(id: string, body: AddPartUsedBody) {
     data: { jobCardId: id, name: body.name, qty: body.qty, unitPrice: body.unitPrice, supplier: body.supplier, subtotal: body.qty * body.unitPrice },
   });
 }
+
+export async function addJobPhoto(id: string, key: string) {
+  const job = await prisma.jobCard.findUniqueOrThrow({ where: { id } });
+  const photos = Array.isArray(job.photos) ? (job.photos as string[]) : [];
+  return prisma.jobCard.update({
+    where: { id },
+    data: { photos: [...photos, key] },
+  });
+}

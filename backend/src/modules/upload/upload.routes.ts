@@ -7,4 +7,4 @@ import { presignGetSchema, presignUploadSchema } from "./upload.validation.js";
 export const router = Router();
 
 router.post("/upload/presign", requireAuth, validate(presignUploadSchema), presignUploadController);
-router.post("/upload/presign-get", requireAuth, requireRole("admin", "advisor"), validate(presignGetSchema), presignGetController);
+router.post("/upload/presign-get", requireAuth, requireRole("admin", "advisor", "mechanic"), validate(presignGetSchema), presignGetController);

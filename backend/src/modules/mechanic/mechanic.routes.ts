@@ -3,10 +3,11 @@ import { requireAuth, requireRole } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import {
   addJobNoteController,
+  addJobPhotoController,
   addPartUsedController,
   updateJobStatusController,
 } from "./mechanic.controller.js";
-import { addJobNoteSchema, addPartUsedSchema, updateJobStatusSchema } from "./mechanic.validation.js";
+import { addJobNoteSchema, addJobPhotoSchema, addPartUsedSchema, updateJobStatusSchema } from "./mechanic.validation.js";
 
 export const router = Router();
 
@@ -32,4 +33,12 @@ router.post(
   requireRole("mechanic", "advisor", "admin"),
   validate(addPartUsedSchema),
   addPartUsedController,
+);
+
+router.post(
+  "/jobs/:id/photos",
+  requireAuth,
+  requireRole("mechanic", "advisor", "admin"),
+  validate(addJobPhotoSchema),
+  addJobPhotoController,
 );

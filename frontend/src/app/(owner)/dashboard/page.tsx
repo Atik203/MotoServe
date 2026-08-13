@@ -7,6 +7,7 @@ import { ArrowUpRight, Bell, Calendar, Car, Check, ChevronRight, FileCheck, Gaug
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchEstimates } from "@/store/slices/estimatesSlice";
 import { buildKpis } from "@/lib/kpis";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
@@ -26,15 +27,18 @@ export default function OwnerDashboardPage() {
   const user = useAppSelector((s) => s.auth.user);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const jobs = useAppSelector((s) => s.jobs.items);
+  const estimates = useAppSelector((s) => s.estimates.items);
 
   useEffect(() => {
     dispatch(fetchVehicles());
     dispatch(fetchJobs());
+    dispatch(fetchEstimates());
   }, [dispatch]);
 
   const kpis = useMemo(() => buildKpis("owner", { jobs, vehicles }), [jobs, vehicles]);
 
   const activeJob = jobs.find((j) => j.status !== "ready" && j.status !== "completed");
+  const pendingEstimate = estimates.find((e) => e.status === "pending");
   const activeVehicle = vehicles[0];
   const firstName = user?.name.split(" ")[0] ?? "John";
 
@@ -136,14 +140,16 @@ export default function OwnerDashboardPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between rounded-lg border border-[#e2e8f0] bg-secondary px-[17px] py-[9px]">
-                    <span className="text-sm text-[#414754]">
-                      Estimate <span className="font-semibold text-foreground">#ES-3301</span> awaiting your approval
-                    </span>
-                    <Link href="/dashboard/estimates/ES-3301" className="flex items-center gap-1 text-xs font-semibold tracking-[0.24px] text-primary">
-                      Review <ChevronRight className="size-3" />
-                    </Link>
-                  </div>
+                  {pendingEstimate && (
+                    <div className="flex items-center justify-between rounded-lg border border-[#e2e8f0] bg-secondary px-[17px] py-[9px]">
+                      <span className="text-sm text-[#414754]">
+                        Estimate <span className="font-semibold text-foreground">#{pendingEstimate.id}</span> awaiting your approval
+                      </span>
+                      <Link href={`/dashboard/estimates/${pendingEstimate.id}`} className="flex items-center gap-1 text-xs font-semibold tracking-[0.24px] text-primary">
+                        Review <ChevronRight className="size-3" />
+                      </Link>
+                    </div>
+                  )}
                 </>
               ) : (
                 <p className="text-sm text-muted-foreground">No active service right now.</p>

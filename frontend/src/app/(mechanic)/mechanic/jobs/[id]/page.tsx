@@ -104,7 +104,7 @@ export default function RepairProgressPage() {
           </div>
 
           <div className="col-span-4 flex flex-col gap-6">
-            <RepairPhotos photos={job.photos} />
+            <RepairPhotos jobId={job.id} photos={job.photos} />
             <div className="flex flex-col gap-2">
               <Button
                 variant="outline"

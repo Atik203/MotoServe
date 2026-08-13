@@ -152,17 +152,19 @@ export default function ServiceTrackingPage() {
                 <span className="text-xs font-semibold tracking-[0.24px] text-primary">View All</span>
               </div>
               <div className="flex flex-col border-l-2 border-[#edeeef]">
-                {[
-                  { text: "Brake pads replaced", time: "1:45 PM", color: "#0052cc" },
-                  { text: "Oil filter changed", time: "1:15 PM", color: "#4caf50" },
-                  { text: "Inspection approved by owner", time: "11:30 AM", color: "#e1e3e4" },
-                ].map((u) => (
-                  <div key={u.text} className="relative flex flex-col gap-1 pb-6 pl-6">
-                    <span className="absolute top-1 left-[-9px] size-4 rounded-xl border-2 border-white" style={{ backgroundColor: u.color }} />
-                    <p className="text-sm text-foreground">{u.text}</p>
-                    <p className="text-[11px] font-medium text-muted-foreground">{u.time}</p>
-                  </div>
-                ))}
+                {job.notes.length === 0 ? (
+                  <p className="pl-6 pb-2 text-sm text-muted-foreground">No updates recorded yet.</p>
+                ) : (
+                  job.notes.slice(0, 5).map((note) => (
+                    <div key={note.id} className="relative flex flex-col gap-1 pb-6 pl-6">
+                      <span className="absolute top-1 left-[-9px] size-4 rounded-xl border-2 border-white" style={{ backgroundColor: "#0052cc" }} />
+                      <p className="text-sm text-foreground">{note.text}</p>
+                      <p className="text-[11px] font-medium text-muted-foreground">
+                        {note.time} • {note.author}
+                      </p>
+                    </div>
+                  ))
+                )}
               </div>
             </section>
           </div>

@@ -72,6 +72,13 @@ export const addPartUsed = createAsyncThunk(
   },
 );
 
+export const addJobPhoto = createAsyncThunk(
+  "jobs/addPhoto",
+  async ({ id, key }: { id: string; key: string }) => {
+    return await api.post<{ photos: string[] }>(`/jobs/${id}/photos`, { key });
+  },
+);
+
 const jobsSlice = createSlice({
   name: "jobs",
   initialState,
@@ -113,6 +120,10 @@ const jobsSlice = createSlice({
       .addCase(addPartUsed.fulfilled, (state, action) => {
         const job = state.items.find((j) => j.id === action.meta.arg.id);
         if (job) job.partsUsed.push(action.payload);
+      })
+      .addCase(addJobPhoto.fulfilled, (state, action) => {
+        const job = state.items.find((j) => j.id === action.meta.arg.id);
+        if (job) job.photos = action.payload.photos;
       });
   },
 });

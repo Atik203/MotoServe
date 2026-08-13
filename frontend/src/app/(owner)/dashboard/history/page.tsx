@@ -8,10 +8,21 @@ import { CalendarDays, ChevronDown, Download, Search, Star, UserRound, Wrench } 
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchInvoices } from "@/store/slices/invoicesSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
+import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchRatings, rateJob } from "@/store/slices/ratingsSlice";
 import { cn } from "@/lib/utils";
 import { downloadInvoicePdf } from "@/lib/pdf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import type { Invoice, Vehicle } from "@/types";
 
 interface HistoryEntry {
@@ -23,17 +34,40 @@ interface HistoryEntry {
   date: string;
   rated: boolean;
   rating?: number;
+  review?: string;
   ratedAt?: string;
 }
 
-function Stars({ rating, size = "h-[19px] w-5" }: { rating: number; size?: string }) {
+function Stars({
+  rating,
+  size = "h-[19px] w-5",
+  onSelect,
+}: {
+  rating: number;
+  size?: string;
+  onSelect?: (value: number) => void;
+}) {
   return (
     <div className="flex gap-1">
       {[1, 2, 3, 4, 5].map((i) => (
-        <Star
+        <button
           key={i}
-          className={cn(size, i <= Math.floor(rating) ? "fill-amber-400 text-amber-400" : i - rating >= 1 ? "text-[#e1e3e4]" : "fill-amber-400/50 text-amber-400")}
-        />
+          type="button"
+          disabled={!onSelect}
+          onClick={() => onSelect?.(i)}
+          className={cn(!onSelect && "cursor-default")}
+        >
+          <Star
+            className={cn(
+              size,
+              i <= Math.floor(rating)
+                ? "fill-amber-400 text-amber-400"
+                : i - rating >= 1
+                  ? "text-[#e1e3e4]"
+                  : "fill-amber-400/50 text-amber-400",
+            )}
+          />
+        </button>
       ))}
     </div>
   );
@@ -43,31 +77,42 @@ export default function ServiceHistoryPage() {
   const dispatch = useAppDispatch();
   const invoices = useAppSelector((s) => s.invoices.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
+  const jobs = useAppSelector((s) => s.jobs.items);
+  const ratings = useAppSelector((s) => s.ratings.items);
   const [search, setSearch] = useState("");
   const [vehicleFilter, setVehicleFilter] = useState("All");
+  const [ratingFor, setRatingFor] = useState<HistoryEntry | null>(null);
+  const [score, setScore] = useState(5);
+  const [review, setReview] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     dispatch(fetchInvoices());
     dispatch(fetchVehicles());
+    dispatch(fetchJobs());
+    dispatch(fetchRatings());
   }, [dispatch]);
 
   const entries = useMemo<HistoryEntry[]>(() => {
-    return invoices.slice(0, 2).map((invoice, idx) => {
+    return invoices.map((invoice, idx) => {
       const vehicle = vehicles.find((v) => v.id === invoice.vehicleId) ?? vehicles[idx];
       if (!vehicle) return null;
+      const job = jobs.find((j) => j.id === invoice.jobId);
+      const rating = ratings.find((r) => r.jobId === invoice.jobId);
       return {
         id: invoice.id,
         vehicle,
         invoice,
         title: (invoice.items[0] as { description?: string } | undefined)?.description ?? `Service ${invoice.id}`,
-        advisor: "Sarah Jenkins",
+        advisor: job?.advisor?.name ?? "Sarah Jenkins",
         date: new Date(invoice.issuedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-        rated: invoice.status === "paid",
-        rating: invoice.status === "paid" ? 4 : undefined,
-        ratedAt: invoice.payment?.paidAt ? new Date(invoice.payment.paidAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : undefined,
+        rated: Boolean(rating),
+        rating: rating?.score,
+        review: rating?.review,
+        ratedAt: rating?.date ? new Date(rating.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : undefined,
       } as HistoryEntry;
     }).filter((e): e is HistoryEntry => e !== null);
-  }, [invoices, vehicles]);
+  }, [invoices, vehicles, jobs, ratings]);
 
   const filtered = entries.filter((e) => {
     const matchSearch =
@@ -77,6 +122,33 @@ export default function ServiceHistoryPage() {
     const matchVehicle = vehicleFilter === "All" || `${e.vehicle.make} ${e.vehicle.model}` === vehicleFilter;
     return matchSearch && matchVehicle;
   });
+
+  const openRate = (entry: HistoryEntry) => {
+    setRatingFor(entry);
+    setScore(entry.rating ?? 5);
+    setReview(entry.review ?? "");
+  };
+
+  const submitRating = async () => {
+    if (!ratingFor) return;
+    setSubmitting(true);
+    try {
+      await dispatch(
+        rateJob({
+          jobId: ratingFor.invoice.jobId,
+          score,
+          review: review.trim(),
+          serviceName: ratingFor.title,
+        }),
+      ).unwrap();
+      toast.success(ratingFor.rated ? "Review updated" : "Thanks for rating!");
+      setRatingFor(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to submit rating");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="bg-background min-h-screen p-8">
@@ -112,7 +184,7 @@ export default function ServiceHistoryPage() {
               key={label}
               type="button"
               onClick={() => {
-                if (i === 2) setVehicleFilter((v) => (v === "All" ? "2023 Ford F-150" : "All"));
+                if (i === 2) setVehicleFilter((v) => (v === "All" ? (entries[0] ? `${entries[0].vehicle.make} ${entries[0].vehicle.model}` : "All") : "All"));
               }}
               className="relative h-[38px] rounded-xl border border-[#c2c6d5] bg-[#f8f9fa] pl-[17px] pr-[41px] text-left text-sm text-foreground"
             >
@@ -153,7 +225,7 @@ export default function ServiceHistoryPage() {
                         </p>
                       </div>
                       <span className="flex items-center gap-1 rounded-xl border border-[rgba(76,175,80,0.2)] bg-[rgba(76,175,80,0.1)] px-[9px] py-[5px] text-[11px] font-medium text-[#4caf50]">
-                        Paid
+                        {entry.invoice.status === "paid" ? "Paid" : "Unpaid"}
                       </span>
                     </div>
                     <div className="flex gap-4 pt-2">
@@ -172,15 +244,16 @@ export default function ServiceHistoryPage() {
                     {entry.rated ? (
                       <>
                         <div>
-                          <Stars rating={entry.rating ?? 4} />
-                          <p className="pt-1 text-[11px] font-medium text-[#424753]">Submitted on {entry.ratedAt}</p>
+                          <Stars rating={entry.rating ?? 0} />
+                          {entry.review && <p className="pt-1 max-w-md truncate text-xs text-[#424753]">&ldquo;{entry.review}&rdquo;</p>}
+                          <p className="pt-0.5 text-[11px] font-medium text-[#424753]">Submitted on {entry.ratedAt}</p>
                         </div>
                         <div className="flex gap-2">
                           <Button variant="outline" size="sm" onClick={() => { downloadInvoicePdf(entry.invoice, entry.vehicle); toast.success("Invoice PDF downloaded"); }} className="gap-2 rounded-xl px-[17px] py-[9px] text-xs font-semibold">
                             <Download className="size-3" />
                             Invoice
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => toast.info("Edit review (demo)")} className="rounded-xl px-4 py-[9.5px] text-xs font-semibold text-primary">
+                          <Button size="sm" variant="ghost" onClick={() => openRate(entry)} className="rounded-xl px-4 py-[9.5px] text-xs font-semibold text-primary">
                             Edit Review
                           </Button>
                         </div>
@@ -194,10 +267,10 @@ export default function ServiceHistoryPage() {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={() => toast.info("Details (demo)")} className="rounded-xl px-[17px] py-[9px] text-xs font-semibold">
-                            View Details
+                          <Button variant="outline" size="sm" asChild className="rounded-xl px-[17px] py-[9px] text-xs font-semibold">
+                            <Link href={`/dashboard/services/${entry.invoice.jobId}`}>View Details</Link>
                           </Button>
-                          <Button size="sm" onClick={() => toast.success("Thanks for rating!")} className="rounded-xl bg-[#8b5000] px-4 py-[8.5px] text-xs font-semibold text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+                          <Button size="sm" onClick={() => openRate(entry)} className="rounded-xl bg-[#8b5000] px-4 py-[8.5px] text-xs font-semibold text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
                             Rate Service
                           </Button>
                         </div>
@@ -208,8 +281,49 @@ export default function ServiceHistoryPage() {
               </div>
             </div>
           ))}
+          {filtered.length === 0 && (
+            <div className="rounded-lg border border-dashed border-[#e2e8f0] bg-white px-4 py-16 text-center text-sm text-muted-foreground">
+              No service history found.
+            </div>
+          )}
         </div>
       </div>
+
+      <Dialog open={ratingFor !== null} onOpenChange={(open) => !open && setRatingFor(null)}>
+        <DialogContent className="max-w-md rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-foreground">
+              {ratingFor?.rated ? "Edit Your Review" : "Rate Your Service"}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              {ratingFor?.title} • {ratingFor?.invoice.id}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-sm font-medium text-foreground">How was the service?</p>
+              <Stars rating={score} size="h-8 w-8" onSelect={setScore} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-foreground">Review (optional)</label>
+              <Textarea
+                value={review}
+                onChange={(e) => setReview(e.target.value)}
+                placeholder="Tell us about your experience..."
+                className="min-h-24 rounded-lg border-border bg-white resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRatingFor(null)} className="rounded-lg">
+              Cancel
+            </Button>
+            <Button onClick={() => void submitRating()} disabled={submitting} className="rounded-lg">
+              {submitting ? "Submitting..." : ratingFor?.rated ? "Update Review" : "Submit Rating"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

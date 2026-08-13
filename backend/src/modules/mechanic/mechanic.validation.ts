@@ -17,8 +17,14 @@ export const addJobNoteSchema = z.object({
 export const addPartUsedSchema = z.object({
   body: z.object({
     name: z.string().min(1),
-    qty: z.number().int().positive(),
+    qty: z.number().positive(),
     unitPrice: z.number().nonnegative(),
-    supplier: z.string(),
+    supplier: z.string().min(1),
+  }),
+});
+
+export const addJobPhotoSchema = z.object({
+  body: z.object({
+    key: z.string().min(1),
   }),
 });

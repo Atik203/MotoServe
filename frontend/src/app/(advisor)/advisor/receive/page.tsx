@@ -42,6 +42,7 @@ export default function ReceiveVehiclePage() {
   const [keysReceived, setKeysReceived] = useState(true);
   const [priority, setPriority] = useState<(typeof priorities)[number]>("medium");
   const [problems, setProblems] = useState("Squeaking noise from front left wheel when turning.");
+  const [jobId, setJobId] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -50,7 +51,8 @@ export default function ReceiveVehiclePage() {
     dispatch(fetchCustomers());
   }, [dispatch]);
 
-  const job: JobCard | null = jobs.find((j) => j.id === "JC-1045") ?? jobs[0] ?? null;
+  const job: JobCard | null =
+    (jobId ? jobs.find((j) => j.id === jobId) ?? null : null) ?? jobs[0] ?? null;
   const vehicle: Vehicle | null = vehicles.find((v) => v.id === job?.vehicleId) ?? null;
   const customer: Customer | null = customers.find((c) => c.id === job?.customerId) ?? null;
 
@@ -92,7 +94,20 @@ export default function ReceiveVehiclePage() {
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold text-[#191c1d]">Receive Vehicle</h1>
-            <p className="text-sm text-[#64748b]">Create Job Card #{job?.id ?? "JC-1045"}</p>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-[#64748b]">Job:</label>
+              <select
+                value={job?.id ?? ""}
+                onChange={(e) => setJobId(e.target.value)}
+                className="rounded border border-[#e5e7eb] bg-white px-3 py-1.5 text-sm font-medium text-foreground outline-none"
+              >
+                {jobs.map((j) => (
+                  <option key={j.id} value={j.id}>
+                    {j.id} — {j.vehicle ? `${j.vehicle.year} ${j.vehicle.make} ${j.vehicle.model}` : "Vehicle"} ({j.status})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex gap-2">
             <button type="button" className={outlineBtn}>
