@@ -1,10 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import { toast } from "sonner";
 import { Package, Plus } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { addPartUsed } from "@/store/slices/jobsSlice";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -22,16 +33,43 @@ interface PartsUsedTableProps {
 
 export function PartsUsedTable({ jobId, parts }: PartsUsedTableProps) {
   const dispatch = useAppDispatch();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [qty, setQty] = useState("1");
+  const [unitPrice, setUnitPrice] = useState("");
+  const [supplier, setSupplier] = useState("");
+  const [saving, setSaving] = useState(false);
   const total = parts.reduce((sum, p) => sum + p.subtotal, 0);
 
-  const addPart = async () => {
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !qty || Number(qty) <= 0 || !unitPrice || Number(unitPrice) < 0 || !supplier.trim()) {
+      toast.error("Fill in part name, qty, unit price, and supplier");
+      return;
+    }
+    setSaving(true);
     try {
       await dispatch(
-        addPartUsed({ id: jobId, part: { name: "New Part", qty: 1, unitPrice: 0, supplier: "Napa" } }),
+        addPartUsed({
+          id: jobId,
+          part: {
+            name: name.trim(),
+            qty: Number(qty),
+            unitPrice: Number(unitPrice),
+            supplier: supplier.trim(),
+          },
+        }),
       ).unwrap();
-      toast.info("Part added — update name, qty and price");
+      toast.success("Part added");
+      setOpen(false);
+      setName("");
+      setQty("1");
+      setUnitPrice("");
+      setSupplier("");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to add part");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -42,7 +80,7 @@ export function PartsUsedTable({ jobId, parts }: PartsUsedTableProps) {
           <Package className="size-5" />
           Parts Used
         </h2>
-        <Button variant="outline" size="sm" onClick={addPart} className="gap-2 rounded-md">
+        <Button variant="outline" size="sm" onClick={() => setOpen(true)} className="gap-2 rounded-md">
           <Plus className="size-3" />
           Add Part
         </Button>
@@ -89,6 +127,43 @@ export function PartsUsedTable({ jobId, parts }: PartsUsedTableProps) {
           )}
         </TableBody>
       </Table>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-sm rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-foreground">Add Part</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">Record a part used on this job.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={submit} className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2 flex flex-col gap-1.5">
+                <Label className="text-xs font-semibold text-foreground">Part Name *</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Brake Pad Set" className="h-10 rounded-lg border-border bg-white" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-semibold text-foreground">Qty *</Label>
+                <Input type="number" min="1" value={qty} onChange={(e) => setQty(e.target.value)} className="h-10 rounded-lg border-border bg-white" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-semibold text-foreground">Unit Price ($) *</Label>
+                <Input type="number" min="0" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} className="h-10 rounded-lg border-border bg-white" />
+              </div>
+              <div className="col-span-2 flex flex-col gap-1.5">
+                <Label className="text-xs font-semibold text-foreground">Supplier *</Label>
+                <Input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="e.g. Napa" className="h-10 rounded-lg border-border bg-white" />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} className="rounded-lg">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={saving} className="rounded-lg">
+                {saving ? "Adding..." : "Add Part"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

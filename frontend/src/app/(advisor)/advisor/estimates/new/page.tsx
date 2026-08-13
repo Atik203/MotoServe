@@ -356,13 +356,6 @@ export default function SendEstimatePage() {
                 <Send className="size-[15px]" />
                 {submitting ? "Sending..." : "Send Estimate to Customer"}
               </button>
-              <button
-                type="button"
-                onClick={() => toast.info("Draft saved (demo)")}
-                className="flex w-full items-center justify-center rounded-lg border border-[#e5e7eb] bg-white px-4 py-[11px] text-[13px] font-semibold text-[#111827]"
-              >
-                Save Draft
-              </button>
             </div>
           </aside>
         </div>

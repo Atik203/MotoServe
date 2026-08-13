@@ -360,12 +360,6 @@ export default function BookAppointmentPage() {
               <Button variant="ghost" onClick={() => router.back()}>
                 Cancel
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => toast.info("Appointment saved as draft")}
-              >
-                Save as Draft
-              </Button>
               <Button onClick={handleBook} className="rounded-lg">
                 Book Appointment
               </Button>

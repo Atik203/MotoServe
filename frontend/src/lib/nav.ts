@@ -55,8 +55,8 @@ export const roleNav: Record<Role, RoleNavConfig> = {
       { label: "Payments & Invoices", href: "/dashboard/payments", icon: Wallet },
     ],
     bottomItems: [
-      { label: "Support", href: "#", icon: LifeBuoy },
-      { label: "Settings", href: "#", icon: Settings },
+      { label: "Support", href: "/faqs", icon: LifeBuoy },
+      { label: "Settings", href: "/profile", icon: Settings },
       { label: "Logout", href: "/login", icon: LogOut },
     ],
   },
@@ -71,7 +71,7 @@ export const roleNav: Record<Role, RoleNavConfig> = {
       { label: "Communication Center", href: "/advisor/chat", icon: MessageSquare },
     ],
     bottomItems: [
-      { label: "Help", href: "#", icon: LifeBuoy },
+      { label: "Help", href: "/faqs", icon: LifeBuoy },
       { label: "Logout", href: "/login", icon: LogOut },
     ],
   },
@@ -84,7 +84,7 @@ export const roleNav: Record<Role, RoleNavConfig> = {
       { label: "Parts Request", href: "/mechanic/parts", icon: Package },
     ],
     bottomItems: [
-      { label: "Help", href: "#", icon: LifeBuoy },
+      { label: "Help", href: "/faqs", icon: LifeBuoy },
       { label: "Logout", href: "/login", icon: LogOut },
     ],
     actionButton: { label: "Clock Out" },
@@ -99,7 +99,7 @@ export const roleNav: Record<Role, RoleNavConfig> = {
       { label: "Customer Management", href: "/admin/verifications", icon: ShieldCheck },
     ],
     bottomItems: [
-      { label: "Settings", href: "#", icon: Settings },
+      { label: "Settings", href: "/profile", icon: Settings },
       { label: "Logout", href: "/login", icon: LogOut },
     ],
   },

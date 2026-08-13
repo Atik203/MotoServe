@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import type { Invoice, JobCard, Vehicle } from "@/types";
+import type { Appointment, Invoice, JobCard, Vehicle } from "@/types";
 
 const PRIMARY: [number, number, number] = [0, 82, 204];
 const DARK: [number, number, number] = [17, 24, 39];
@@ -276,4 +276,52 @@ export function buildJobCardPdf(job: JobCard): jsPDF {
 
 export function downloadJobCardPdf(job: JobCard): void {
   buildJobCardPdf(job).save(`${job.id}.pdf`);
+}
+
+export function buildAppointmentPdf(appointment: Appointment, vehicle: Vehicle | null, serviceNames: string[]): jsPDF {
+  const doc = new jsPDF();
+  header(doc, "Appointment Confirmation", appointment.id);
+
+  let y = 50;
+  y = sectionTitle(doc, y, "Appointment Details");
+  y = infoRow(doc, y, "Reference", appointment.id);
+  y = infoRow(doc, y, "Date", new Date(appointment.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }));
+  y = infoRow(doc, y, "Time", appointment.time);
+  y = infoRow(doc, y, "Status", appointment.status.toUpperCase());
+  y = infoRow(doc, y, "Vehicle", vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model} (${vehicle.regNo})` : "—");
+  y += 3;
+
+  y = sectionTitle(doc, y, "Requested Services");
+  if (serviceNames.length === 0) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...GRAY);
+    doc.text("Vehicle service", MARGIN, y);
+  } else {
+    for (const name of serviceNames) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(...DARK);
+      doc.text(`•  ${name}`, MARGIN, y);
+      y += 5;
+    }
+  }
+  y += 3;
+
+  y = sectionTitle(doc, y, "Workshop");
+  y = infoRow(doc, y, "Location", "MotoServe Main Hub");
+  y = infoRow(doc, y, "Address", "123 Precision Way\nAutomotive District, NY 10001");
+  y += 3;
+
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(9);
+  doc.setTextColor(...GRAY);
+  doc.text("Please arrive 10 minutes before your appointment.", MARGIN, y);
+
+  footer(doc);
+  return doc;
+}
+
+export function downloadAppointmentPdf(appointment: Appointment, vehicle: Vehicle | null, serviceNames: string[]): void {
+  buildAppointmentPdf(appointment, vehicle, serviceNames).save(`appointment-${appointment.id}.pdf`);
 }

@@ -90,11 +90,28 @@ export default function AdminDashboardPage() {
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="gap-1 rounded border-[#e2e8f0] px-[17px] py-[9px] text-xs font-semibold tracking-[0.24px]">
               <Calendar className="size-[13.5px]" />
-              Last 30 Days
+              This Year
             </Button>
             <Button
               size="sm"
-              onClick={() => toast.success("Report exported (demo)")}
+              onClick={() => {
+                if (!reports) return;
+                const lines: string[][] = [["Metric", "Value"]];
+                lines.push(["Total Revenue", String(reports.totalRevenue)]);
+                lines.push(["Active Jobs", String(reports.activeJobs)]);
+                lines.push(["Registered Customers", String(reports.registeredCustomers)]);
+                lines.push(["Active Employees", String(reports.activeEmployees)]);
+                lines.push([], ["Month", "Revenue"]);
+                reports.revenueByMonth.forEach((r) => lines.push([r.month, String(r.revenue)]));
+                const csv = lines.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+                const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "motoserve-dashboard.csv";
+                a.click();
+                URL.revokeObjectURL(url);
+                toast.success("Report exported");
+              }}
               className="gap-1 rounded px-4 py-[9px] text-xs font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
             >
               <Download className="size-3" />

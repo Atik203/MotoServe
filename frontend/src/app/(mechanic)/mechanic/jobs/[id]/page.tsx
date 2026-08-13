@@ -13,26 +13,7 @@ import { PartsUsedTable } from "@/components/roles/mechanic/PartsUsedTable";
 import { RepairPhotos } from "@/components/roles/mechanic/RepairPhotos";
 import { Button } from "@/components/ui/button";
 
-import type { JobCard } from "@/types";
-
 const STATUS_ORDER = ["received", "inspecting", "repairing", "testing", "ready", "completed"];
-
-const vehicles = new Map<string, string>([
-  ["veh-001", "2023 Ford F-150"],
-  ["veh-002", "2022 Toyota Camry"],
-  ["veh-003", "2021 Honda Civic"],
-]);
-const customers = new Map<string, string>([
-  ["cus-001", "John Doe"],
-  ["cus-002", "Jane Smith"],
-  ["cus-003", "Michael Brown"],
-]);
-const advisors = new Map<string, string>([["emp-001", "Sarah Jenkins"]]);
-
-const vehicleName = (id: JobCard["vehicleId"], job?: JobCard) =>
-  job?.vehicle ? `${job.vehicle.make} ${job.vehicle.model}` : vehicles.get(id) ?? id;
-const customerName = (id: JobCard["customerId"], job?: JobCard) => job?.customer?.name ?? customers.get(id) ?? id;
-const advisorName = (id: JobCard["advisorId"], job?: JobCard) => job?.advisor?.name ?? advisors.get(id) ?? id;
 
 export default function RepairProgressPage() {
   const params = useParams<{ id: string }>();
@@ -77,17 +58,15 @@ export default function RepairProgressPage() {
 
         <section className="flex gap-4 rounded-lg border border-border bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
           {[
-            { label: "Vehicle", value: vehicleName(job.vehicleId, job) },
-            { label: "Customer", value: customerName(job.customerId, job) },
-            { label: "Job Card", value: job.id, blue: true },
-            { label: "Advisor", value: advisorName(job.advisorId, job) },
+            { label: "Vehicle", value: job.vehicle ? `${job.vehicle.year} ${job.vehicle.make} ${job.vehicle.model}` : job.vehicleId },
+            { label: "Customer", value: job.customer?.name ?? job.customerId },
+            { label: "Mechanic", value: job.mechanic?.name ?? job.mechanicId ?? "Not assigned" },
+            { label: "Advisor", value: job.advisor?.name ?? job.advisorId },
             { label: "Station", value: job.station ?? "Not assigned" },
           ].map((f) => (
             <div key={f.label} className="flex flex-1 flex-col gap-1">
               <span className="text-[13px] text-muted-foreground">{f.label}</span>
-              <span className={`text-sm font-semibold ${f.blue ? "text-primary" : "text-foreground"}`}>
-                {f.value}
-              </span>
+              <span className="text-sm font-semibold text-foreground">{f.value}</span>
             </div>
           ))}
         </section>

@@ -78,7 +78,25 @@ export default function VerificationPage() {
             <h1 className="text-2xl font-semibold tracking-[-0.24px] text-foreground">Vehicle Owner Verification</h1>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1 rounded-lg px-[13px] py-[7px] text-xs font-semibold tracking-[0.24px]" onClick={() => toast.success("List exported (demo)")}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1 rounded-lg px-[13px] py-[7px] text-xs font-semibold tracking-[0.24px]"
+              onClick={() => {
+                const header = ["Name", "Email", "Phone", "NID", "Status"];
+                const lines = rows.map((c) => [c.name, c.email, c.phone, c.nid, c.status]);
+                const csv = [header, ...lines]
+                  .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+                  .join("\n");
+                const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "customer-verifications.csv";
+                a.click();
+                URL.revokeObjectURL(url);
+                toast.success("List exported");
+              }}
+            >
               <Download className="size-3" />
               Export List
             </Button>

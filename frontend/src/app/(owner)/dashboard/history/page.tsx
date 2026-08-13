@@ -81,6 +81,8 @@ export default function ServiceHistoryPage() {
   const ratings = useAppSelector((s) => s.ratings.items);
   const [search, setSearch] = useState("");
   const [vehicleFilter, setVehicleFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
   const [ratingFor, setRatingFor] = useState<HistoryEntry | null>(null);
   const [score, setScore] = useState(5);
   const [review, setReview] = useState("");
@@ -114,13 +116,20 @@ export default function ServiceHistoryPage() {
     }).filter((e): e is HistoryEntry => e !== null);
   }, [invoices, vehicles, jobs, ratings]);
 
+  const years = useMemo(() => {
+    const set = new Set(entries.map((e) => new Date(e.invoice.issuedAt).getFullYear()));
+    return [...set].sort((a, b) => b - a);
+  }, [entries]);
+
   const filtered = entries.filter((e) => {
     const matchSearch =
       e.title.toLowerCase().includes(search.toLowerCase()) ||
       e.invoice.id.toLowerCase().includes(search.toLowerCase()) ||
       e.vehicle.regNo.toLowerCase().includes(search.toLowerCase());
     const matchVehicle = vehicleFilter === "All" || `${e.vehicle.make} ${e.vehicle.model}` === vehicleFilter;
-    return matchSearch && matchVehicle;
+    const matchStatus = statusFilter === "all" || (statusFilter === "paid" ? e.invoice.status === "paid" : e.invoice.status !== "paid");
+    const matchYear = yearFilter === "all" || new Date(e.invoice.issuedAt).getFullYear() === Number(yearFilter);
+    return matchSearch && matchVehicle && matchStatus && matchYear;
   });
 
   const openRate = (entry: HistoryEntry) => {
@@ -179,19 +188,48 @@ export default function ServiceHistoryPage() {
               className="h-[38px] rounded-xl border-[#c2c6d5] bg-[#f8f9fa] pl-[41px]"
             />
           </div>
-          {["Status: All", "Year: 2026", vehicleFilter === "All" ? "Vehicle: All" : `Vehicle: ${vehicleFilter}`].map((label, i) => (
-            <button
-              key={label}
-              type="button"
-              onClick={() => {
-                if (i === 2) setVehicleFilter((v) => (v === "All" ? (entries[0] ? `${entries[0].vehicle.make} ${entries[0].vehicle.model}` : "All") : "All"));
-              }}
-              className="relative h-[38px] rounded-xl border border-[#c2c6d5] bg-[#f8f9fa] pl-[17px] pr-[41px] text-left text-sm text-foreground"
+          <div className="relative">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-[38px] appearance-none rounded-xl border border-[#c2c6d5] bg-[#f8f9fa] pl-[17px] pr-[38px] text-left text-sm text-foreground outline-none"
             >
-              {label}
-              <ChevronDown className="absolute top-1/2 right-3 size-3 -translate-y-1/2 text-muted-foreground" />
-            </button>
-          ))}
+              <option value="all">Status: All</option>
+              <option value="paid">Status: Paid</option>
+              <option value="unpaid">Status: Unpaid</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-3 -translate-y-1/2 text-muted-foreground" />
+          </div>
+          <div className="relative">
+            <select
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+              className="h-[38px] appearance-none rounded-xl border border-[#c2c6d5] bg-[#f8f9fa] pl-[17px] pr-[38px] text-left text-sm text-foreground outline-none"
+            >
+              <option value="all">Year: All</option>
+              {years.map((y) => (
+                <option key={y} value={y}>
+                  Year: {y}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-3 -translate-y-1/2 text-muted-foreground" />
+          </div>
+          <div className="relative">
+            <select
+              value={vehicleFilter}
+              onChange={(e) => setVehicleFilter(e.target.value)}
+              className="h-[38px] appearance-none rounded-xl border border-[#c2c6d5] bg-[#f8f9fa] pl-[17px] pr-[38px] text-left text-sm text-foreground outline-none"
+            >
+              <option value="All">Vehicle: All</option>
+              {[...new Set(entries.map((e) => `${e.vehicle.make} ${e.vehicle.model}`))].map((v) => (
+                <option key={v} value={v}>
+                  Vehicle: {v}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-3 -translate-y-1/2 text-muted-foreground" />
+          </div>
         </div>
 
         <div className="flex w-[912px] flex-col gap-12 border-l-2 border-[#e2e8f0] pl-[42px] pt-2">

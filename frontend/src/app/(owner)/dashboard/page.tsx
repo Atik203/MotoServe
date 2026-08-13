@@ -3,11 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
-import { ArrowUpRight, Bell, Calendar, Car, Check, ChevronRight, FileCheck, Gauge, MoreVertical, Wrench } from "lucide-react";
+import { ArrowUpRight, Bell, Calendar, Car, Check, ChevronRight, FileCheck, Gauge, Wrench } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchJobs } from "@/store/slices/jobsSlice";
 import { fetchEstimates } from "@/store/slices/estimatesSlice";
+import { fetchAppointments } from "@/store/slices/appointmentsSlice";
+import { fetchServices } from "@/store/slices/servicesSlice";
 import { buildKpis } from "@/lib/kpis";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
@@ -22,23 +24,38 @@ const kpiIcons: Record<string, typeof Calendar> = {
   bell: Bell,
 };
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 export default function OwnerDashboardPage() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const jobs = useAppSelector((s) => s.jobs.items);
   const estimates = useAppSelector((s) => s.estimates.items);
+  const appointments = useAppSelector((s) => s.appointments.items);
+  const services = useAppSelector((s) => s.services.items);
 
   useEffect(() => {
     dispatch(fetchVehicles());
     dispatch(fetchJobs());
     dispatch(fetchEstimates());
+    dispatch(fetchAppointments());
+    dispatch(fetchServices());
   }, [dispatch]);
 
   const kpis = useMemo(() => buildKpis("owner", { jobs, vehicles }), [jobs, vehicles]);
 
   const activeJob = jobs.find((j) => j.status !== "ready" && j.status !== "completed");
   const pendingEstimate = estimates.find((e) => e.status === "pending");
+  const nextAppointment = appointments
+    .filter((a) => a.status !== "cancelled")
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
+  const appointmentVehicle = nextAppointment ? vehicles.find((v) => v.id === nextAppointment.vehicleId) : undefined;
+  const appointmentService = nextAppointment
+    ? (nextAppointment.serviceIds
+        .map((id) => services.find((s) => s.id === id)?.name)
+        .filter(Boolean)[0] ?? "Vehicle service")
+    : "Vehicle service";
   const activeVehicle = vehicles[0];
   const firstName = user?.name.split(" ")[0] ?? "John";
 
@@ -220,19 +237,42 @@ export default function OwnerDashboardPage() {
             <section className="flex flex-col gap-4 rounded-xl border border-[#e2e8f0] bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
               <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-3">
                 <h2 className="text-xs font-semibold tracking-[0.24px] text-foreground">Upcoming Appointments</h2>
-                <span className="text-[11px] font-medium text-primary">View All</span>
+                <Link href="/dashboard/appointments" className="text-[11px] font-medium text-primary hover:underline">
+                  View All
+                </Link>
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-[#e2e8f0] p-[9px]">
-                <div className="flex min-w-[50px] flex-col items-center rounded border border-[#e2e8f0] bg-secondary px-[9px] py-[5px]">
-                  <span className="text-[10px] font-medium text-[#ba1a1a] uppercase">Aug</span>
-                  <span className="text-xl font-semibold text-foreground">14</span>
+              {nextAppointment ? (
+                <div className="flex items-center justify-between rounded-lg border border-[#e2e8f0] p-[9px]">
+                  <div className="flex min-w-[50px] flex-col items-center rounded border border-[#e2e8f0] bg-secondary px-[9px] py-[5px]">
+                    <span className="text-[10px] font-medium text-[#ba1a1a] uppercase">
+                      {MONTHS[new Date(nextAppointment.date).getMonth()] ?? "—"}
+                    </span>
+                    <span className="text-xl font-semibold text-foreground">
+                      {new Date(nextAppointment.date).getDate()}
+                    </span>
+                  </div>
+                  <div className="flex-1 pl-4">
+                    <p className="text-[11px] font-medium text-foreground">{appointmentService}</p>
+                    <p className="text-xs text-[#414754]">
+                      {appointmentVehicle ? `${appointmentVehicle.make} ${appointmentVehicle.model}` : "Vehicle"} • {nextAppointment.time}
+                    </p>
+                  </div>
+                  <span
+                    className={cn(
+                      "mr-1 rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize",
+                      nextAppointment.status === "confirmed"
+                        ? "bg-[rgba(76,175,80,0.1)] text-[#4caf50]"
+                        : "bg-[rgba(255,193,7,0.1)] text-[#8b5000]",
+                    )}
+                  >
+                    {nextAppointment.status}
+                  </span>
                 </div>
-                <div className="flex-1 pl-4">
-                  <p className="text-[11px] font-medium text-foreground">Brake Service</p>
-                  <p className="text-xs text-[#414754]">Ford F-150 • 10:30 AM</p>
-                </div>
-                <MoreVertical className="size-4 text-muted-foreground" />
-              </div>
+              ) : (
+                <p className="rounded-lg border border-dashed border-[#e2e8f0] px-4 py-8 text-center text-sm text-muted-foreground">
+                  No upcoming appointments.
+                </p>
+              )}
             </section>
           </div>
         </div>

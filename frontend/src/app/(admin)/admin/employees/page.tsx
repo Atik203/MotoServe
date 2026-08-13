@@ -13,7 +13,6 @@ import {
   Pencil,
   Plus,
   Search,
-  SlidersHorizontal,
   Trash2,
   TrendingUp,
   Users,
@@ -260,23 +259,15 @@ export default function EmployeeManagementPage() {
               ))}
             </div>
             <div className="flex items-center gap-2">
-              <div className="relative w-64">
-                <Search className="absolute top-1/2 left-2 size-[15px] -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by name, ID..."
-                  className="h-[38px] rounded pl-[33px] text-sm"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => toast.info("Filters — coming with the backend")}
-                className="rounded border border-[#e2e8f0] bg-white p-[9px] text-muted-foreground transition-colors hover:text-foreground"
-                aria-label="Filter employees"
-              >
-                <SlidersHorizontal className="size-3.5" />
-              </button>
+            <div className="relative w-64">
+              <Search className="absolute top-1/2 left-2 size-[15px] -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name, ID..."
+                className="h-[38px] rounded pl-[33px] text-sm"
+              />
+            </div>
             </div>
           </div>
 

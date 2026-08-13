@@ -1,9 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { CheckCircle2, ChevronRight, Clock, Download, MapPin, User, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppSelector } from "@/store/hooks";
+import { downloadAppointmentPdf } from "@/lib/pdf";
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -124,7 +126,16 @@ export default function AppointmentConfirmationPage() {
         </div>
 
         <footer className="flex items-center justify-between border-t border-[#e2e8f0] px-6 pt-[25px] pb-6">
-          <Button variant="outline" className="gap-2 rounded px-[17px] py-[11px] text-xs font-semibold tracking-[0.24px]">
+          <Button
+            variant="outline"
+            className="gap-2 rounded px-[17px] py-[11px] text-xs font-semibold tracking-[0.24px]"
+            onClick={() => {
+              if (appointment) {
+                downloadAppointmentPdf(appointment, vehicle ?? null, serviceNames);
+                toast.success("Appointment PDF downloaded");
+              }
+            }}
+          >
             <Download className="size-3" />
             Download PDF
           </Button>
