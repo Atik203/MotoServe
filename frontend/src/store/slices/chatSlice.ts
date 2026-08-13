@@ -27,6 +27,20 @@ export const sendMessage = createAsyncThunk(
   },
 );
 
+export const markThreadRead = createAsyncThunk(
+  "chat/markRead",
+  async (threadId: string) => {
+    return await api.post<{ ok: boolean }>(`/chat/threads/${threadId}/read`);
+  },
+);
+
+export const createThread = createAsyncThunk(
+  "chat/createThread",
+  async ({ advisorId, subject, text }: { advisorId: string; subject: string; text: string }) => {
+    return await api.post<ChatThread>("/chat/threads", { advisorId, subject, text });
+  },
+);
+
 function pushMessage(state: ChatState, threadId: string, message: ChatMessage) {
   const thread = state.threads.find((t) => t.id === threadId);
   if (!thread) return;
@@ -42,10 +56,6 @@ const chatSlice = createSlice({
   reducers: {
     setActiveThread(state, action: PayloadAction<string | null>) {
       state.activeThreadId = action.payload;
-      const thread = state.threads.find((t) => t.id === action.payload);
-      if (thread) thread.unread = 0;
-    },
-    markThreadRead(state, action: PayloadAction<string>) {
       const thread = state.threads.find((t) => t.id === action.payload);
       if (thread) thread.unread = 0;
     },
@@ -68,9 +78,19 @@ const chatSlice = createSlice({
       })
       .addCase(sendMessage.fulfilled, (state, action) => {
         pushMessage(state, action.meta.arg.threadId, action.payload);
+      })
+      .addCase(markThreadRead.fulfilled, (state, action) => {
+        const thread = state.threads.find((t) => t.id === action.meta.arg);
+        if (thread) thread.unread = 0;
+      })
+      .addCase(createThread.fulfilled, (state, action) => {
+        if (!state.threads.some((t) => t.id === action.payload.id)) {
+          state.threads.unshift(action.payload);
+        }
+        state.activeThreadId = action.payload.id;
       });
   },
 });
 
-export const { setActiveThread, markThreadRead, receiveMessage } = chatSlice.actions;
+export const { setActiveThread, receiveMessage } = chatSlice.actions;
 export default chatSlice.reducer;

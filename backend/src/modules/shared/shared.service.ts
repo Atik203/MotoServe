@@ -143,6 +143,13 @@ export function listThreads(role?: string, userId?: string) {
   });
 }
 
+export function markThreadRead(id: string, role: string | undefined) {
+  return prisma.chatThread.update({
+    where: { id },
+    data: role === "OWNER" ? { ownerUnread: 0 } : { advisorUnread: 0 },
+  });
+}
+
 export function listParts() {
   return prisma.part.findMany({ orderBy: { name: "asc" } });
 }

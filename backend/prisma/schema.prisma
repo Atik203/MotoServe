@@ -275,7 +275,8 @@ model ChatThread {
   advisorId     String
   advisor       User     @relation("AdvisorThreads", fields: [advisorId], references: [id])
   subject       String
-  unread        Int      @default(0)
+  ownerUnread   Int      @default(0)
+  advisorUnread Int      @default(0)
   lastMessageAt DateTime @default(now())
 
   messages Message[]

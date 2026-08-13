@@ -54,6 +54,10 @@ export function createChatThread(ownerId: string, advisorId: string, subject: st
       subject: subject ?? "Vehicle service inquiry",
       messages: { create: { sender: "OWNER", text } },
     },
-    include: { messages: true },
+    include: {
+      owner: { select: { id: true, name: true, avatar: true } },
+      advisor: { select: { id: true, name: true, avatar: true } },
+      messages: true,
+    },
   });
 }

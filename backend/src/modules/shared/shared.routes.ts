@@ -16,6 +16,7 @@ import {
   getTestimonials,
   getThreads,
   getVehicles,
+  markThreadReadController,
   sendMessage,
   updateAppointmentController,
 } from "./shared.controller.js";
@@ -43,6 +44,7 @@ router.get("/invoices", requireAuth, getInvoices);
 
 router.get("/chat/threads", requireAuth, getThreads);
 router.post("/chat/messages", requireAuth, validate(sendMessageSchema), sendMessage);
+router.post("/chat/threads/:id/read", requireAuth, requireRole("owner", "advisor"), markThreadReadController);
 
 router.get("/parts", requireAuth, getParts);
 router.get("/ratings", requireAuth, getRatings);

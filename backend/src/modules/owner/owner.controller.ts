@@ -53,5 +53,15 @@ export async function createThreadController(req: Request, res: Response): Promi
   const { advisorId, subject, text } = req.body.body as CreateThreadBody;
   const thread = await createChatThread(req.user.userId, advisorId, subject, text);
   getIo().to(`user:${advisorId}`).emit("thread:new", { id: thread.id, ownerId: thread.ownerId, subject: thread.subject });
-  res.status(201).json(thread);
+  res.status(201).json({
+    id: thread.id,
+    ownerId: thread.ownerId,
+    advisorId: thread.advisorId,
+    subject: thread.subject,
+    unread: 0,
+    lastMessageAt: thread.lastMessageAt,
+    owner: { id: thread.owner.id, name: thread.owner.name, avatar: thread.owner.avatar },
+    advisor: { id: thread.advisor.id, name: thread.advisor.name, avatar: thread.advisor.avatar },
+    messages: thread.messages.map((m) => ({ id: m.id, sender: m.sender.toLowerCase(), text: m.text, time: m.time })),
+  });
 }

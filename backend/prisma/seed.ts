@@ -432,13 +432,14 @@ async function main() {
   for (const t of threads) {
     await prisma.chatThread.upsert({
       where: { id: t.id },
-      update: { unread: t.unread, lastMessageAt: new Date(t.lastMessageAt) },
+      update: { ownerUnread: t.unread, advisorUnread: t.unread, lastMessageAt: new Date(t.lastMessageAt) },
       create: {
         id: t.id,
         ownerId: t.ownerId,
         advisorId: t.advisorId,
         subject: t.subject,
-        unread: t.unread,
+        ownerUnread: t.unread,
+        advisorUnread: t.unread,
         lastMessageAt: new Date(t.lastMessageAt),
       },
     });

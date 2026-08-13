@@ -14,6 +14,7 @@ import {
   listVehicles,
   findJobById,
   mapCustomerStatus,
+  markThreadRead,
   updateAppointment,
 } from "./shared.service.js";
 import { getIo } from "../../lib/socket.js";
@@ -121,7 +122,7 @@ export async function getThreads(req: Request, res: Response): Promise<void> {
       ownerId: t.ownerId,
       advisorId: t.advisorId,
       subject: t.subject,
-      unread: t.unread,
+      unread: req.user?.role === "OWNER" ? t.ownerUnread : t.advisorUnread,
       lastMessageAt: t.lastMessageAt,
       owner: { id: t.owner.id, name: t.owner.name, avatar: t.owner.avatar },
       advisor: { id: t.advisor.id, name: t.advisor.name, avatar: t.advisor.avatar },
@@ -136,11 +137,19 @@ export async function sendMessage(req: Request, res: Response): Promise<void> {
   const message = await prisma.message.create({ data: { threadId, sender, text } });
   await prisma.chatThread.update({
     where: { id: threadId },
-    data: { lastMessageAt: new Date() },
+    data: {
+      lastMessageAt: new Date(),
+      ...(sender === "OWNER" ? { advisorUnread: { increment: 1 } } : { ownerUnread: { increment: 1 } }),
+    },
   });
   const payload = { ...message, sender: message.sender.toLowerCase() };
   getIo().to(threadId).emit("message:new", payload);
   res.status(201).json(payload);
+}
+
+export async function markThreadReadController(req: Request, res: Response): Promise<void> {
+  await markThreadRead(req.params.id as string, req.user?.role);
+  res.json({ ok: true });
 }
 
 export async function getParts(_req: Request, res: Response): Promise<void> {
