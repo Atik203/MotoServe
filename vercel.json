@@ -1,6 +1,5 @@
 {
-  "buildCommand": "pnpm --dir backend db:generate",
-  "installCommand": "exit 1",
+  "buildCommand": "npm run db:generate --workspace backend",
   "builds": [
     { "src": "frontend/package.json", "use": "@vercel/next" },
     { "src": "backend/api/index.ts", "use": "@vercel/node" }

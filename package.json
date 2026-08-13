@@ -2,12 +2,14 @@
   "name": "motoserve",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@11.3.0",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
-    "build": "pnpm --dir backend db:generate",
-    "dev:frontend": "pnpm --dir frontend dev",
-    "dev:backend": "pnpm --dir backend dev",
-    "lint": "pnpm --dir frontend lint && pnpm --dir backend typecheck",
-    "typecheck": "pnpm --dir frontend typecheck && pnpm --dir backend typecheck"
+    "build": "npm run db:generate --workspace backend",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "dev:backend": "npm run dev --workspace backend",
+    "typecheck": "npm run typecheck --workspace frontend && npm run typecheck --workspace backend"
   }
 }
