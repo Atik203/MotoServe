@@ -54,6 +54,9 @@ export interface Customer {
   gender?: string | null;
   avatar?: string | null;
   documentUrl?: string | null;
+  emergencyName?: string | null;
+  emergencyRelation?: string | null;
+  emergencyPhone?: string | null;
   joinedAt?: string;
 }
 
@@ -125,6 +128,10 @@ export interface JobCard {
   customer?: { id: string; name: string };
   advisor?: { id: string; name: string };
   mechanic?: { id: string; name: string };
+  mileage?: number | null;
+  fuelLevel?: number | null;
+  keysReceived?: boolean | null;
+  accessories?: string | null;
 }
 
 export interface Part {

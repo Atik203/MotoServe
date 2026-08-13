@@ -24,6 +24,9 @@ export const registerSchema = z.object({
     zip: z.string().optional(),
     country: z.string().optional(),
     documentUrl: z.string().optional(),
+    emergencyName: z.string().optional(),
+    emergencyRelation: z.string().optional(),
+    emergencyPhone: z.string().optional(),
   }),
 });
 

@@ -42,6 +42,9 @@ export default function ReceiveVehiclePage() {
   const [keysReceived, setKeysReceived] = useState(true);
   const [priority, setPriority] = useState<(typeof priorities)[number]>("medium");
   const [problems, setProblems] = useState("Squeaking noise from front left wheel when turning.");
+  const [mileage, setMileage] = useState("45,210");
+  const [fuelLevel, setFuelLevel] = useState("75");
+  const [accessories, setAccessories] = useState("");
   const [jobId, setJobId] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -70,6 +73,10 @@ export default function ReceiveVehiclePage() {
           issues: problems.trim(),
           priority,
           station: "Main Bay / Station 04",
+          mileage: Number(mileage.replace(/[^0-9]/g, "")) || undefined,
+          fuelLevel: Number(fuelLevel) || undefined,
+          keysReceived,
+          accessories: accessories.trim() || undefined,
         }),
       ).unwrap();
       toast.success("Job card created");
@@ -176,7 +183,8 @@ export default function ReceiveVehiclePage() {
                     <Gauge className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-[#64748b]" />
                     <input
                       type="text"
-                      defaultValue="45,210"
+                      value={mileage}
+                      onChange={(e) => setMileage(e.target.value)}
                       className={cn(inputBase, "pl-[34px] pr-10")}
                     />
                     <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-[#64748b]">
@@ -187,7 +195,12 @@ export default function ReceiveVehiclePage() {
                 <div className="flex flex-col gap-1.5">
                   <label className={fieldLabel}>Fuel Level</label>
                   <div className="relative">
-                    <input type="text" defaultValue="75" className={cn(inputBase, "pr-10")} />
+                    <input
+                      type="text"
+                      value={fuelLevel}
+                      onChange={(e) => setFuelLevel(e.target.value)}
+                      className={cn(inputBase, "pr-10")}
+                    />
                     <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-[#64748b]">
                       %
                     </span>
@@ -205,6 +218,8 @@ export default function ReceiveVehiclePage() {
                   <label className={fieldLabel}>Accessories left in vehicle</label>
                   <input
                     type="text"
+                    value={accessories}
+                    onChange={(e) => setAccessories(e.target.value)}
                     placeholder="e.g., Dashcam, tools in bed..."
                     className={inputBase}
                   />

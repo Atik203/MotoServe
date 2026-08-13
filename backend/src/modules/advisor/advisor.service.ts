@@ -25,6 +25,10 @@ export async function createJobCard(advisorId: string, body: CreateJobCardBody) 
       issues: body.issues,
       priority: (body.priority ?? "medium").toUpperCase() as never,
       station: body.station,
+      mileage: body.mileage,
+      fuelLevel: body.fuelLevel,
+      keysReceived: body.keysReceived,
+      accessories: body.accessories,
       status: "RECEIVED",
     },
   });

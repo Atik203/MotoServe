@@ -7,6 +7,10 @@ export const createJobCardSchema = z.object({
     issues: z.string().min(1),
     priority: z.enum(["low", "medium", "high"]).optional(),
     station: z.string().optional(),
+    mileage: z.number().int().nonnegative().optional(),
+    fuelLevel: z.number().int().min(0).max(100).optional(),
+    keysReceived: z.boolean().optional(),
+    accessories: z.string().optional(),
   }),
 });
 

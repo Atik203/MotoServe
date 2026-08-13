@@ -22,6 +22,9 @@ export interface RegisterBody {
   zip?: string;
   country?: string;
   documentUrl?: string;
+  emergencyName?: string;
+  emergencyRelation?: string;
+  emergencyPhone?: string;
 }
 
 export interface ForgotPasswordBody {

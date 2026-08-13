@@ -139,6 +139,15 @@ export default function VerificationDetailPage() {
                 <InfoRow icon={UserIcon} label="Gender" value={customer.gender ?? ""} />
                 <InfoRow icon={Briefcase} label="Occupation" value={customer.occupation ?? ""} />
                 <InfoRow icon={MapPin} label="Address" value={fullAddress} />
+                {customer.emergencyName && (
+                  <>
+                    <InfoRow icon={Phone} label="Emergency Contact" value={customer.emergencyName} />
+                    <InfoRow icon={Phone} label="Emergency Phone" value={customer.emergencyPhone ?? ""} />
+                    {customer.emergencyRelation && (
+                      <InfoRow icon={UserIcon} label="Relationship" value={customer.emergencyRelation} />
+                    )}
+                  </>
+                )}
               </div>
             </section>
           </div>

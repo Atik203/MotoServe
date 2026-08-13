@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { ApiError } from "../../middleware/error.js";
 import { getIo } from "../../lib/socket.js";
+import { logAudit } from "../../lib/audit.js";
 import {
   bookAppointment,
   createChatThread,
@@ -53,6 +54,7 @@ export async function decideEstimateController(req: Request, res: Response): Pro
 export async function payInvoiceController(req: Request, res: Response): Promise<void> {
   const { method } = req.body.body as PayInvoiceBody;
   const invoice = await payInvoice(req.params.id as string, method);
+  await logAudit(req.user?.name ?? "owner", `Paid invoice ${invoice.id} (${method})`);
   res.json({ id: invoice.id, status: "paid" });
 }
 

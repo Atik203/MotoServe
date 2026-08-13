@@ -105,6 +105,9 @@ model User {
   dateOfBirth    DateTime?
   gender         String?
   documentUrl    String?
+  emergencyName      String?
+  emergencyRelation  String?
+  emergencyPhone     String?
   verifiedAt     DateTime?
   joinedAt       DateTime  @default(now())
 
@@ -191,6 +194,10 @@ model JobCard {
   services       Json?
   photos         Json?
   totalEstimate  Float?
+  mileage        Int?
+  fuelLevel      Int?
+  keysReceived   Boolean?
+  accessories    String?
 
   progress       JobProgress[]
   notes          JobNote[]

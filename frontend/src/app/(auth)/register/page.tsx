@@ -47,6 +47,9 @@ interface FormState {
   district: string;
   zip: string;
   country: string;
+  emergencyName: string;
+  emergencyRelation: string;
+  emergencyPhone: string;
 }
 
 const initialForm: FormState = {
@@ -65,6 +68,9 @@ const initialForm: FormState = {
   district: "",
   zip: "",
   country: "",
+  emergencyName: "",
+  emergencyRelation: "",
+  emergencyPhone: "",
 };
 
 function Field({
@@ -157,6 +163,9 @@ export default function RegisterPage() {
           zip: form.zip.trim() || undefined,
           country: form.country.trim() || undefined,
           documentUrl: document?.key ?? undefined,
+          emergencyName: form.emergencyName.trim() || undefined,
+          emergencyRelation: form.emergencyRelation.trim() || undefined,
+          emergencyPhone: form.emergencyPhone.trim() || undefined,
         }),
       ).unwrap();
       toast.success("Account created — verification pending. You can log in once approved.");
@@ -325,9 +334,9 @@ export default function RegisterPage() {
                 Emergency Contact
               </h2>
               <div className="grid grid-cols-2 gap-x-[16px] gap-y-[16px]">
-                <Field label="Contact Name" required placeholder="Jane Doe" icon={<User className="size-[15px]" />} value="" onChange={() => {}} />
-                <Field label="Relationship" placeholder="e.g. Spouse, Parent" icon={<HeartHandshake className="size-[15px]" />} value="" onChange={() => {}} />
-                <Field label="Contact Phone" required type="tel" placeholder="+1 (555) 000-0000" icon={<Phone className="size-[15px]" />} value="" onChange={() => {}} />
+                <Field label="Contact Name" required placeholder="Jane Doe" icon={<User className="size-[15px]" />} value={form.emergencyName} onChange={set("emergencyName")} />
+                <Field label="Relationship" placeholder="e.g. Spouse, Parent" icon={<HeartHandshake className="size-[15px]" />} value={form.emergencyRelation} onChange={set("emergencyRelation")} />
+                <Field label="Contact Phone" required type="tel" placeholder="+1 (555) 000-0000" icon={<Phone className="size-[15px]" />} value={form.emergencyPhone} onChange={set("emergencyPhone")} />
               </div>
             </section>
 

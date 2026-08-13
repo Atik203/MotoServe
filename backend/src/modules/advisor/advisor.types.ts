@@ -1,10 +1,13 @@
 export interface CreateJobCardBody {
   vehicleId: string;
   customerId: string;
-  advisorId: string;
   issues: string;
-  priority?: "low" | "medium" | "high";
+  priority?: string;
   station?: string;
+  mileage?: number;
+  fuelLevel?: number;
+  keysReceived?: boolean;
+  accessories?: string;
 }
 
 export interface AssignMechanicBody {
