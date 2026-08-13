@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { api } from "@/lib/api";
+import { api, setAuthToken } from "@/lib/api";
 import type { UserRole } from "@/types";
 
 export type DemoRole = UserRole;
@@ -28,7 +28,9 @@ const initialState: AuthState = {
 };
 
 export const loginUser = createAsyncThunk("auth/login", async ({ email, password }: { email: string; password: string }) => {
-  return await api.post<AuthUser>("/auth/login", { email, password });
+  const res = await api.post<AuthUser & { token?: string }>("/auth/login", { email, password });
+  if (res.token) setAuthToken(res.token);
+  return res;
 });
 
 export const registerUser = createAsyncThunk(
@@ -94,7 +96,11 @@ export const fetchMe = createAsyncThunk("auth/me", async () => {
 });
 
 export const logoutUser = createAsyncThunk("auth/logout", async () => {
-  await api.post("/auth/logout");
+  try {
+    await api.post("/auth/logout");
+  } finally {
+    setAuthToken(null);
+  }
 });
 
 const authSlice = createSlice({

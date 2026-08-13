@@ -10,7 +10,14 @@ export async function login(req: Request, res: Response): Promise<void> {
   const user = await verifyCredentials(email, password);
   const token = signToken({ userId: user.id, role: user.role, name: user.name });
   res.cookie(COOKIE_NAME, token, cookieOptions);
-  res.json({ id: user.id, name: user.name, email: user.email, role: user.role.toLowerCase(), avatar: user.avatar });
+  res.json({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role.toLowerCase(),
+    avatar: user.avatar,
+    token,
+  });
 }
 
 export async function register(req: Request, res: Response): Promise<void> {

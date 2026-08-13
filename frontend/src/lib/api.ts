@@ -1,4 +1,6 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+const TOKEN_COOKIE = "motoserve_token";
+const TOKEN_STORAGE = "motoserve_token";
 
 export class ApiError extends Error {
   status: number;
@@ -10,17 +12,47 @@ export class ApiError extends Error {
   }
 }
 
+export function setAuthToken(token: string | null): void {
+  if (token) {
+    try {
+      localStorage.setItem(TOKEN_STORAGE, token);
+    } catch {
+      // ignore storage errors
+    }
+    document.cookie = `${TOKEN_COOKIE}=${encodeURIComponent(token)}; path=/; samesite=lax`;
+  } else {
+    try {
+      localStorage.removeItem(TOKEN_STORAGE);
+    } catch {
+      // ignore storage errors
+    }
+    document.cookie = `${TOKEN_COOKIE}=; path=/; samesite=lax; max-age=0`;
+  }
+}
+
+export function getAuthToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_STORAGE);
+  } catch {
+    return null;
+  }
+}
+
 interface ApiOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
 }
 
 async function request<T>(path: string, { body, ...init }: ApiOptions = {}): Promise<T> {
   let res: Response;
+  const headers: Record<string, string> = {};
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const token = getAuthToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   try {
     res = await fetch(`${BASE_URL}${path}`, {
       ...init,
       credentials: "include",
-      headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
+      headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
