@@ -146,6 +146,8 @@ export interface Appointment {
   status: "pending" | "confirmed" | "cancelled";
   notes: string;
   createdAt: string;
+  owner?: { id: string; name: string };
+  vehicle?: Vehicle;
 }
 
 export interface EstimateItem {
@@ -165,6 +167,7 @@ export interface Estimate {
   summary: string;
   items: EstimateItem[];
   total: number;
+  jobCard?: { id: string; vehicle?: Vehicle };
 }
 
 export interface InvoiceItem {

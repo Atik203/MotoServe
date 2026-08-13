@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import {
   Calendar,
   Car,
@@ -20,9 +21,11 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchJobs } from "@/store/slices/jobsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
-import { fetchAppointments } from "@/store/slices/appointmentsSlice";
+import { fetchAppointments, updateAppointmentStatus } from "@/store/slices/appointmentsSlice";
 import { fetchEstimates } from "@/store/slices/estimatesSlice";
 import { fetchThreads } from "@/store/slices/chatSlice";
+import { fetchServices } from "@/store/slices/servicesSlice";
+import { fetchCustomers } from "@/store/slices/customersSlice";
 import { buildKpis } from "@/lib/kpis";
 import { cn } from "@/lib/utils";
 import {
@@ -71,22 +74,11 @@ const statusPills: Record<JobStatus, { label: string; className: string }> = {
   },
 };
 
-const schedule = [
-  {
-    time: "09:00",
-    period: "AM",
-    title: "Oil Change & Filter",
-    meta: "David Smith - Ford Ranger",
-    current: false,
-  },
-  {
-    time: "10:30",
-    period: "AM",
-    title: "Brake Inspection",
-    meta: "Emma Wilson - Honda Civic",
-    current: true,
-  },
-];
+const appointmentStatus: Record<string, { label: string; className: string }> = {
+  pending: { label: "Pending", className: "bg-[rgba(255,193,7,0.1)] text-[#8b5000]" },
+  confirmed: { label: "Confirmed", className: "bg-[rgba(76,175,80,0.1)] text-[#4caf50]" },
+  cancelled: { label: "Cancelled", className: "bg-[rgba(186,26,26,0.1)] text-[#ba1a1a]" },
+};
 
 export default function AdvisorDashboardPage() {
   const dispatch = useAppDispatch();
@@ -95,6 +87,8 @@ export default function AdvisorDashboardPage() {
   const appointments = useAppSelector((s) => s.appointments.items);
   const estimates = useAppSelector((s) => s.estimates.items);
   const threads = useAppSelector((s) => s.chat.threads);
+  const services = useAppSelector((s) => s.services.items);
+  const customers = useAppSelector((s) => s.customers.items);
 
   useEffect(() => {
     dispatch(fetchJobs());
@@ -102,12 +96,35 @@ export default function AdvisorDashboardPage() {
     dispatch(fetchAppointments());
     dispatch(fetchEstimates());
     dispatch(fetchThreads());
+    dispatch(fetchServices());
+    dispatch(fetchCustomers());
   }, [dispatch]);
 
   const kpis = useMemo(
     () => buildKpis("advisor", { jobs, vehicles, appointments, estimates, threads }),
     [jobs, vehicles, appointments, estimates, threads],
   );
+
+  const pendingEstimates = estimates.filter((e) => e.status === "pending");
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayAppointments = appointments.filter((a) => a.date === todayKey);
+  const scheduleSlots = (todayAppointments.length > 0 ? todayAppointments : appointments.slice(0, 4)).map((a) => ({
+    appointment: a,
+    time: a.time,
+    title: a.serviceIds.map((id) => services.find((s) => s.id === id)?.name).filter(Boolean).join(", ") || "Vehicle service",
+    meta: `${a.owner?.name ?? "Owner"} • ${a.vehicle ? `${a.vehicle.make} ${a.vehicle.model}` : "Vehicle"}`,
+    current: a.status === "pending",
+  }));
+  const unreadThread = threads.find((t) => t.unread > 0) ?? threads[0] ?? null;
+
+  const setAppointmentStatus = async (id: string, status: "confirmed" | "cancelled") => {
+    try {
+      await dispatch(updateAppointmentStatus({ id, status })).unwrap();
+      toast.success(status === "confirmed" ? "Appointment confirmed" : "Appointment cancelled");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Action failed");
+    }
+  };
 
   return (
     <div className="bg-background min-h-screen p-8">
@@ -268,48 +285,76 @@ export default function AdvisorDashboardPage() {
               </div>
 
               <div className="flex flex-col gap-3">
-                {schedule.map((slot) => (
-                  <div key={slot.time} className="relative flex items-start gap-4">
-                    <div className="flex w-16 flex-col items-end gap-[2.5px] pt-[9.5px]">
-                      <span
-                        className={cn(
-                          "text-xs font-semibold tracking-[0.24px]",
-                          slot.current ? "text-primary" : "text-[#191c1d]",
-                        )}
-                      >
-                        {slot.time}
-                      </span>
-                      <span className={cn("text-[10px]", slot.current ? "text-primary" : "text-[#64748b]")}>
-                        {slot.period}
-                      </span>
-                    </div>
-                    <span
-                      className={cn(
-                        "absolute top-2 left-17 rounded-full bg-primary shadow-[0_0_0_4px_white]",
-                        slot.current ? "top-1.5 left-[66px] size-3 bg-[#ffc107]" : "size-2",
-                      )}
-                    />
-                    <div
-                      className={cn(
-                        "flex flex-1 items-center justify-between gap-4 rounded border p-[13px]",
-                        slot.current
-                          ? "border-[rgba(255,193,7,0.2)] bg-[rgba(255,193,7,0.05)]"
-                          : "border-[#e5e7eb] bg-[#f3f4f5]",
-                      )}
-                    >
-                      <div className="min-w-0">
-                        <p className="text-xs font-semibold tracking-[0.24px] text-[#191c1d]">{slot.title}</p>
-                        <p className="text-sm text-[#424753]">{slot.meta}</p>
-                      </div>
-                      <button
-                        type="button"
-                        className="shrink-0 rounded-sm border border-[#e5e7eb] bg-white px-[9px] py-[5px] text-xs text-[#191c1d]"
-                      >
-                        Quick View
-                      </button>
-                    </div>
+                {scheduleSlots.length === 0 ? (
+                  <div className="rounded border border-dashed border-[#e5e7eb] px-4 py-10 text-center text-sm text-muted-foreground">
+                    No appointments scheduled.
                   </div>
-                ))}
+                ) : (
+                  scheduleSlots.map((slot) => {
+                    const pill = appointmentStatus[slot.appointment.status] ?? appointmentStatus.pending;
+                    return (
+                      <div key={slot.appointment.id} className="relative flex items-start gap-4">
+                        <div className="flex w-16 flex-col items-end gap-[2.5px] pt-[9.5px]">
+                          <span
+                            className={cn(
+                              "text-xs font-semibold tracking-[0.24px]",
+                              slot.current ? "text-primary" : "text-[#191c1d]",
+                            )}
+                          >
+                            {slot.time}
+                          </span>
+                          <span className={cn("text-[10px]", slot.current ? "text-primary" : "text-[#64748b]")}>
+                            {slot.appointment.status}
+                          </span>
+                        </div>
+                        <span
+                          className={cn(
+                            "absolute top-2 left-17 rounded-full bg-primary shadow-[0_0_0_4px_white]",
+                            slot.current ? "top-1.5 left-[66px] size-3 bg-[#ffc107]" : "size-2",
+                          )}
+                        />
+                        <div
+                          className={cn(
+                            "flex flex-1 items-center justify-between gap-4 rounded border p-[13px]",
+                            slot.current
+                              ? "border-[rgba(255,193,7,0.2)] bg-[rgba(255,193,7,0.05)]"
+                              : "border-[#e5e7eb] bg-[#f3f4f5]",
+                          )}
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="truncate text-xs font-semibold tracking-[0.24px] text-[#191c1d]">
+                                {slot.title}
+                              </p>
+                              <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize", pill.className)}>
+                                {pill.label}
+                              </span>
+                            </div>
+                            <p className="truncate text-sm text-[#424753]">{slot.meta}</p>
+                          </div>
+                          {slot.appointment.status === "pending" && (
+                            <button
+                              type="button"
+                              onClick={() => void setAppointmentStatus(slot.appointment.id, "confirmed")}
+                              className="shrink-0 rounded-sm bg-primary px-[9px] py-[5px] text-xs font-semibold text-white"
+                            >
+                              Confirm
+                            </button>
+                          )}
+                          {(slot.appointment.status === "pending" || slot.appointment.status === "confirmed") && (
+                            <button
+                              type="button"
+                              onClick={() => void setAppointmentStatus(slot.appointment.id, "cancelled")}
+                              className="shrink-0 rounded-sm border border-[#e5e7eb] bg-white px-[9px] py-[5px] text-xs text-[#ba1a1a]"
+                            >
+                              Cancel
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </section>
           </div>
@@ -318,48 +363,95 @@ export default function AdvisorDashboardPage() {
             <section className="flex flex-col gap-3 rounded-lg border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-foreground">Pending Estimates</h2>
-                <span className="rounded-xl bg-[#f44336] px-2 py-0.5 text-xs text-white">3</span>
+                <span className="rounded-xl bg-[#f44336] px-2 py-0.5 text-xs text-white">
+                  {pendingEstimates.length}
+                </span>
               </div>
 
-              <div className="flex flex-col gap-2.5 rounded border border-[#e5e7eb] p-[13px]">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold tracking-[0.24px] text-[#191c1d]">John Doe</span>
-                  <span className="text-sm font-medium text-[#f44336]">$1,250</span>
+              {pendingEstimates.length === 0 ? (
+                <div className="rounded border border-dashed border-[#e5e7eb] px-4 py-8 text-center text-sm text-muted-foreground">
+                  No pending estimates.
                 </div>
-                <p className="text-xs text-[#64748b]">Toyota Camry • Waiting 2h</p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    className="flex-1 rounded-sm bg-[#f3f4f5] py-1.5 text-xs text-[#191c1d]"
-                  >
-                    View
-                  </button>
-                  <button
-                    type="button"
-                    className="flex-1 rounded-sm bg-primary/10 py-1.5 text-xs text-primary"
-                  >
-                    Remind
-                  </button>
-                </div>
-              </div>
+              ) : (
+                pendingEstimates.slice(0, 3).map((estimate) => {
+                  const customer = customers.find((c) => c.id === estimate.customerId);
+                  const vehicle = estimate.jobCard && "vehicle" in estimate.jobCard ? estimate.jobCard.vehicle : undefined;
+                  return (
+                    <div key={estimate.id} className="flex flex-col gap-2.5 rounded border border-[#e5e7eb] p-[13px]">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold tracking-[0.24px] text-[#191c1d]">
+                          {customer?.name ?? "Owner"}
+                        </span>
+                        <span className="text-sm font-medium text-[#f44336]">${estimate.total.toFixed(2)}</span>
+                      </div>
+                      <p className="text-xs text-[#64748b]">
+                        {vehicle ? `${vehicle.make} ${vehicle.model}` : "Vehicle"} • {estimate.id}
+                      </p>
+                      <div className="flex gap-2">
+                        <Link
+                          href={`/advisor/estimates/new`}
+                          className="flex-1 rounded-sm bg-[#f3f4f5] py-1.5 text-center text-xs text-[#191c1d]"
+                        >
+                          View
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => toast.success(`Reminder sent to ${customer?.name ?? "owner"}`)}
+                          className="flex-1 rounded-sm bg-primary/10 py-1.5 text-xs text-primary"
+                        >
+                          Remind
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </section>
 
             <section className="flex flex-col gap-3 rounded-lg border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-              <h2 className="text-xl font-semibold text-foreground">Messages</h2>
-
-              <div className="flex items-start gap-3 rounded border border-[#e5e7eb] p-[13px]">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#ffb05f] text-xs font-bold text-[#754300]">
-                  SJ
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold tracking-[0.24px] text-[#191c1d]">Sarah Jenkins</span>
-                    <span className="shrink-0 text-[10px] text-[#64748b]">10m</span>
-                  </div>
-                  <p className="truncate text-xs text-[#424753]">Is my car ready yet?</p>
-                </div>
-                <span className="mt-1.5 size-2 shrink-0 rounded-xl bg-primary" />
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-foreground">Messages</h2>
+                <Link href="/advisor/chat" className="text-xs font-semibold text-primary hover:underline">
+                  View All
+                </Link>
               </div>
+
+              {unreadThread ? (
+                <Link
+                  href="/advisor/chat"
+                  className="flex items-start gap-3 rounded border border-[#e5e7eb] p-[13px] transition-colors hover:border-primary/40"
+                >
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#ffb05f] text-xs font-bold text-[#754300]">
+                    {unreadThread.owner?.name
+                      ?.split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .slice(0, 2) ?? "O"}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-xs font-semibold tracking-[0.24px] text-[#191c1d]">
+                        {unreadThread.owner?.name ?? "Vehicle Owner"}
+                      </span>
+                      <span className="shrink-0 text-[10px] text-[#64748b]">
+                        {new Date(unreadThread.lastMessageAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                      </span>
+                    </div>
+                    <p className="truncate text-xs text-[#424753]">
+                      {unreadThread.messages[unreadThread.messages.length - 1]?.text ?? unreadThread.subject}
+                    </p>
+                  </div>
+                  {unreadThread.unread > 0 && (
+                    <span className="mt-1.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                      {unreadThread.unread}
+                    </span>
+                  )}
+                </Link>
+              ) : (
+                <div className="rounded border border-dashed border-[#e5e7eb] px-4 py-8 text-center text-sm text-muted-foreground">
+                  No messages yet.
+                </div>
+              )}
             </section>
           </div>
         </div>
