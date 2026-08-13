@@ -17,7 +17,7 @@ import {
   markThreadRead,
   updateAppointment,
 } from "./shared.service.js";
-import { getIo } from "../../lib/socket.js";
+import { safeEmit } from "../../lib/socket.js";
 import { prisma } from "../../lib/prisma.js";
 
 export async function getHealth(_req: Request, res: Response): Promise<void> {
@@ -143,7 +143,7 @@ export async function sendMessage(req: Request, res: Response): Promise<void> {
     },
   });
   const payload = { ...message, sender: message.sender.toLowerCase() };
-  getIo().to(threadId).emit("message:new", payload);
+  safeEmit(threadId, "message:new", payload);
   res.status(201).json(payload);
 }
 

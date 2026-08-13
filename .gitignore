@@ -26,6 +26,9 @@ frontend/build/
 *.tsbuildinfo
 next-env.d.ts
 
+# vercel
+.vercel
+
 # prisma generated client
 backend/src/generated/
 
@@ -35,3 +38,6 @@ backend/dist/
 # editor
 .vscode/
 .idea/
+
+.vercel
+.env*

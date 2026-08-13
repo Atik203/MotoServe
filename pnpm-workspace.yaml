@@ -1,0 +1,10 @@
+packages:
+  - frontend
+  - backend
+
+allowBuilds:
+  "@prisma/engines": true
+  prisma: true
+  esbuild: true
+  "core-js": true
+  "unrs-resolver": true

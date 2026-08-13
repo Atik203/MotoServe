@@ -87,6 +87,13 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
   }, [dispatch, role]);
 
   useEffect(() => {
+    const timer = setInterval(() => {
+      void dispatch(fetchThreads()).catch(() => {});
+    }, 8000);
+    return () => clearInterval(timer);
+  }, [dispatch]);
+
+  useEffect(() => {
     if (!activeThreadId && threads.length > 0) dispatch(setActiveThread(threads[0].id));
   }, [activeThreadId, threads, dispatch]);
 

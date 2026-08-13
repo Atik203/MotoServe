@@ -1,0 +1,13 @@
+{
+  "name": "motoserve",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.3.0",
+  "scripts": {
+    "build": "pnpm --dir backend db:generate",
+    "dev:frontend": "pnpm --dir frontend dev",
+    "dev:backend": "pnpm --dir backend dev",
+    "lint": "pnpm --dir frontend lint && pnpm --dir backend typecheck",
+    "typecheck": "pnpm --dir frontend typecheck && pnpm --dir backend typecheck"
+  }
+}

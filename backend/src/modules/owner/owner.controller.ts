@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { ApiError } from "../../middleware/error.js";
-import { getIo } from "../../lib/socket.js";
+import { safeEmit } from "../../lib/socket.js";
 import { logAudit } from "../../lib/audit.js";
 import {
   bookAppointment,
@@ -68,7 +68,7 @@ export async function createThreadController(req: Request, res: Response): Promi
   if (!req.user) throw new ApiError(401, "Authentication required");
   const { advisorId, subject, text } = req.body.body as CreateThreadBody;
   const thread = await createChatThread(req.user.userId, advisorId, subject, text);
-  getIo().to(`user:${advisorId}`).emit("thread:new", { id: thread.id, ownerId: thread.ownerId, subject: thread.subject });
+  safeEmit(`user:${advisorId}`, "thread:new", { id: thread.id, ownerId: thread.ownerId, subject: thread.subject });
   res.status(201).json({
     id: thread.id,
     ownerId: thread.ownerId,

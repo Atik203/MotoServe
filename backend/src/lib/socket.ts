@@ -2,13 +2,14 @@ import { Server } from "socket.io";
 import type { Server as HttpServer } from "node:http";
 import { COOKIE_NAME, verifyToken } from "./auth.js";
 import { listThreads } from "../modules/shared/shared.service.js";
+import { isAllowedOrigin } from "./cors.js";
 
 let io: Server | null = null;
 
 export function initSocket(httpServer: HttpServer): Server {
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.CLIENT_URL ?? "http://localhost:3500",
+      origin: isAllowedOrigin,
       credentials: true,
     },
   });
@@ -38,4 +39,12 @@ export function initSocket(httpServer: HttpServer): Server {
 export function getIo(): Server {
   if (!io) throw new Error("Socket.IO not initialized");
   return io;
+}
+
+export function safeEmit(room: string, event: string, payload: unknown): void {
+  try {
+    io?.to(room).emit(event, payload);
+  } catch {
+    // no-op — socket push is best-effort (unavailable on serverless)
+  }
 }

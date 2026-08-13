@@ -44,6 +44,7 @@ export function SessionBootstrap({ requiredRole }: SessionBootstrapProps) {
       return;
     }
     const socket = connectSocket();
+    if (!socket) return;
     const onMessage = (msg: SocketMessage) => {
       dispatch(receiveMessage({ threadId: msg.threadId, message: msg }));
     };
