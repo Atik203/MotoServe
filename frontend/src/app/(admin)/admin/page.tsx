@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import {
   Calendar,
@@ -204,17 +205,16 @@ export default function AdminDashboardPage() {
                     { label: "Add Service", icon: PackagePlus, href: "/admin/services/new" },
                     { label: "Add Employee", icon: UserPlus, href: "/admin/employees" },
                     { label: "Generate Report", icon: FileBarChart, href: "/admin/reports" },
-                    { label: "Manage Pricing", icon: Settings2, href: "/admin/services" },
+                    { label: "Manage Services", icon: Settings2, href: "/admin/services" },
                   ].map((a) => (
-                    <button
+                    <Link
                       key={a.label}
-                      type="button"
-                      onClick={() => toast.info(`${a.label} — coming with the backend`)}
+                      href={a.href}
                       className="flex flex-col items-center justify-center gap-2 rounded border border-[#e2e8f0] bg-background py-[25px] transition-colors hover:border-primary/50"
                     >
                       <a.icon className="size-5 text-muted-foreground" />
                       <span className="text-xs font-semibold tracking-[0.24px] text-foreground">{a.label}</span>
-                    </button>
+                    </Link>
                   ))}
                 </div>
               </section>

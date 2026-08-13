@@ -59,7 +59,18 @@ export default function WorkloadReportsPage() {
           </div>
           <Button
             size="sm"
-            onClick={() => toast.success("Report exported (demo)")}
+            onClick={() => {
+              const lines: string[][] = [["Mechanic", "Active", "Completed", "Utilization"]];
+              mechanics.forEach((m, i) => lines.push([m.mechanic, String(m.active), String(m.completed), `${utilizations[i] ?? 0}%`]));
+              const csv = lines.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+              const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "workload-report.csv";
+              a.click();
+              URL.revokeObjectURL(url);
+              toast.success("Report exported");
+            }}
             className="gap-1 rounded px-4 py-[9px] text-xs font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
           >
             <Download className="size-3" />

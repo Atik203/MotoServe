@@ -3,10 +3,10 @@
 import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import {
-  Calendar,
-  Clock,
+  CalendarDays,
   Download,
   Star,
+  Users,
   Wallet,
   Wrench,
 } from "lucide-react";
@@ -22,13 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-const kpis = [
-  { label: "Total Revenue", value: "$24,850", delta: "+12.4%", positive: true, icon: Wallet },
-  { label: "Active Jobs", value: "18", delta: "+3 today", positive: true, icon: Wrench },
-  { label: "Avg. Job Time", value: "1.9h", delta: "+0.2h", positive: false, icon: Clock },
-  { label: "Customer Satisfaction", value: "4.8", delta: "+0.3", positive: true, icon: Star },
-];
 
 export default function AdminReportsPage() {
   const dispatch = useAppDispatch();
@@ -59,6 +52,30 @@ export default function AdminReportsPage() {
 
   const maxStatusCount = Math.max(...reports.jobsByStatus.map((s) => s.count));
 
+  const kpis = [
+    { label: "Total Revenue", value: `$${reports.totalRevenue.toLocaleString()}`, delta: "This year", positive: true, icon: Wallet },
+    { label: "Active Jobs", value: String(reports.activeJobs), delta: "In workshop", positive: true, icon: Wrench },
+    { label: "Registered Customers", value: String(reports.registeredCustomers), delta: "All time", positive: true, icon: Users },
+    { label: "Active Employees", value: String(reports.activeEmployees), delta: "On staff", positive: true, icon: Star },
+  ];
+
+  const exportCsv = () => {
+    const lines: string[][] = [["Metric", "Value"]];
+    kpis.forEach((k) => lines.push([k.label, k.value]));
+    lines.push([], ["Month", "Revenue"]);
+    reports.revenueByMonth.forEach((r) => lines.push([r.month, String(r.revenue)]));
+    lines.push([], ["Status", "Count"]);
+    reports.jobsByStatus.forEach((j) => lines.push([j.status, String(j.count)]));
+    const csv = lines.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "motoserve-report.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Report exported");
+  };
+
   return (
     <div className="bg-background min-h-screen p-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
@@ -71,15 +88,14 @@ export default function AdminReportsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info("Date range selection coming with the backend")}
               className="gap-1 rounded border-[#e2e8f0] px-[17px] py-[9px] text-xs font-semibold tracking-[0.24px]"
             >
-              <Calendar className="size-[13.5px]" />
-              Last 30 Days
+              <CalendarDays className="size-[13.5px]" />
+              This Year
             </Button>
             <Button
               size="sm"
-              onClick={() => toast.success("Report exported (demo)")}
+              onClick={exportCsv}
               className="gap-1 rounded px-4 py-[9px] text-xs font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
             >
               <Download className="size-3" />

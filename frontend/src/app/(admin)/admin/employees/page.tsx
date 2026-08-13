@@ -20,12 +20,21 @@ import {
   Wrench,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchEmployees } from "@/store/slices/employeesSlice";
+import { deleteEmployee, fetchEmployees, updateEmployee } from "@/store/slices/employeesSlice";
 import type { Employee } from "@/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -70,6 +79,9 @@ export default function EmployeeManagementPage() {
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [dialog, setDialog] = useState<{ mode: "view" | "edit"; employee: Employee } | null>(null);
+  const [deleting, setDeleting] = useState<Employee | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (employees.length === 0) dispatch(fetchEmployees());
@@ -109,6 +121,60 @@ export default function EmployeeManagementPage() {
 
   const roleLabel = (e: Employee) => (e.role === "advisor" ? "Service Advisor" : "Mechanic");
 
+  const exportCsv = () => {
+    const header = ["ID", "Name", "Email", "Phone", "Role", "Specialization", "Status"];
+    const lines = rows.map((e) => [e.id, e.name, e.email, e.phone, roleLabel(e), e.specialization ?? "", e.status]);
+    const csv = [header, ...lines]
+      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "employees.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Employees exported");
+  };
+
+  const handleSave = async (data: { name: string; phone: string; station?: string; specialization?: string; status: "active" | "inactive" }) => {
+    if (!dialog) return;
+    setSaving(true);
+    try {
+      await dispatch(
+        updateEmployee({
+          id: dialog.employee.id,
+          data: {
+            name: data.name,
+            phone: data.phone,
+            station: data.station ?? undefined,
+            specialization: data.specialization ?? undefined,
+            status: data.status,
+          },
+        }),
+      ).unwrap();
+      toast.success("Employee updated");
+      setDialog(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleting) return;
+    setSaving(true);
+    try {
+      await dispatch(deleteEmployee(deleting.id)).unwrap();
+      toast.success(`${deleting.name} deactivated`);
+      setDeleting(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="bg-background min-h-screen p-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
@@ -124,7 +190,7 @@ export default function EmployeeManagementPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => toast.success("Employees list exported (demo)")}
+                onClick={exportCsv}
                 className="gap-1 rounded px-[17px] py-[9px] text-xs font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
               >
                 <Download className="size-3" />
@@ -267,7 +333,7 @@ export default function EmployeeManagementPage() {
                     <div className="flex justify-end gap-1">
                       <button
                         type="button"
-                        onClick={() => toast.info(`View ${employee.name} — coming with the backend`)}
+                        onClick={() => setDialog({ mode: "view", employee })}
                         className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-[#f3f4f5] hover:text-foreground"
                         aria-label={`View ${employee.name}`}
                       >
@@ -275,7 +341,7 @@ export default function EmployeeManagementPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => toast.info(`Edit ${employee.name} — coming with the backend`)}
+                        onClick={() => setDialog({ mode: "edit", employee })}
                         className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-[#f3f4f5] hover:text-foreground"
                         aria-label={`Edit ${employee.name}`}
                       >
@@ -283,7 +349,7 @@ export default function EmployeeManagementPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => toast.info(`Delete ${employee.name} — coming with the backend`)}
+                        onClick={() => setDeleting(employee)}
                         className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-[#f3f4f5] hover:text-destructive"
                         aria-label={`Delete ${employee.name}`}
                       >
@@ -342,6 +408,116 @@ export default function EmployeeManagementPage() {
           </div>
         </div>
       </div>
+
+      <EmployeeDialog dialog={dialog} saving={saving} onClose={() => setDialog(null)} onSave={handleSave} />
+
+      <Dialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
+        <DialogContent className="max-w-sm rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-foreground">Deactivate {deleting?.name}?</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              The employee account will be set to inactive and will no longer be able to log in. This can be undone by
+              reactivating the account.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleting(null)} className="rounded-lg">
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={() => void handleDelete()} disabled={saving} className="rounded-lg">
+              {saving ? "Deactivating..." : "Deactivate"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+function EmployeeDialog({
+  dialog,
+  saving,
+  onClose,
+  onSave,
+}: {
+  dialog: { mode: "view" | "edit"; employee: Employee } | null;
+  saving: boolean;
+  onClose: () => void;
+  onSave: (data: { name: string; phone: string; station?: string; specialization?: string; status: "active" | "inactive" }) => void;
+}) {
+  const [name, setName] = useState(dialog?.employee.name ?? "");
+  const [phone, setPhone] = useState(dialog?.employee.phone ?? "");
+  const [station, setStation] = useState(dialog?.employee.station ?? "");
+  const [specialization, setSpecialization] = useState(dialog?.employee.specialization ?? "");
+  const [status, setStatus] = useState<"active" | "inactive">(dialog?.employee.status ?? "active");
+
+  const mode = dialog?.mode ?? "view";
+  const employee = dialog?.employee;
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    onSave({ name: name.trim(), phone: phone.trim(), station: station.trim() || undefined, specialization: specialization.trim() || undefined, status });
+  };
+
+  return (
+    <Dialog open={dialog !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md rounded-xl">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold text-foreground">
+            {mode === "view" ? employee?.name : `Edit ${employee?.name}`}
+          </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            {employee?.role === "advisor" ? "Service Advisor" : "Mechanic"} • {employee?.id.toUpperCase()}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-semibold text-foreground">Full Name</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} readOnly={mode === "view"} className="h-10 rounded-lg border-border bg-white" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-semibold text-foreground">Phone</Label>
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} readOnly={mode === "view"} className="h-10 rounded-lg border-border bg-white" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-semibold text-foreground">Email</Label>
+              <Input value={employee?.email ?? ""} readOnly className="h-10 rounded-lg border-border bg-[#f3f4f5] text-muted-foreground" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-semibold text-foreground">Status</Label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as "active" | "inactive")}
+                disabled={mode === "view"}
+                className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-foreground outline-none focus:border-primary disabled:bg-[#f3f4f5]"
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-semibold text-foreground">Station</Label>
+              <Input value={station} onChange={(e) => setStation(e.target.value)} readOnly={mode === "view"} className="h-10 rounded-lg border-border bg-white" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-semibold text-foreground">Specialization</Label>
+              <Input value={specialization} onChange={(e) => setSpecialization(e.target.value)} readOnly={mode === "view"} className="h-10 rounded-lg border-border bg-white" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose} className="rounded-lg">
+              {mode === "view" ? "Close" : "Cancel"}
+            </Button>
+            {mode === "edit" && (
+              <Button type="submit" disabled={saving} className="rounded-lg">
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+            )}
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

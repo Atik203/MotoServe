@@ -28,6 +28,19 @@ export function verifyCustomerStatus(id: string, decision: "approved" | "rejecte
   });
 }
 
+const employeeSelect = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  phone: true,
+  avatar: true,
+  station: true,
+  specialization: true,
+  status: true,
+  joinedAt: true,
+} as const;
+
 export async function createEmployee(data: CreateEmployeeBody) {
   const existing = await findUserByEmail(data.email);
   if (existing) throw new ApiError(409, "Email already registered");
@@ -39,6 +52,7 @@ export async function createEmployee(data: CreateEmployeeBody) {
       role: role.toUpperCase() as never,
       status: "ACTIVE",
     },
+    select: employeeSelect,
   });
 }
 
@@ -51,11 +65,12 @@ export function updateEmployee(id: string, data: UpdateEmployeeBody) {
       ...(password ? { passwordHash: bcrypt.hashSync(password, 10) } : {}),
       ...(status ? { status: status.toUpperCase() as never } : {}),
     },
+    select: employeeSelect,
   });
 }
 
 export function deactivateEmployee(id: string) {
-  return prisma.user.update({ where: { id }, data: { status: "INACTIVE" } });
+  return prisma.user.update({ where: { id }, data: { status: "INACTIVE" }, select: employeeSelect });
 }
 
 export async function getReportData(): Promise<ReportDto> {
