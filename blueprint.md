@@ -169,6 +169,17 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 - **Phase 6** ✅ dynamic overhaul: chat redesign (per-party unread + shared CommunicationCenter + new-conversation), job→invoice auto-generation, advisor dashboard real schedule/estimates/messages, admin employee/service edit dialogs + CSV exports, owner rating flow + history details, receive job selector, repair photos via S3, vehicle edit/delete
 - **Phase 7** ✅ final polish: parts add dialog, dynamic dashboard appointment card, appointment PDF, history filters, CSV exports everywhere, JobCard intake fields (mileage/fuel/keys/accessories), owner emergency contact, real AuditLog writes, parts stock pills, chat-unread bell
 
+## Deployment (Vercel — both apps live)
+
+- **Frontend** → project `motoserve-web` (Root Directory `frontend/`) → `https://motoserve-web.vercel.app` ✓
+- **Backend** → project `motoserve-api` (Root Directory `backend/`, framework `node`, Node 24) → `https://motoserve-api.vercel.app/api` ✓
+- Auth: cross-domain via **Bearer token** — login returns `token`; frontend stores it in `localStorage` + sets its own `motoserve_token` cookie (for the Next proxy gate) and sends `Authorization: Bearer` on every request (`src/lib/api.ts`). No httpOnly cookie cross-domain; acceptable for demo.
+- Backend function: `backend/api/index.cjs` = async handler that `import()`s the tsc-compiled ESM app (`build:api` → `dist-api/` with a `{"type":"module"}` marker, generated at deploy; gitignored).
+- CORS: `src/lib/cors.ts` uses the `(origin, callback)` signature required by both `cors` and socket.io; allows configured `CLIENT_URL`s + `localhost` + any `*.vercel.app`.
+- Socket.io: disabled in production (`NEXT_PUBLIC_SOCKET_URL` unset) — chat falls back to 8s polling in `CommunicationCenter`.
+- `vercel env`: web → `NEXT_PUBLIC_API_URL=https://motoserve-api.vercel.app/api`; api → DB/JWT/AWS/Stripe/CLIENT_URL=S3 prefix.
+- Remaining manual steps: Stripe webhook endpoint → `https://motoserve-api.vercel.app/api/payments/webhook` (`checkout.session.completed`) + `STRIPE_WEBHOOK_SECRET`; S3 CORS add the web origin.
+
 ## API conventions (backend)
 
 - Base URL `http://localhost:4000/api` · JSON bodies sent raw (the `validate` middleware wraps them internally — do NOT send `{body: ...}` wrappers).
