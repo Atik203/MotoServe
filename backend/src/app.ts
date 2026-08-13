@@ -39,3 +39,7 @@ export function createApp(): express.Express {
 
   return app;
 }
+
+const app = createApp();
+
+export default app;
