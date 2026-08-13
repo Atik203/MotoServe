@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "bundle:api": "esbuild src/serverless.ts --bundle --platform=node --format=esm --outfile=dist-api/index.mjs",
+    "build:api": "tsc -p tsconfig.build.json && node -e \"require('fs').writeFileSync('dist-api/package.json', JSON.stringify({ type: 'module' }))\"",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "postinstall": "prisma generate",
@@ -36,7 +36,6 @@
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.0.0",
-    "esbuild": "^0.28.2",
     "prisma": "7.9.1",
     "tsx": "^4.20.3",
     "typescript": "^5.9.0"
