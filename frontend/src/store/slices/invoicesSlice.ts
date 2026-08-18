@@ -51,9 +51,9 @@ const invoicesSlice = createSlice({
         if (invoice) {
           invoice.status = "paid";
           invoice.payment = {
-            method: (action.meta.arg.method === "mobile" ? "cash" : action.meta.arg.method),
+            method: action.meta.arg.method === "card" ? "card" : "cash",
             paidAt: new Date().toISOString(),
-            last4: "4242",
+            last4: action.meta.arg.method === "card" ? "4242" : null,
           };
         }
       });

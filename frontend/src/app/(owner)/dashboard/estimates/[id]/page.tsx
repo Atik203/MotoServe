@@ -8,6 +8,7 @@ import { AlertTriangle, Car, Check, Clock, HelpCircle, MessageSquare, X } from "
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchEstimates, decideEstimate } from "@/store/slices/estimatesSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
+import { fetchJobs } from "@/store/slices/jobsSlice";
 import { Button } from "@/components/ui/button";
 
 export default function EstimateApprovalPage() {
@@ -15,11 +16,13 @@ export default function EstimateApprovalPage() {
   const dispatch = useAppDispatch();
   const estimates = useAppSelector((s) => s.estimates.items);
   const employees = useAppSelector((s) => s.employees.items);
+  const jobs = useAppSelector((s) => s.jobs.items);
 
   useEffect(() => {
     if (estimates.length === 0) dispatch(fetchEstimates());
     if (employees.length === 0) dispatch(fetchEmployees());
-  }, [dispatch, estimates.length, employees.length]);
+    if (jobs.length === 0) dispatch(fetchJobs());
+  }, [dispatch, estimates.length, employees.length, jobs.length]);
 
   const estimate = estimates.find((e) => e.id === params.id) ?? null;
 
@@ -27,14 +30,26 @@ export default function EstimateApprovalPage() {
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">Loading estimate...</div>;
   }
 
+  const job = jobs.find((j) => j.id === estimate.jobId);
+  const resolvedVehicle = estimate.jobCard?.vehicle ?? job?.vehicle ?? null;
   const advisor = employees.find((emp) => emp.id === estimate.advisorId) ?? null;
   const advisorInitials =
-    (advisor?.name ?? "SJ")
+    (advisor?.name ?? "Advisor")
       .split(" ")
       .map((n) => n[0])
       .join("")
       .slice(0, 2)
       .toUpperCase();
+
+  const estimatedCompletion = job?.expectedDate
+    ? new Date(job.expectedDate.replace(" ", "T")).toLocaleString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : "—";
 
   const subtotal = estimate.total / 1.085;
   const tax = estimate.total - subtotal;
@@ -73,11 +88,13 @@ export default function EstimateApprovalPage() {
                   <Car className="size-[18px] text-primary" />
                 </span>
                 <div>
-                  <p className="text-xl font-bold text-foreground">2023 Ford F-150</p>
+                  <p className="text-xl font-bold text-foreground">
+                    {resolvedVehicle ? `${resolvedVehicle.year} ${resolvedVehicle.make} ${resolvedVehicle.model}` : `Job ${job?.id ?? "—"}`}
+                  </p>
                   <p className="flex items-center gap-1 text-sm text-[#424753]">
                     License Plate:{" "}
                     <span className="rounded-sm border border-border bg-[#edeeef] px-[9px] py-px font-mono text-sm text-foreground">
-                      A9C-1234
+                      {resolvedVehicle?.regNo ?? "—"}
                     </span>
                   </p>
                 </div>
@@ -106,9 +123,7 @@ export default function EstimateApprovalPage() {
                   <div key={item.id} className={i > 0 ? "border-t border-border" : ""}>
                     <div className="flex items-start">
                       <p className="w-[340px] px-4 py-3 text-sm text-foreground">{item.description}</p>
-                      <p className="w-24 px-4 py-3 text-center text-sm text-[#424753]">
-                        {item.category === "labor" ? "2.5" : "1"}
-                      </p>
+                      <p className="w-24 px-4 py-3 text-center text-sm text-[#424753]">—</p>
                       <p className="flex-1 px-4 py-3 text-right font-mono text-sm text-foreground">
                         ${item.amount.toFixed(2)}
                       </p>
@@ -144,21 +159,21 @@ export default function EstimateApprovalPage() {
                   {advisorInitials}
                 </span>
                 <div>
-                  <p className="text-xs font-bold tracking-[0.24px] text-foreground">{advisor?.name ?? "Sarah Jenkins"}</p>
+                  <p className="text-xs font-bold tracking-[0.24px] text-foreground">{advisor?.name ?? "Your Advisor"}</p>
                   <p className="text-[11px] text-[#424753]">Service Advisor</p>
                 </div>
               </div>
               <div className="relative rounded bg-[#edeeef] px-4 py-6">
-                <p className="text-sm leading-5 text-foreground">
-                  &quot;Hi {estimate.customerId === "cus-001" ? "John" : "there"}, our inspection revealed the following work is
-                  needed. Please review the estimate and let us know if you have any questions. - {advisor?.name?.split(" ")[0] ?? "Your advisor"}&quot;
-                </p>
+<p className="text-sm leading-5 text-foreground">
+                    Our inspection revealed the following work is needed. Please review the estimate and let us know if
+                    you have any questions. — {advisor?.name?.split(" ")[0] ?? "Your advisor"}
+                  </p>
               </div>
               <div className="flex items-center gap-3 rounded border border-[rgba(0,82,204,0.1)] bg-[rgba(0,82,204,0.05)] p-[13px]">
                 <Clock className="size-5 text-primary" />
                 <div>
                   <p className="text-[11px] text-[#424753]">Estimated Completion</p>
-                  <p className="text-sm font-bold text-foreground">Today, 5:30 PM</p>
+                  <p className="text-sm font-bold text-foreground">{estimatedCompletion}</p>
                 </div>
               </div>
               <div className="flex flex-col gap-3 border-t border-border pt-[25px]">

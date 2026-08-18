@@ -117,26 +117,21 @@ export function buildInvoicePdf(invoice: Invoice, vehicle?: Vehicle | null): jsP
 
   y = sectionTitle(doc, y, "Invoice Breakdown");
   y = tableHeader(doc, y, [
-    { label: "Description", w: 110 },
-    { label: "Qty", w: 20, align: "right" },
-    { label: "Rate", w: 30, align: "right" },
-    { label: "Amount", w: 20, align: "right" },
+    { label: "Description", w: 120 },
+    { label: "Amount", w: 40, align: "right" },
   ]);
   for (const item of invoice.items) {
-    const qty = item.category === "parts" ? 2 : 1;
     y = tableRow(doc, y, [
-      { text: item.description, w: 110 },
-      { text: String(qty), w: 20, align: "right" },
-      { text: money(item.amount / qty), w: 30, align: "right" },
-      { text: money(item.amount), w: 20, align: "right" },
+      { text: `${item.description}  (${item.category})`, w: 120 },
+      { text: money(item.amount), w: 40, align: "right" },
     ]);
   }
-  y = tableRow(doc, y, [
-    { text: "Labor Charge", w: 110 },
-    { text: "3.5", w: 20, align: "right" },
-    { text: "$60.00/hr", w: 30, align: "right" },
-    { text: money(invoice.laborTotal), w: 20, align: "right" },
-  ]);
+  if (invoice.laborTotal > 0) {
+    y = tableRow(doc, y, [
+      { text: "Labor Charge", w: 120 },
+      { text: money(invoice.laborTotal), w: 40, align: "right" },
+    ]);
+  }
 
   y += 4;
   const totals: [string, number][] = [

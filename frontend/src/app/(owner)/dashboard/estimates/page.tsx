@@ -47,7 +47,7 @@ export default function MyEstimatesPage() {
           <div className="grid grid-cols-2 gap-6">
             {estimates.map((estimate) => {
               const job = jobs.find((j) => j.id === estimate.jobId);
-              const vehicle = vehicles.find((v) => v.id === job?.vehicleId);
+              const vehicle = estimate.jobCard?.vehicle ?? (job ? vehicles.find((v) => v.id === job.vehicleId) : undefined);
               const Style = statusStyle[estimate.status] ?? statusStyle.pending;
               return (
                 <div
@@ -57,10 +57,10 @@ export default function MyEstimatesPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex flex-col gap-1">
                       <p className="text-base font-semibold text-foreground">
-                        {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : "Vehicle"}
+                        {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : `Job ${job?.id ?? "—"}`}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {estimate.id} • {job ? `Job ${job.id}` : ""}
+                        {estimate.id}{job ? ` • Job ${job.id}` : ""}
                       </p>
                     </div>
                     <span className={cn("flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold capitalize", Style.className)}>
