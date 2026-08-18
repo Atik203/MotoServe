@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Car, Mail, Phone, Plus, Send, User } from "lucide-react";
@@ -294,7 +294,7 @@ function LineItemEditor({ job, estimates }: EditorProps) {
   );
 }
 
-export default function SendEstimatePage() {
+function SendEstimatePage() {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const jobs = useAppSelector((s) => s.jobs.items);
@@ -413,5 +413,13 @@ export default function SendEstimatePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SendEstimatePageWrapper() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background p-8 text-muted-foreground">Loading estimate builder...</div>}>
+      <SendEstimatePage />
+    </Suspense>
   );
 }

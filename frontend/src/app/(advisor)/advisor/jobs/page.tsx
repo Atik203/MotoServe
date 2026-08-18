@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { FilePlus2, Search, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,7 +31,7 @@ const statusFilters: Array<JobStatus | "all"> = [
   "completed",
 ];
 
-export default function AdvisorJobsPage() {
+function AdvisorJobsPage() {
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
   const jobs = useAppSelector((s) => s.jobs.items);
@@ -194,5 +194,13 @@ export default function AdvisorJobsPage() {
         </section>
       </div>
     </div>
+  );
+}
+
+export default function AdvisorJobsPageWrapper() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background p-8 text-muted-foreground">Loading jobs...</div>}>
+      <AdvisorJobsPage />
+    </Suspense>
   );
 }
