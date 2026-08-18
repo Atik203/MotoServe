@@ -9,6 +9,7 @@ export interface CreateVehicleBody {
   color?: string;
   transmission?: string;
   image?: string;
+  photos?: string[];
 }
 
 export interface BookAppointmentBody {

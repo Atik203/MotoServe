@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { HelpCircle, Search } from "lucide-react";
+import { HelpCircle, Plus, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchVehicles, selectVehicle } from "@/store/slices/vehiclesSlice";
@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import type { ServiceCategory } from "@/types";
 
 const FILTERS: { label: string; value: ServiceCategory | "all" }[] = [
@@ -60,6 +61,7 @@ export default function BookAppointmentPage() {
   const [filter, setFilter] = useState<ServiceCategory | "all">("all");
   const [search, setSearch] = useState("");
   const [customRequest, setCustomRequest] = useState("");
+  const [customOpen, setCustomOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState("10:30 AM");
   const [branchOn, setBranchOn] = useState(true);
@@ -111,8 +113,8 @@ export default function BookAppointmentPage() {
       toast.error("Please select a vehicle");
       return;
     }
-    if (selectedServices.length === 0) {
-      toast.error("Please choose at least one service");
+    if (selectedServices.length === 0 && !customRequest.trim()) {
+      toast.error("Please choose a service or add a custom request");
       return;
     }
     if (!selectedDate) {
@@ -214,18 +216,40 @@ export default function BookAppointmentPage() {
                     />
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-xl border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
-              <CardContent className="flex flex-col gap-4 p-[21px]">
-                <SectionTitle>Custom Service Request</SectionTitle>
-                <Input
-                  value={customRequest}
-                  onChange={(e) => setCustomRequest(e.target.value)}
-                  placeholder="Enter other service or issue..."
-                  className="h-[38px] rounded-lg"
-                />
+                {customOpen ? (
+                  <div className="flex flex-col gap-2 rounded-lg border border-dashed border-primary/40 bg-[#eff6ff] p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold tracking-[0.35px] text-foreground uppercase">
+                        Custom Service Request
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCustomOpen(false);
+                          setCustomRequest("");
+                        }}
+                        className="text-xs font-semibold text-[#ba1a1a] hover:underline"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    <Textarea
+                      value={customRequest}
+                      onChange={(e) => setCustomRequest(e.target.value)}
+                      placeholder="Describe the custom service or issue (e.g. install roof rack, custom paint touch-up, AC not cooling)..."
+                      className="min-h-[90px] rounded-lg"
+                    />
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setCustomOpen(true)}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[#c2c6d5] bg-[#f8f9fa] py-3 text-sm font-medium text-[#4b5563] transition-colors hover:border-primary/50 hover:text-primary"
+                  >
+                    <Plus className="size-4" />
+                    Request Custom Service
+                  </button>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -312,6 +336,12 @@ export default function BookAppointmentPage() {
                   <span className="text-muted-foreground">Date &amp; Time: </span>
                   <span className="font-medium text-foreground">{summaryDate}</span>
                 </div>
+                {customRequest.trim() && (
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Custom Request: </span>
+                    <span className="font-medium text-foreground">{customRequest.trim()}</span>
+                  </div>
+                )}
                 <div className="text-sm">
                   <span className="text-muted-foreground">Branch: </span>
                   <span className="font-medium text-foreground">Main Street</span>

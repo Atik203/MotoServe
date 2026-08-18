@@ -55,48 +55,65 @@ export function buildKpis(role: KpiRole, ctx: KpiContext): KpiCard[] {
 
   switch (role) {
     case "owner":
-      return [
-        {
-          id: "kpi-301",
-          label: "Upcoming Appts",
-          value: String(upcomingAppointments.length),
-          delta: nextAppointmentDate,
-          trend: "up",
-          icon: "calendar",
-        },
-        {
-          id: "kpi-302",
-          label: "Active Services",
-          value: String(activeJobs.length),
-          delta: activeJobs.length > 0 ? "In progress" : "None right now",
-          trend: "flat",
-          icon: "wrench",
-        },
-        {
-          id: "kpi-303",
-          label: "Registered Vehicles",
-          value: String(vehicles.length),
-          delta: "All active",
-          trend: "flat",
-          icon: "car",
-        },
-        {
-          id: "kpi-304",
-          label: "Pending Payments",
-          value: fmtMoney(unpaidTotal),
-          delta: `${unpaidInvoices.length} invoice${unpaidInvoices.length === 1 ? "" : "s"} due`,
-          trend: unpaidInvoices.length > 0 ? "down" : "flat",
-          icon: "wallet",
-        },
-        {
-          id: "kpi-305",
-          label: "Next Reminder",
-          value: vehicles[0] ? `${vehicles[0].make} ${vehicles[0].model} - Maintenance` : "No reminders",
-          delta: "Due in 5 days",
-          trend: "flat",
-          icon: "bell",
-        },
-      ];
+      {
+        const servicedMileage = vehicles.length > 0 ? Math.max(...vehicles.map((v) => v.mileage)) : 0;
+        const lastServiced =
+          jobs
+            .filter((j) => j.status === "completed" || j.status === "ready")
+            .map((j) => ({
+              vehicle: vehicles.find((v) => v.id === j.vehicleId),
+              at: j.progress[j.progress.length - 1]?.timestamp,
+            }))
+            .filter((x) => x.vehicle && x.at)
+            .sort((a, b) => new Date(b.at as string).getTime() - new Date(a.at as string).getTime())[0];
+        const reminderVehicle = lastServiced?.vehicle ?? (vehicles.length > 0 ? vehicles[0] : null);
+        return [
+          {
+            id: "kpi-301",
+            label: "Upcoming Appts",
+            value: String(upcomingAppointments.length),
+            delta: nextAppointmentDate,
+            trend: "up",
+            icon: "calendar",
+          },
+          {
+            id: "kpi-302",
+            label: "Active Services",
+            value: String(activeJobs.length),
+            delta: activeJobs.length > 0 ? "In progress" : "None right now",
+            trend: "flat",
+            icon: "wrench",
+          },
+          {
+            id: "kpi-303",
+            label: "Registered Vehicles",
+            value: String(vehicles.length),
+            delta: "All active",
+            trend: "flat",
+            icon: "car",
+          },
+          {
+            id: "kpi-304",
+            label: "Pending Payments",
+            value: fmtMoney(unpaidTotal),
+            delta: `${unpaidInvoices.length} invoice${unpaidInvoices.length === 1 ? "" : "s"} due`,
+            trend: unpaidInvoices.length > 0 ? "down" : "flat",
+            icon: "wallet",
+          },
+          {
+            id: "kpi-305",
+            label: "Next Reminder",
+            value: reminderVehicle ? `${reminderVehicle.make} ${reminderVehicle.model}` : "No reminders",
+            delta: reminderVehicle
+              ? lastServiced?.at
+                ? `Last serviced ${Math.max(1, Math.round((Date.now() - new Date(lastServiced.at as string).getTime()) / 86_400_000))}d ago`
+                : `${servicedMileage.toLocaleString()} mi — due for first service`
+              : "Register a vehicle to begin",
+            trend: "flat",
+            icon: "bell",
+          },
+        ];
+      }
 
     case "mechanic":
       return [

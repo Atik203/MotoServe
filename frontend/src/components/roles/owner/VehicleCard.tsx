@@ -23,8 +23,8 @@ export function VehicleCard({ vehicle, selected, onSelect }: VehicleCardProps) {
           : "border border-border hover:border-primary/50",
       )}
     >
-      <div className="relative h-24 w-full bg-secondary">
-        <VehicleImage src={vehicle.image} alt={`${vehicle.make} ${vehicle.model}`} fill className="object-cover" />
+      <div className="relative h-28 w-full overflow-hidden bg-[#eef1f4] p-2">
+        <VehicleImage src={vehicle.image} alt={`${vehicle.make} ${vehicle.model}`} fill className="object-contain" />
         {selected && (
           <span className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-primary px-2 py-1 text-xs font-medium text-white">
             <Check className="size-2.5" />

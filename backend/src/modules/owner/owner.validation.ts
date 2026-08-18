@@ -12,6 +12,7 @@ export const createVehicleSchema = z.object({
     color: z.string().optional(),
     transmission: z.string().optional(),
     image: z.string().optional(),
+    photos: z.array(z.string()).optional(),
   }),
 });
 
@@ -27,13 +28,14 @@ export const updateVehicleSchema = z.object({
     color: z.string().optional(),
     transmission: z.string().optional(),
     image: z.string().optional(),
+    photos: z.array(z.string()).optional(),
   }),
 });
 
 export const bookAppointmentSchema = z.object({
   body: z.object({
     vehicleId: z.string(),
-    serviceIds: z.array(z.string()).min(1),
+    serviceIds: z.array(z.string()),
     date: z.string(),
     time: z.string(),
     notes: z.string().optional(),

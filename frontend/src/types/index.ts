@@ -36,6 +36,7 @@ export interface Vehicle {
   vin?: string | null;
   color?: string | null;
   transmission?: string | null;
+  photos?: string[] | null;
 }
 
 export interface Customer {

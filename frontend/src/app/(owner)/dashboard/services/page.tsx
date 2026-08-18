@@ -15,27 +15,47 @@ export default function ServiceTrackingListPage() {
   const jobs = useAppSelector((s) => s.jobs.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
 
+  const vehicleFilter =
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("vehicle") : null;
+
   useEffect(() => {
     if (jobs.length === 0) dispatch(fetchJobs());
     if (vehicles.length === 0) dispatch(fetchVehicles());
   }, [dispatch, jobs.length, vehicles.length]);
 
-  const activeJobs = jobs.filter((j) => !["completed", "ready"].includes(j.status));
-  const pastJobs = jobs.filter((j) => ["completed", "ready"].includes(j.status));
+  const filteredJobs = vehicleFilter ? jobs.filter((j) => j.vehicleId === vehicleFilter) : jobs;
+  const activeJobs = filteredJobs.filter((j) => !["completed", "ready"].includes(j.status));
+  const pastJobs = filteredJobs.filter((j) => ["completed", "ready"].includes(j.status));
+  const filterVehicle = vehicleFilter ? vehicles.find((v) => v.id === vehicleFilter) ?? null : null;
 
   return (
     <div className="bg-background min-h-screen p-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <div>
-          <p className="text-sm text-muted-foreground">Dashboard › Service Tracking</p>
-          <h1 className="text-4xl font-bold tracking-[-0.72px] text-foreground">Service Tracking</h1>
-          <p className="pt-1 text-sm text-[#424753]">Follow the live progress of your vehicles in the workshop.</p>
+          <p className="text-sm text-muted-foreground">
+            Dashboard › Service Tracking{filterVehicle ? ` › ${filterVehicle.year} ${filterVehicle.make} ${filterVehicle.model}` : ""}
+          </p>
+          <div className="flex items-center justify-between">
+            <h1 className="text-4xl font-bold tracking-[-0.72px] text-foreground">Service Tracking</h1>
+            {filterVehicle && (
+              <Link href="/dashboard/services" className="text-xs font-semibold text-primary hover:underline">
+                Clear filter — show all vehicles
+              </Link>
+            )}
+          </div>
+          <p className="pt-1 text-sm text-[#424753]">
+            {filterVehicle
+              ? `Service records for ${filterVehicle.regNo}.`
+              : "Follow the live progress of your vehicles in the workshop."}
+          </p>
         </div>
 
-        {jobs.length === 0 ? (
+        {filteredJobs.length === 0 ? (
           <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-border bg-white py-20">
             <Gauge className="size-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">No service records found.</p>
+            <p className="text-sm text-muted-foreground">
+              {filterVehicle ? "No service records for this vehicle yet." : "No service records found."}
+            </p>
             <Link href="/dashboard/appointments/book" className="rounded bg-primary px-4 py-2 text-xs font-semibold text-white">
               Book a Service
             </Link>

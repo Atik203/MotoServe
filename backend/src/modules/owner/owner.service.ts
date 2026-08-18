@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
 import { ApiError } from "../../middleware/error.js";
+import type { Prisma } from "../../generated/prisma/client.js";
 import type {
   BookAppointmentBody,
   CreateVehicleBody,
@@ -9,8 +10,14 @@ import type {
 } from "./owner.types.js";
 
 export function createVehicle(ownerId: string, body: CreateVehicleBody) {
+  const { photos, fuelType, ...rest } = body;
   return prisma.vehicle.create({
-    data: { ...body, ownerId, fuelType: body.fuelType.toUpperCase() as never },
+    data: {
+      ...rest,
+      photos: photos ? (photos as unknown as Prisma.InputJsonValue) : undefined,
+      ownerId,
+      fuelType: fuelType.toUpperCase() as never,
+    },
   });
 }
 
@@ -18,11 +25,12 @@ export async function updateVehicle(ownerId: string, id: string, body: Partial<C
   const vehicle = await prisma.vehicle.findUnique({ where: { id } });
   if (!vehicle) throw new ApiError(404, "Vehicle not found");
   if (vehicle.ownerId !== ownerId) throw new ApiError(403, "Insufficient permissions");
-  const { fuelType, ...rest } = body;
+  const { fuelType, photos, ...rest } = body;
   return prisma.vehicle.update({
     where: { id },
     data: {
       ...rest,
+      ...(photos ? { photos: photos as unknown as Prisma.InputJsonValue } : {}),
       ...(fuelType ? { fuelType: fuelType.toUpperCase() as never } : {}),
     },
   });
@@ -32,7 +40,11 @@ export async function deleteVehicle(ownerId: string, id: string) {
   const vehicle = await prisma.vehicle.findUnique({ where: { id } });
   if (!vehicle) throw new ApiError(404, "Vehicle not found");
   if (vehicle.ownerId !== ownerId) throw new ApiError(403, "Insufficient permissions");
-  await prisma.vehicle.delete({ where: { id } });
+  await prisma.$transaction([
+    prisma.appointment.deleteMany({ where: { vehicleId: id } }),
+    prisma.jobCard.deleteMany({ where: { vehicleId: id } }),
+    prisma.vehicle.delete({ where: { id } }),
+  ]);
 }
 
 export function bookAppointment(ownerId: string, body: BookAppointmentBody) {
