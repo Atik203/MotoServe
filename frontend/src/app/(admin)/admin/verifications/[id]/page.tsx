@@ -34,7 +34,7 @@ export default function VerificationDetailPage() {
   const params = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const customers = useAppSelector((s) => s.customers.items);
-  const [doc, setDoc] = useState<{ key: string; url: string } | null>(null);
+  const [docs, setDocs] = useState<{ key: string; url: string; kind: "nid" | "license"; name: string }[]>([]);
 
   useEffect(() => {
     if (customers.length === 0) dispatch(fetchCustomers());
@@ -43,21 +43,24 @@ export default function VerificationDetailPage() {
   const customer = customers.find((c) => c.id === params.id) ?? null;
 
   useEffect(() => {
-    const key = customer?.documentUrl;
-    if (!key) return;
+    const keys = [...(customer?.documents ?? []).map((d) => ({ key: d.key, kind: d.kind, name: d.name }))];
+    if (customer?.documentUrl) keys.push({ key: customer.documentUrl, kind: "nid", name: "document" });
+    if (keys.length === 0) return;
     let cancelled = false;
-    dispatch(fetchDocumentUrl(key))
-      .unwrap()
-      .then((res) => {
-        if (!cancelled) setDoc({ key, url: res.url });
-      })
-      .catch(() => {
-        if (!cancelled) toast.error("Could not load the verification document");
-      });
+    Promise.all(
+      keys.map(({ key, kind, name }) =>
+        dispatch(fetchDocumentUrl(key))
+          .unwrap()
+          .then((res) => ({ key, kind, name, url: res.url }))
+          .catch(() => null),
+      ),
+    ).then((resolved) => {
+      if (!cancelled) setDocs(resolved.filter((r): r is { key: string; url: string; kind: "nid" | "license"; name: string } => r !== null));
+    });
     return () => {
       cancelled = true;
     };
-  }, [dispatch, customer?.documentUrl]);
+  }, [dispatch, customer?.documentUrl, customer?.documents]);
 
   const decide = async (decision: "approved" | "rejected") => {
     if (!customer) return;
@@ -73,8 +76,6 @@ export default function VerificationDetailPage() {
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">Loading owner details...</div>;
   }
 
-  const docSrc = doc && doc.key === customer.documentUrl ? doc.url : null;
-  const isPdf = docSrc?.toLowerCase().includes(".pdf");
   const fullAddress = [customer.street, customer.city, customer.district, customer.zip, customer.country].filter(Boolean).join(", ");
 
   return (
@@ -139,15 +140,6 @@ export default function VerificationDetailPage() {
                 <InfoRow icon={UserIcon} label="Gender" value={customer.gender ?? ""} />
                 <InfoRow icon={Briefcase} label="Occupation" value={customer.occupation ?? ""} />
                 <InfoRow icon={MapPin} label="Address" value={fullAddress} />
-                {customer.emergencyName && (
-                  <>
-                    <InfoRow icon={Phone} label="Emergency Contact" value={customer.emergencyName} />
-                    <InfoRow icon={Phone} label="Emergency Phone" value={customer.emergencyPhone ?? ""} />
-                    {customer.emergencyRelation && (
-                      <InfoRow icon={UserIcon} label="Relationship" value={customer.emergencyRelation} />
-                    )}
-                  </>
-                )}
               </div>
             </section>
           </div>
@@ -157,33 +149,46 @@ export default function VerificationDetailPage() {
               <div className="flex items-center justify-between border-b border-border pb-[9px]">
                 <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
                   <FileText className="size-4 text-primary" />
-                  Verification Document
+                  Verification Documents
                 </h2>
-                {docSrc && (
-                  <a
-                    href={docSrc}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 rounded border border-[#e2e8f0] px-3 py-1.5 text-xs font-semibold text-[#424753] transition-colors hover:border-primary/50"
-                  >
-                    <Download className="size-3.5" />
-                    Open / Download
-                  </a>
-                )}
               </div>
 
-              {docSrc ? (
-                <div className="pt-4">
-                  {isPdf ? (
-                    <iframe src={docSrc} title="Identity document" className="h-[480px] w-full rounded border border-border bg-[#f8f9fa]" />
-                  ) : (
-                    <img src={docSrc} alt="Identity document" className="max-h-[480px] w-full rounded border border-border bg-[#f8f9fa] object-contain" />
-                  )}
+              {docs.length > 0 ? (
+                <div className="grid grid-cols-2 gap-4 pt-4">
+                  {docs.map((doc) => {
+                    const isPdf = doc.name.toLowerCase().endsWith(".pdf") || doc.url.toLowerCase().includes(".pdf");
+                    return (
+                      <div key={doc.key} className="flex flex-col gap-2 overflow-hidden rounded border border-border bg-[#f8f9fa]">
+                        <div className="flex items-center justify-between px-3 pt-3">
+                          <span className="text-[11px] font-semibold tracking-[0.55px] text-muted-foreground uppercase">
+                            {doc.kind === "nid" ? "National ID (NID)" : "Driving License"}
+                          </span>
+                          <a
+                            href={doc.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-1.5 rounded border border-[#e2e8f0] bg-white px-2.5 py-1 text-xs font-semibold text-[#424753] transition-colors hover:border-primary/50"
+                          >
+                            <Download className="size-3.5" />
+                            Open
+                          </a>
+                        </div>
+                        <div className="px-3">
+                          {isPdf ? (
+                            <iframe src={doc.url} title={doc.name} className="h-52 w-full rounded border border-border bg-white" />
+                          ) : (
+                            <img src={doc.url} alt={doc.name} className="h-52 w-full rounded border border-border bg-white object-contain" />
+                          )}
+                        </div>
+                        <p className="truncate px-3 pb-3 text-xs text-muted-foreground">{doc.name}</p>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-3 rounded border border-dashed border-[#c2c6d5] bg-[#f8f9fa] py-16">
                   <FileText className="size-8 text-muted-foreground" />
-                  <p className="text-sm font-medium text-muted-foreground">No verification document uploaded</p>
+                  <p className="text-sm font-medium text-muted-foreground">No verification documents uploaded</p>
                   <p className="text-xs text-muted-foreground">The owner can attach their NID or license during registration.</p>
                 </div>
               )}

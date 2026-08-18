@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { LayoutDashboard, LogOut, User } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logoutUser } from "@/store/slices/authSlice";
+import { useFileUrl } from "@/hooks/useFileUrl";
 import { roleHome } from "@/lib/nav";
 
 export function userInitials(name: string) {
@@ -21,6 +22,7 @@ export function UserMenu() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
+  const avatar = useFileUrl(user?.avatar);
 
   if (!user) return null;
 
@@ -40,8 +42,8 @@ export function UserMenu() {
         aria-label="Account menu"
         className="relative flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-border bg-primary-soft text-xs font-bold text-primary transition-shadow hover:shadow-[0_0_0_3px_rgba(0,82,204,0.15)]"
       >
-        {user.avatar ? (
-          <Image src={user.avatar} alt={user.name} fill className="object-cover" />
+        {avatar ? (
+          <Image src={avatar} alt={user.name} fill className="object-cover" />
         ) : (
           userInitials(user.name)
         )}

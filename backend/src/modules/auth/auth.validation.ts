@@ -24,9 +24,10 @@ export const registerSchema = z.object({
     zip: z.string().optional(),
     country: z.string().optional(),
     documentUrl: z.string().optional(),
-    emergencyName: z.string().optional(),
-    emergencyRelation: z.string().optional(),
-    emergencyPhone: z.string().optional(),
+    documents: z
+      .array(z.object({ name: z.string().min(1), key: z.string().min(1), kind: z.enum(["nid", "license"]) }))
+      .optional(),
+    avatar: z.string().optional(),
   }),
 });
 

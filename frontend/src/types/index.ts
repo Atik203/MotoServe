@@ -57,9 +57,7 @@ export interface Customer {
   gender?: string | null;
   avatar?: string | null;
   documentUrl?: string | null;
-  emergencyName?: string | null;
-  emergencyRelation?: string | null;
-  emergencyPhone?: string | null;
+  documents?: { name: string; key: string; kind: "nid" | "license" }[] | null;
   joinedAt?: string;
 }
 

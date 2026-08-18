@@ -51,9 +51,8 @@ export const registerUser = createAsyncThunk(
     zip?: string;
     country?: string;
     documentUrl?: string;
-    emergencyName?: string;
-    emergencyRelation?: string;
-    emergencyPhone?: string;
+    documents?: { name: string; key: string; kind: "nid" | "license" }[];
+    avatar?: string;
   }) => {
     return await api.post<{ id: string; name: string; email: string; role: string; status: string }>(
       "/auth/register",

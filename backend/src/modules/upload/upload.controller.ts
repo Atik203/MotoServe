@@ -1,14 +1,14 @@
+import { randomUUID } from "node:crypto";
 import type { Request, Response } from "express";
-import { ApiError } from "../../middleware/error.js";
 import { presignDocumentUpload, presignImageUpload, presignRead } from "./upload.service.js";
 
 export async function presignUploadController(req: Request, res: Response): Promise<void> {
-  if (!req.user) throw new ApiError(401, "Authentication required");
   const { fileName, fileType, purpose } = req.body.body as { fileName: string; fileType: string; purpose: "document" | "image" };
+  const folderId = req.user?.userId ?? `anon-${randomUUID()}`;
   const result =
     purpose === "document"
-      ? await presignDocumentUpload(req.user.userId, fileName, fileType)
-      : await presignImageUpload(req.user.userId, fileName, fileType);
+      ? await presignDocumentUpload(folderId, fileName, fileType)
+      : await presignImageUpload(folderId, fileName, fileType);
   res.json(result);
 }
 

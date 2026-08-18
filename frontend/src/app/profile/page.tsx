@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Mail, Phone, ShieldCheck, User } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { updateProfile } from "@/store/slices/authSlice";
+import { useFileUrl } from "@/hooks/useFileUrl";
 import { userInitials } from "@/components/layout/UserMenu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ export default function ProfilePage() {
   const [name, setName] = useState(user?.name ?? "");
   const [phone, setPhone] = useState(user?.phone ?? "");
   const [saving, setSaving] = useState(false);
+  const avatar = useFileUrl(user?.avatar);
 
   if (!user) return null;
 
@@ -48,8 +50,8 @@ export default function ProfilePage() {
 
         <div className="flex items-center gap-6 rounded-lg border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
           <span className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-primary-soft text-2xl font-bold text-primary">
-            {user.avatar ? (
-              <Image src={user.avatar} alt={user.name} fill className="object-cover" />
+            {avatar ? (
+              <Image src={avatar} alt={user.name} fill className="object-cover" />
             ) : (
               userInitials(user.name)
             )}

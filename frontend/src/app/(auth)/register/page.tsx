@@ -6,13 +6,13 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Briefcase,
-  Camera,
   CalendarDays,
+  Camera,
   ChevronDown,
   Eye,
   EyeOff,
+  FileText,
   Hash,
-  HeartHandshake,
   Home,
   IdCard,
   KeyRound,
@@ -20,7 +20,6 @@ import {
   Mail,
   MapPin,
   Phone,
-  User,
   Wrench,
 } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
@@ -47,9 +46,6 @@ interface FormState {
   district: string;
   zip: string;
   country: string;
-  emergencyName: string;
-  emergencyRelation: string;
-  emergencyPhone: string;
 }
 
 const initialForm: FormState = {
@@ -68,9 +64,6 @@ const initialForm: FormState = {
   district: "",
   zip: "",
   country: "",
-  emergencyName: "",
-  emergencyRelation: "",
-  emergencyPhone: "",
 };
 
 function Field({
@@ -103,26 +96,64 @@ function Field({
   );
 }
 
+function DocItem({
+  doc,
+  onRemove,
+}: {
+  doc: { name: string; preview: string; key: string; kind: "nid" | "license" };
+  onRemove: (key: string) => void;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-md border border-[#c2c6d5] bg-[#f8f9fa] px-4 py-3">
+      {doc.name.toLowerCase().endsWith(".pdf") ? (
+        <span className="flex size-10 shrink-0 items-center justify-center rounded bg-[rgba(0,82,204,0.1)]">
+          <FileText className="size-5 text-primary" />
+        </span>
+      ) : (
+        <img src={doc.preview} alt={doc.name} className="size-10 shrink-0 rounded object-cover" />
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-foreground">{doc.name}</p>
+        <p className="text-xs text-muted-foreground">{doc.kind === "nid" ? "NID document" : "License document"}</p>
+      </div>
+      <button
+        type="button"
+        onClick={() => onRemove(doc.key)}
+        className="rounded border border-border px-3 py-1.5 text-xs font-semibold text-[#ba1a1a]"
+      >
+        Remove
+      </button>
+    </div>
+  );
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [document, setDocument] = useState<{ name: string; key: string; preview: string } | null>(null);
+  const [photo, setPhoto] = useState<{ name: string; key: string; preview: string } | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [docs, setDocs] = useState<{ name: string; key: string; kind: "nid" | "license"; preview: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState<FormState>(initialForm);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const nidInputRef = useRef<HTMLInputElement>(null);
+  const licenseInputRef = useRef<HTMLInputElement>(null);
 
   const set = (key: keyof FormState) => (v: string) => setForm((f) => ({ ...f, [key]: v }));
   const setEvent = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const parseDate = (value: string): string | null => {
-    const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value.trim());
-    if (!match) return null;
-    const [mm, dd, yyyy] = [Number(match[1]), Number(match[2]), Number(match[3])];
-    if (mm < 1 || mm > 12 || dd < 1 || dd > 31 || yyyy < 1900 || yyyy > new Date().getFullYear()) return null;
-    return `${yyyy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
+  const uploadFile = async (file: File, purpose: "document" | "image"): Promise<string> => {
+    const res = await dispatch(uploadDocument({ fileName: file.name, fileType: file.type, purpose })).unwrap();
+    const put = await fetch(res.uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+    if (!put.ok) throw new Error("Upload to storage failed");
+    return res.key;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -139,11 +170,6 @@ export default function RegisterPage() {
       toast.error("Passwords do not match");
       return;
     }
-    const dateOfBirth = form.dateOfBirth.trim() ? parseDate(form.dateOfBirth) : undefined;
-    if (form.dateOfBirth.trim() && !dateOfBirth) {
-      toast.error("Date of birth must be in mm/dd/yyyy format");
-      return;
-    }
     setSubmitting(true);
     try {
       await dispatch(
@@ -152,7 +178,7 @@ export default function RegisterPage() {
           email: form.email.trim(),
           phone: form.phone.trim(),
           password: form.password,
-          dateOfBirth: dateOfBirth ?? undefined,
+          dateOfBirth: form.dateOfBirth.trim() || undefined,
           gender: form.gender.trim() || undefined,
           nid: form.nid.trim(),
           drivingLicense: form.drivingLicense.trim(),
@@ -162,10 +188,8 @@ export default function RegisterPage() {
           district: form.district.trim(),
           zip: form.zip.trim() || undefined,
           country: form.country.trim() || undefined,
-          documentUrl: document?.key ?? undefined,
-          emergencyName: form.emergencyName.trim() || undefined,
-          emergencyRelation: form.emergencyRelation.trim() || undefined,
-          emergencyPhone: form.emergencyPhone.trim() || undefined,
+          documents: docs.map(({ name, key, kind }) => ({ name, key, kind })),
+          avatar: photo?.key ?? undefined,
         }),
       ).unwrap();
       toast.success("Account created — verification pending. You can log in once approved.");
@@ -176,36 +200,68 @@ export default function RegisterPage() {
     }
   };
 
-  const handleDocumentPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    if (!["image/png", "image/jpeg", "application/pdf"].includes(file.type)) {
-      toast.error("Only JPG, PNG or PDF documents are allowed");
+    if (!["image/png", "image/jpeg"].includes(file.type)) {
+      toast.error("Only JPG or PNG photos are allowed");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Document exceeds 5MB limit");
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Photo exceeds 2MB limit");
       return;
     }
-    setUploading(true);
+    setPhotoUploading(true);
     try {
-      const res = await dispatch(
-        uploadDocument({ fileName: file.name, fileType: file.type, purpose: "document" }),
-      ).unwrap();
-      const put = await fetch(res.uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      if (!put.ok) throw new Error("Upload to storage failed");
-      setDocument({ name: file.name, key: res.key, preview: URL.createObjectURL(file) });
-      toast.success("Document uploaded for verification");
+      const key = await uploadFile(file, "image");
+      setPhoto({ name: file.name, key, preview: URL.createObjectURL(file) });
+      toast.success("Profile photo uploaded");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  const handleDocsPick = (kind: "nid" | "license") => async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (files.length === 0) return;
+    const accepted = files.filter((file) => {
+      if (!["image/png", "image/jpeg", "application/pdf"].includes(file.type)) {
+        toast.error(`"${file.name}" — only JPG, PNG or PDF documents are allowed`);
+        return false;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`"${file.name}" exceeds 5MB limit`);
+        return false;
+      }
+      return true;
+    });
+    if (accepted.length === 0) return;
+    setUploading(true);
+    try {
+      for (const file of accepted) {
+        try {
+          const key = await uploadFile(file, "document");
+          setDocs((d) => [...d, { name: file.name, key, kind, preview: URL.createObjectURL(file) }]);
+        } catch (err) {
+          toast.error(`"${file.name}" — ${err instanceof Error ? err.message : "Upload failed"}`);
+        }
+      }
+      toast.success("Documents uploaded for verification");
+    } finally {
       setUploading(false);
     }
+  };
+
+  const removeDoc = (key: string) => {
+    setDocs((d) => {
+      const doc = d.find((x) => x.key === key);
+      if (doc) URL.revokeObjectURL(doc.preview);
+      return d.filter((x) => x.key !== key);
+    });
   };
 
   return (
@@ -238,13 +294,46 @@ export default function RegisterPage() {
               </h2>
 
               <div className="flex items-center gap-4 pb-2">
-                <span className="flex size-16 items-center justify-center rounded-xl border border-dashed border-[#727784] bg-[#edeeef]">
-                  <Camera className="size-[22px] text-muted-foreground" />
-                </span>
-                <div>
-                  <p className="text-base text-foreground">Profile Photo (Optional)</p>
-                  <p className="text-base text-muted-foreground">JPG, PNG up to 2MB</p>
-                </div>
+                <input ref={photoInputRef} type="file" accept="image/png,image/jpeg" className="hidden" onChange={handlePhotoPick} />
+                <button
+                  type="button"
+                  disabled={photoUploading}
+                  onClick={() => photoInputRef.current?.click()}
+                  className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-dashed border-[#727784] bg-[#edeeef] transition-colors hover:border-primary/50 disabled:opacity-60"
+                >
+                  {photo ? (
+                    <img src={photo.preview} alt="Profile photo" className="size-full object-cover" />
+                  ) : (
+                    <Camera className="size-[22px] text-muted-foreground" />
+                  )}
+                </button>
+                {photo ? (
+                  <>
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-medium text-foreground">{photo.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {photoUploading ? "Uploading..." : "Profile photo uploaded — click the tile to change"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        URL.revokeObjectURL(photo.preview);
+                        setPhoto(null);
+                      }}
+                      className="rounded border border-border px-3 py-1.5 text-xs font-semibold text-[#ba1a1a]"
+                    >
+                      Remove
+                    </button>
+                  </>
+                ) : (
+                  <div>
+                    <p className="text-base text-foreground">Profile Photo (Optional)</p>
+                    <p className="text-sm text-muted-foreground">
+                      {photoUploading ? "Uploading..." : "JPG, PNG up to 2MB — click the tile to upload"}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-x-[16px] gap-y-[16px]">
@@ -265,7 +354,7 @@ export default function RegisterPage() {
                 <div className="flex flex-col gap-1">
                   <Label className="text-base text-foreground">Phone Number {required}</Label>
                   <div className="relative">
-                    <Input type="tel" value={form.phone} onChange={setEvent("phone")} placeholder="+1 (555) 000-0000" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" />
+                    <Input type="tel" value={form.phone} onChange={setEvent("phone")} placeholder="+880 1XXX-XXXXXX" className="h-[46px] rounded-md border-[#c2c6d5] bg-[#f8f9fa] pl-[41px] text-base" />
                     <Phone className="absolute top-1/2 left-[15px] size-[15px] -translate-y-1/2 text-muted-foreground" />
                   </div>
                 </div>
@@ -286,7 +375,7 @@ export default function RegisterPage() {
                     <KeyRound className="absolute top-1/2 left-[15px] size-[16.7px] -translate-y-1/2 text-muted-foreground" />
                   </div>
                 </div>
-                <Field label="Date of Birth" placeholder="mm/dd/yyyy" icon={<CalendarDays className="size-[15px]" />} value={form.dateOfBirth} onChange={set("dateOfBirth")} />
+                <Field label="Date of Birth" type="date" placeholder="Select date" icon={<CalendarDays className="size-[15px]" />} value={form.dateOfBirth} onChange={set("dateOfBirth")} />
                 <div className="flex flex-col gap-1">
                   <Label className="text-base text-foreground">Gender</Label>
                   <div className="relative">
@@ -330,84 +419,57 @@ export default function RegisterPage() {
 
             <section className="flex flex-col gap-6">
               <h2 className="flex items-center gap-2 border-b border-border pb-[9px] text-base text-foreground">
-                <Phone className="size-[15px]" />
-                Emergency Contact
-              </h2>
-              <div className="grid grid-cols-2 gap-x-[16px] gap-y-[16px]">
-                <Field label="Contact Name" required placeholder="Jane Doe" icon={<User className="size-[15px]" />} value={form.emergencyName} onChange={set("emergencyName")} />
-                <Field label="Relationship" placeholder="e.g. Spouse, Parent" icon={<HeartHandshake className="size-[15px]" />} value={form.emergencyRelation} onChange={set("emergencyRelation")} />
-                <Field label="Contact Phone" required type="tel" placeholder="+1 (555) 000-0000" icon={<Phone className="size-[15px]" />} value={form.emergencyPhone} onChange={set("emergencyPhone")} />
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-6">
-              <h2 className="flex items-center gap-2 border-b border-border pb-[9px] text-base text-foreground">
                 <IdCard className="size-4" />
                 Identity Verification
               </h2>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,application/pdf"
-                className="hidden"
-                onChange={handleDocumentPick}
-              />
-              {document ? (
-                <div className="flex items-center gap-4 rounded-md border border-[#c2c6d5] bg-[#f8f9fa] px-4 py-3">
-                  {document.name.toLowerCase().endsWith(".pdf") ? (
-                    <span className="flex size-10 items-center justify-center rounded bg-[rgba(0,82,204,0.1)]">
-                      <IdCard className="size-5 text-primary" />
-                    </span>
-                  ) : (
-                    <img src={document.preview} alt="Identity document" className="size-10 rounded object-cover" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">{document.name}</p>
-                    <p className="text-xs text-muted-foreground">Uploaded — visible to the admin for verification</p>
+              {(
+                [
+                  { kind: "nid", title: "National ID (NID) Documents", ref: nidInputRef },
+                  { kind: "license", title: "Driving License Documents", ref: licenseInputRef },
+                ] as const
+              ).map(({ kind, title, ref }) => {
+                const list = docs.filter((d) => d.kind === kind);
+                return (
+                  <div key={kind} className="flex flex-col gap-3">
+                    <Label className="text-base text-foreground">{title}</Label>
+                    <input ref={ref} type="file" accept="image/png,image/jpeg,application/pdf" multiple className="hidden" onChange={handleDocsPick(kind)} />
+                    {list.length > 0 && (
+                      <div className="flex flex-col gap-3">
+                        {list.map((doc) => (
+                          <DocItem key={doc.key} doc={doc} onRemove={removeDoc} />
+                        ))}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      disabled={uploading}
+                      onClick={() => ref.current?.click()}
+                      className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-[#c2c6d5] bg-[#f8f9fa] py-8 transition-colors hover:border-primary/50 disabled:opacity-60"
+                    >
+                      <Camera className="size-6 text-muted-foreground" />
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {uploading ? "Uploading..." : "Click to upload multiple files"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">JPG, PNG or PDF up to 5MB each — you can upload more than one</p>
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      URL.revokeObjectURL(document.preview);
-                      setDocument(null);
-                    }}
-                    className="rounded border border-border px-3 py-1.5 text-xs font-semibold text-[#ba1a1a]"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  disabled={uploading}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-[#c2c6d5] bg-[#f8f9fa] py-12 transition-colors hover:border-primary/50"
-                >
-                  <Camera className="size-6 text-muted-foreground" />
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {uploading ? "Uploading..." : "Click to upload or drag and drop"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">NID / License document — JPG, PNG or PDF up to 5MB</p>
-                </button>
-              )}
+                );
+              })}
             </section>
 
-            <div className="flex items-center justify-between border-t border-border pt-6">
-              <p className="text-sm text-muted-foreground">
-                By creating an account you agree to our <span className="font-medium text-primary">Privacy Policy</span>.
-              </p>
-              <div className="flex items-center gap-3">
-                <span className="cursor-pointer text-sm font-medium text-primary hover:underline" onClick={() => router.push("/login")}>
-                  Back to Login
-                </span>
-                <Button type="button" variant="outline" onClick={() => setForm(initialForm)}>
-                  Reset
-                </Button>
-                <Button type="submit" disabled={submitting} className="rounded-md">
-                  {submitting ? "Creating account..." : "Create Account"}
-                </Button>
+              <div className="flex items-center justify-between border-t border-border pt-6">
+                <p className="text-sm text-muted-foreground">
+                  By creating an account you agree to our <span className="font-medium text-primary">Privacy Policy</span>.
+                </p>
+                <div className="flex items-center gap-3">
+                  <span className="cursor-pointer text-sm font-medium text-primary hover:underline" onClick={() => router.push("/login")}>
+                    Back to Login
+                  </span>
+                  <Button type="submit" disabled={submitting} className="rounded-md">
+                    {submitting ? "Creating account..." : "Create Account"}
+                  </Button>
+                </div>
               </div>
-            </div>
           </form>
         </div>
       </div>

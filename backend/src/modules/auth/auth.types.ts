@@ -6,6 +6,12 @@ export interface AuthUserDto {
   avatar: string | null;
 }
 
+export interface RegisterDocument {
+  name: string;
+  key: string;
+  kind: "nid" | "license";
+}
+
 export interface RegisterBody {
   name: string;
   email: string;
@@ -22,9 +28,8 @@ export interface RegisterBody {
   zip?: string;
   country?: string;
   documentUrl?: string;
-  emergencyName?: string;
-  emergencyRelation?: string;
-  emergencyPhone?: string;
+  documents?: RegisterDocument[];
+  avatar?: string;
 }
 
 export interface ForgotPasswordBody {

@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma.js";
 import { ApiError } from "../../middleware/error.js";
 import { findUserByEmail } from "../shared/shared.service.js";
+import type { Prisma } from "../../generated/prisma/client.js";
 import type { RegisterBody } from "./auth.types.js";
 
 export async function verifyCredentials(email: string, password: string) {
@@ -18,10 +19,11 @@ export async function verifyCredentials(email: string, password: string) {
 export async function createOwner(data: RegisterBody) {
   const existing = await findUserByEmail(data.email);
   if (existing) throw new ApiError(409, "Email already registered");
-  const { password, ...profile } = data;
+  const { password, documents, ...profile } = data;
   return prisma.user.create({
     data: {
       ...profile,
+      documents: documents as unknown as Prisma.InputJsonValue,
       passwordHash: await bcrypt.hash(password, 10),
       role: "OWNER",
       status: "PENDING",

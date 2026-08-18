@@ -105,9 +105,7 @@ model User {
   dateOfBirth    DateTime?
   gender         String?
   documentUrl    String?
-  emergencyName      String?
-  emergencyRelation  String?
-  emergencyPhone     String?
+  documents      Json?
   verifiedAt     DateTime?
   joinedAt       DateTime  @default(now())
 

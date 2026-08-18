@@ -13,6 +13,7 @@ import {
   setActiveThread,
 } from "@/store/slices/chatSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
+import { useFileUrl } from "@/hooks/useFileUrl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,15 +55,16 @@ const getInitials = (name: string) =>
     .toUpperCase();
 
 function Avatar({ name, src }: { name: string; src?: string | null }) {
+  const url = useFileUrl(src);
   const fallback = (
     <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-bold text-primary">
       {getInitials(name)}
     </span>
   );
-  if (!src) return fallback;
+  if (!url) return fallback;
   return (
     <span className="relative block size-11 shrink-0 overflow-hidden rounded-full">
-      <Image src={src} alt={name} fill className="object-cover" />
+      <Image src={url} alt={name} fill className="object-cover" />
     </span>
   );
 }
