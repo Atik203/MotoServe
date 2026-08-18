@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAuth, requireRole } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import {
+  getAppointment,
   getAppointments,
   getCustomers,
   getEmployees,
@@ -31,6 +32,7 @@ router.get("/services", getServices);
 router.get("/vehicles", requireAuth, getVehicles);
 
 router.get("/appointments", requireAuth, getAppointments);
+router.get("/appointments/:id", requireAuth, getAppointment);
 router.patch("/appointments/:id", requireAuth, requireRole("owner", "advisor", "admin"), validate(updateAppointmentSchema), updateAppointmentController);
 
 router.get("/jobs", requireAuth, getJobs);

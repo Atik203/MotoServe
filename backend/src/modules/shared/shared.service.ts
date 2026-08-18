@@ -32,6 +32,7 @@ export function listJobs(role?: string, userId?: string) {
       customer: { select: { id: true, name: true } },
       advisor: { select: { id: true, name: true } },
       mechanic: { select: { id: true, name: true } },
+      appointment: true,
       progress: { orderBy: { id: "asc" } },
       notes: { orderBy: { id: "desc" } },
       partsUsed: true,
@@ -48,6 +49,7 @@ export function findJobById(id: string) {
       customer: { select: { id: true, name: true } },
       advisor: { select: { id: true, name: true } },
       mechanic: { select: { id: true, name: true } },
+      appointment: true,
       progress: { orderBy: { id: "asc" } },
       notes: { orderBy: { id: "desc" } },
       partsUsed: true,
@@ -60,8 +62,21 @@ export function findJobById(id: string) {
 export function listAppointments(ownerId?: string) {
   return prisma.appointment.findMany({
     where: { ownerId: ownerId ?? undefined },
-    include: { vehicle: true, owner: { select: { id: true, name: true } } },
+    include: {
+      vehicle: true,
+      owner: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+    },
     orderBy: [{ date: "desc" }, { time: "desc" }],
+  });
+}
+
+export function findAppointmentById(id: string) {
+  return prisma.appointment.findUnique({
+    where: { id },
+    include: {
+      vehicle: true,
+      owner: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+    },
   });
 }
 

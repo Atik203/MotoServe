@@ -130,6 +130,9 @@ export interface JobCard {
   customer?: { id: string; name: string };
   advisor?: { id: string; name: string };
   mechanic?: { id: string; name: string };
+  appointmentId?: string | null;
+  appointment?: Appointment | null;
+  expectedDate?: string | null;
   mileage?: number | null;
   fuelLevel?: number | null;
   keysReceived?: boolean | null;
@@ -155,8 +158,22 @@ export interface Appointment {
   status: "pending" | "confirmed" | "cancelled";
   notes: string;
   createdAt: string;
-  owner?: { id: string; name: string };
+  owner?: { id: string; name: string; phone?: string; email?: string; avatar?: string };
   vehicle?: Vehicle;
+  jobCard?: JobCard | null;
+}
+
+export interface CreateCustomerInput {
+  name: string;
+  phone: string;
+  email?: string;
+  nid?: string;
+  occupation?: string;
+  street?: string;
+  city?: string;
+  district?: string;
+  zip?: string;
+  country?: string;
 }
 
 export interface EstimateItem {

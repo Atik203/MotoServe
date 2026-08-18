@@ -23,7 +23,7 @@ import {
 
 export const router = Router();
 
-router.post("/vehicles", requireAuth, requireRole("owner"), validate(createVehicleSchema), createVehicleController);
+router.post("/vehicles", requireAuth, requireRole("owner", "advisor", "admin"), validate(createVehicleSchema), createVehicleController);
 router.patch("/vehicles/:id", requireAuth, requireRole("owner"), validate(updateVehicleSchema), updateVehicleController);
 router.delete("/vehicles/:id", requireAuth, requireRole("owner"), deleteVehicleController);
 

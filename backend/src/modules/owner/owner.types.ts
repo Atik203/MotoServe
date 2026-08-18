@@ -10,6 +10,7 @@ export interface CreateVehicleBody {
   transmission?: string;
   image?: string;
   photos?: string[];
+  ownerId?: string;
 }
 
 export interface BookAppointmentBody {

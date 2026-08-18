@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import {
+  findAppointmentById,
   listAppointments,
   listCustomers,
   listEmployees,
@@ -19,6 +20,7 @@ import {
 } from "./shared.service.js";
 import { safeEmit } from "../../lib/socket.js";
 import { prisma } from "../../lib/prisma.js";
+import { ApiError } from "../../middleware/error.js";
 
 export async function getHealth(_req: Request, res: Response): Promise<void> {
   try {
@@ -72,6 +74,15 @@ export async function getAppointments(req: Request, res: Response): Promise<void
   const ownerId = req.user?.role === "OWNER" ? req.user.userId : undefined;
   const appointments = await listAppointments(ownerId);
   res.json(appointments.map((a) => ({ ...a, status: a.status.toLowerCase() })));
+}
+
+export async function getAppointment(req: Request, res: Response): Promise<void> {
+  const appointment = await findAppointmentById(req.params.id as string);
+  if (!appointment) throw new ApiError(404, "Appointment not found");
+  if (req.user?.role === "OWNER" && appointment.ownerId !== req.user.userId) {
+    throw new ApiError(403, "Insufficient permissions");
+  }
+  res.json({ ...appointment, status: appointment.status.toLowerCase() });
 }
 
 export async function updateAppointmentController(req: Request, res: Response): Promise<void> {

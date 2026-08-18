@@ -11,6 +11,24 @@ export const createJobCardSchema = z.object({
     fuelLevel: z.number().int().min(0).max(100).optional(),
     keysReceived: z.boolean().optional(),
     accessories: z.string().optional(),
+    appointmentId: z.string().optional(),
+    serviceIds: z.array(z.string()).optional(),
+    expectedDate: z.string().optional(),
+  }),
+});
+
+export const createCustomerSchema = z.object({
+  body: z.object({
+    name: z.string().min(1),
+    phone: z.string().min(1),
+    email: z.string().email().optional().or(z.string().max(0).optional()),
+    nid: z.string().optional(),
+    occupation: z.string().optional(),
+    street: z.string().optional(),
+    city: z.string().optional(),
+    district: z.string().optional(),
+    zip: z.string().optional(),
+    country: z.string().optional(),
   }),
 });
 

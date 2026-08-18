@@ -10,7 +10,7 @@ import type {
 } from "./owner.types.js";
 
 export function createVehicle(ownerId: string, body: CreateVehicleBody) {
-  const { photos, fuelType, ...rest } = body;
+  const { photos, fuelType, ownerId: _ownerId, ...rest } = body;
   return prisma.vehicle.create({
     data: {
       ...rest,

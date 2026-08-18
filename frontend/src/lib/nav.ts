@@ -64,6 +64,7 @@ export const roleNav: Record<Role, RoleNavConfig> = {
     brand: "MotoServe",
     items: [
       { label: "Dashboard", href: "/advisor", icon: LayoutDashboard },
+      { label: "Appointments", href: "/advisor/appointments", icon: CalendarDays },
       { label: "Receive Vehicle", href: "/advisor/receive", icon: Truck },
       { label: "Create Job Card", href: "/advisor/job-cards/new", icon: FileText },
       { label: "Assign Mechanic", href: "/advisor/job-cards/assign", icon: Users },
@@ -95,6 +96,7 @@ export const roleNav: Record<Role, RoleNavConfig> = {
       { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
       { label: "Services", href: "/admin/services", icon: Wrench },
       { label: "Employees", href: "/admin/employees", icon: Users },
+      { label: "Appointments", href: "/admin/appointments", icon: CalendarDays },
       { label: "Reports", href: "/admin/reports", icon: FileText },
       { label: "Customer Management", href: "/admin/verifications", icon: ShieldCheck },
     ],

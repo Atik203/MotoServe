@@ -48,6 +48,9 @@ export const createJobCard = createAsyncThunk(
     fuelLevel?: number;
     keysReceived?: boolean;
     accessories?: string;
+    appointmentId?: string;
+    serviceIds?: string[];
+    expectedDate?: string;
   }) => {
     return await api.post<{ id: string }>("/jobs", data);
   },

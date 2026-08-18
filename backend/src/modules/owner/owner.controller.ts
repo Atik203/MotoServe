@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { ApiError } from "../../middleware/error.js";
 import { safeEmit } from "../../lib/socket.js";
 import { logAudit } from "../../lib/audit.js";
+import { prisma } from "../../lib/prisma.js";
 import {
   bookAppointment,
   createChatThread,
@@ -23,7 +24,15 @@ import type {
 
 export async function createVehicleController(req: Request, res: Response): Promise<void> {
   if (!req.user) throw new ApiError(401, "Authentication required");
-  const vehicle = await createVehicle(req.user.userId, req.body.body as CreateVehicleBody);
+  const body = req.body.body as CreateVehicleBody;
+  let ownerId = req.user.userId;
+  if (req.user.role !== "OWNER") {
+    if (!body.ownerId) throw new ApiError(400, "ownerId is required when staff register a vehicle for a customer");
+    const owner = await prisma.user.findUnique({ where: { id: body.ownerId } });
+    if (!owner || owner.role !== "OWNER") throw new ApiError(400, "Owner account not found");
+    ownerId = body.ownerId;
+  }
+  const vehicle = await createVehicle(ownerId, body);
   res.status(201).json({ ...vehicle, fuelType: vehicle.fuelType.toLowerCase() });
 }
 

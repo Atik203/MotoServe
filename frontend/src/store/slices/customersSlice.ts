@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { api } from "@/lib/api";
-import type { Customer } from "@/types";
+import type { CreateCustomerInput, Customer } from "@/types";
 
 interface CustomersState {
   items: Customer[];
@@ -16,6 +16,10 @@ const initialState: CustomersState = {
 
 export const fetchCustomers = createAsyncThunk("customers/fetchAll", async () => {
   return await api.get<Customer[]>("/customers");
+});
+
+export const createCustomer = createAsyncThunk("customers/create", async (data: CreateCustomerInput) => {
+  return await api.post<Customer>("/customers", data);
 });
 
 export const verifyCustomer = createAsyncThunk(
@@ -48,6 +52,9 @@ const customersSlice = createSlice({
       .addCase(fetchCustomers.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error.message ?? "Failed to load customers";
+      })
+      .addCase(createCustomer.fulfilled, (state, action) => {
+        state.items.unshift(action.payload);
       })
       .addCase(verifyCustomer.fulfilled, (state, action) => {
         const customer = state.items.find((c) => c.id === action.payload.id);

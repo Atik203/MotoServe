@@ -8,6 +8,22 @@ export interface CreateJobCardBody {
   fuelLevel?: number;
   keysReceived?: boolean;
   accessories?: string;
+  appointmentId?: string;
+  serviceIds?: string[];
+  expectedDate?: string;
+}
+
+export interface CreateCustomerBody {
+  name: string;
+  phone: string;
+  email?: string;
+  nid?: string;
+  occupation?: string;
+  street?: string;
+  city?: string;
+  district?: string;
+  zip?: string;
+  country?: string;
 }
 
 export interface AssignMechanicBody {

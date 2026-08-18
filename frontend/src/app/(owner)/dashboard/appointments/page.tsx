@@ -76,13 +76,13 @@ export default function MyAppointmentsPage() {
               return (
                 <div
                   key={appt.id}
-                  className="flex items-center justify-between gap-6 rounded-lg border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
+                  className="flex items-center justify-between gap-6 rounded-lg border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-colors hover:border-primary/40"
                 >
-                  <div className="flex items-center gap-5">
+                  <Link href={`/dashboard/appointments/${appt.id}`} className="flex min-w-0 flex-1 items-center gap-5">
                     <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary-soft">
                       <CalendarPlus className="size-5 text-primary" />
                     </span>
-                    <div className="flex flex-col gap-1">
+                    <div className="flex min-w-0 flex-col gap-1">
                       <p className="text-base font-semibold text-foreground">
                         {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : "Vehicle"} — {appt.time}
                       </p>
@@ -94,8 +94,11 @@ export default function MyAppointmentsPage() {
                           </span>
                         ))}
                       </div>
+                      {appt.notes && (
+                        <p className="truncate text-xs text-muted-foreground">Note: {appt.notes}</p>
+                      )}
                     </div>
-                  </div>
+                  </Link>
                   <div className="flex shrink-0 items-center gap-3">
                     <span className={cn("rounded-full px-3 py-1 text-xs font-semibold capitalize", statusStyle[appt.status])}>
                       {appt.status}

@@ -172,6 +172,8 @@ model Appointment {
   status     AppointmentStatus @default(PENDING)
   notes      String
 
+  jobCard JobCard?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -193,6 +195,9 @@ model JobCard {
   services       Json?
   photos         Json?
   totalEstimate  Float?
+  appointmentId  String?   @unique
+  appointment    Appointment? @relation(fields: [appointmentId], references: [id])
+  expectedDate   String?
   mileage        Int?
   fuelLevel      Int?
   keysReceived   Boolean?

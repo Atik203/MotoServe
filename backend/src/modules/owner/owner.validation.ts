@@ -13,6 +13,7 @@ export const createVehicleSchema = z.object({
     transmission: z.string().optional(),
     image: z.string().optional(),
     photos: z.array(z.string()).optional(),
+    ownerId: z.string().optional(),
   }),
 });
 
