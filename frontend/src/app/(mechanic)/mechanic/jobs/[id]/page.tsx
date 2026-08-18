@@ -21,6 +21,7 @@ export default function RepairProgressPage() {
   const dispatch = useAppDispatch();
 
   const jobs = useAppSelector((s) => s.jobs.items);
+  const user = useAppSelector((s) => s.auth.user);
   const job = jobs.find((j) => j.id === jobId);
 
   useEffect(() => {
@@ -78,7 +79,7 @@ export default function RepairProgressPage() {
 
         <div className="grid grid-cols-12 items-start gap-6">
           <div className="col-span-8 flex flex-col gap-6">
-            <MechanicNotes jobId={job.id} notes={job.notes} author="Alex Turner" />
+            <MechanicNotes jobId={job.id} notes={job.notes} author={user?.name ?? "Mechanic"} />
             <PartsUsedTable jobId={job.id} parts={job.partsUsed} />
           </div>
 
@@ -91,9 +92,6 @@ export default function RepairProgressPage() {
                 className="rounded border-[#c2c6d5] bg-secondary text-foreground hover:bg-muted"
               >
                 Download Job Card
-              </Button>
-              <Button variant="outline" className="rounded border-[#c2c6d5] bg-secondary text-foreground hover:bg-muted">
-                Save Progress
               </Button>
               <Button
                 onClick={advanceStage}

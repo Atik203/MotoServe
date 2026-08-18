@@ -45,7 +45,7 @@ export default function PartsInventoryPage() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Mechanic › Parts Request</p>
+            <p className="text-sm text-muted-foreground">Mechanic › Parts Inventory</p>
             <h1 className="text-4xl font-bold tracking-[-0.72px] text-foreground">Parts Inventory</h1>
             <p className="pt-1 text-sm text-[#424753]">
               {parts.length} parts • {lowStock} low or out of stock

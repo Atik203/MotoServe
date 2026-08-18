@@ -46,7 +46,7 @@ const STEP_ORDER = ["received", "inspecting", "repairing", "testing", "ready", "
 
 const quickActions: { label: string; icon: LucideIcon; href?: string }[] = [
   { label: "Repair Progress", icon: Wrench, href: "/mechanic/jobs" },
-  { label: "Parts Request", icon: Package, href: "/mechanic/parts" },
+  { label: "Parts Inventory", icon: Package, href: "/mechanic/parts" },
   { label: "History", icon: ClipboardList, href: "/mechanic/history" },
 ];
 
@@ -54,6 +54,7 @@ export default function MechanicDashboardPage() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
   const jobs = useAppSelector((s) => s.jobs.items);
+  const jobsStatus = useAppSelector((s) => s.jobs.status);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const parts = useAppSelector((s) => s.parts.items);
 
@@ -82,7 +83,7 @@ export default function MechanicDashboardPage() {
     [assignedJobs, mechanicId],
   );
 
-  if (kpiCards.length === 0 || jobs.length === 0 || vehicles.length === 0) {
+  if (jobsStatus === "loading" || jobsStatus === "idle" || (jobs.length > 0 && vehicles.length === 0)) {
     return (
       <div className="bg-background min-h-screen p-8">
         <p className="text-muted-foreground">Loading dashboard...</p>
@@ -90,12 +91,43 @@ export default function MechanicDashboardPage() {
     );
   }
 
-  const activeIdx = activeJob ? STEP_ORDER.indexOf(activeJob.status) : -1;
-  const firstName = user?.name.split(" ")[0] ?? "Alex";
+  const firstName = user?.name.split(" ")[0] ?? "Mechanic";
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
   const todayLabel = new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
   const activeCount = jobs.filter((j) => !["completed", "ready"].includes(j.status)).length;
+  const todayParts = assignedJobs.flatMap((j) => j.partsUsed);
+
+  if (assignedJobs.length === 0) {
+    return (
+      <div className="bg-background min-h-screen p-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+          <div className="flex items-end justify-between">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl font-semibold text-foreground">{greeting}, {firstName}</h1>
+              <p className="text-sm text-[#64748b]">{user?.station ?? "Main Bay"} • {activeCount} active jobs</p>
+            </div>
+            <div className="flex items-center gap-1">
+              <Calendar className="size-3 text-[#64748b]" />
+              <span className="text-xs font-semibold tracking-[0.24px] text-[#64748b]">{todayLabel}</span>
+            </div>
+          </div>
+          <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-border bg-white py-24 text-center">
+            <Wrench className="size-8 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">No assigned jobs yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">Jobs assigned to you by the service advisor will appear here.</p>
+            </div>
+            <Button asChild className="mt-2 rounded-lg text-sm font-semibold">
+              <Link href="/mechanic/jobs">View All Jobs</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const activeIdx = activeJob ? STEP_ORDER.indexOf(activeJob.status) : -1;
 
   return (
     <div className="bg-background min-h-screen p-8">
@@ -213,7 +245,14 @@ export default function MechanicDashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {activeJob.partsUsed.map((part) => {
+                  {todayParts.length === 0 && (
+                    <TableRow className="border-border">
+                      <TableCell className="py-6 text-sm text-muted-foreground" colSpan={4}>
+                        No parts have been flagged for your current jobs.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {todayParts.map((part) => {
                     const catalog = parts.find((p) => p.name.toLowerCase() === part.name.toLowerCase());
                     const stock = catalog?.stock ?? 0;
                     const pill =
