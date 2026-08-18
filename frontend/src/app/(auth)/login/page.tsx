@@ -20,6 +20,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { roleHome } from "@/lib/nav";
+import { ApiError } from "@/lib/api";
+
+const LOGIN_ERRORS: Record<number, string> = {
+  0: "Unable to reach the server. Please check your connection and try again.",
+  401: "Invalid email or password. Please check your credentials.",
+  403: "Your account is not approved yet. You will be able to log in once an admin approves it.",
+};
 
 const DEMO_ROLES: {
   role: string;
@@ -62,6 +69,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const toLoginError = (err: unknown): string => {
+    if (err instanceof ApiError) {
+      if (err.message && err.message !== `Request failed (${err.status})`) return err.message;
+      return LOGIN_ERRORS[err.status] ?? "Login failed. Please try again.";
+    }
+    if (err instanceof Error && err.message) return err.message;
+    return "Login failed. Please try again.";
+  };
+
   const doLogin = async (emailValue: string, passwordValue: string) => {
     setSubmitting(true);
     try {
@@ -73,7 +89,7 @@ export default function LoginPage() {
       const next = new URLSearchParams(window.location.search).get("next");
       router.push(next && next.startsWith(home) ? next : home);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Login failed");
+      toast.error(toLoginError(err));
       setSubmitting(false);
     }
   };
