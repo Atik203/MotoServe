@@ -24,7 +24,6 @@ import type { Employee } from "@/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -45,9 +44,9 @@ import {
 
 const EXISTING_AVATARS = new Set(["/images/avatars/alex-turner.png"]);
 
-type Tab = "all" | "mechanic" | "advisor";
+const PAGE_SIZE = 8;
 
-const PAGE_LABELS: (number | "…")[] = [1, 2, 3, "…", 15];
+type Tab = "all" | "mechanic" | "advisor";
 
 function EmployeeAvatar({ employee }: { employee: Employee }) {
   const [broken, setBroken] = useState(!EXISTING_AVATARS.has(employee.avatar));
@@ -97,26 +96,35 @@ export default function EmployeeManagementPage() {
     return matchTab && matchSearch;
   });
 
+  const activeCount = employees.filter((e) => e.status === "active").length;
+  const activeMechanics = mechanics.filter((e) => e.status === "active").length;
+  const activeAdvisors = advisors.filter((e) => e.status === "active").length;
+
   const kpis = [
     {
       label: "Total Employees",
       value: employees.length,
       icon: Users,
-      delta: { text: "+4 this month", className: "bg-[rgba(76,175,80,0.1)] text-[#4caf50]" },
+      delta: { text: `${activeCount} active`, className: "bg-[rgba(76,175,80,0.1)] text-[#4caf50]" },
     },
     {
       label: "Active Mechanics",
-      value: mechanics.length,
+      value: activeMechanics,
       icon: Wrench,
-      sub: "92% Utilization",
+      sub: `${mechanics.length - activeMechanics} inactive`,
     },
     {
       label: "Service Advisors",
-      value: advisors.length,
+      value: activeAdvisors,
       icon: Headset,
-      delta: { text: "2 on leave", className: "bg-[rgba(255,193,7,0.1)] text-[#ffc107]" },
+      sub: `${advisors.length - activeAdvisors} inactive`,
     },
   ];
+
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const safePage = Math.min(Math.max(1, page), pageCount);
+  const pageRows = rows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const pageNumbers = Array.from({ length: pageCount }, (_, i) => i + 1);
 
   const roleLabel = (e: Employee) => (e.role === "advisor" ? "Service Advisor" : "Mechanic");
 
@@ -274,9 +282,6 @@ export default function EmployeeManagementPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-background hover:bg-background">
-                <TableHead className="w-12 px-4 py-4">
-                  <Checkbox aria-label="Select all" />
-                </TableHead>
                 <TableHead className="px-4 py-4 text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Employee</TableHead>
                 <TableHead className="px-4 py-4 text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Contact</TableHead>
                 <TableHead className="px-4 py-4 text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Role</TableHead>
@@ -285,11 +290,8 @@ export default function EmployeeManagementPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((employee) => (
+              {pageRows.map((employee) => (
                 <TableRow key={employee.id} className="border-t border-border transition-colors hover:bg-background">
-                  <TableCell className="px-4 py-[17px]">
-                    <Checkbox aria-label={`Select ${employee.name}`} />
-                  </TableCell>
                   <TableCell className="px-4 py-[17px]">
                     <div className="flex items-center gap-4">
                       <EmployeeAvatar employee={employee} />
@@ -350,47 +352,51 @@ export default function EmployeeManagementPage() {
                   </TableCell>
                 </TableRow>
               ))}
+              {pageRows.length === 0 && (
+                <TableRow className="border-t border-border">
+                  <TableCell colSpan={5} className="py-16 text-center text-sm text-muted-foreground">
+                    No employees match your filters.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
 
           <div className="flex items-center justify-between border-t border-[#e2e8f0] px-4 pt-[17px] pb-4">
             <p className="text-[11px] font-medium text-[#424753]">
-              Showing 1 to {rows.length} of {employees.length} entries
+              Showing {rows.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1} to{" "}
+              {Math.min(safePage * PAGE_SIZE, rows.length)} of {rows.length} entries
             </p>
             <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="rounded border border-[#e2e8f0] bg-white p-[9px] text-[#424753] transition-colors hover:text-foreground"
+                disabled={safePage <= 1}
+                className="rounded border border-[#e2e8f0] bg-white p-[9px] text-[#424753] transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Previous page"
               >
                 <ChevronLeft className="size-3" />
               </button>
-              {PAGE_LABELS.map((label, i) =>
-                label === "…" ? (
-                  <span key={`${label}-${i}`} className="px-1 text-base text-[#424753]">
-                    …
-                  </span>
-                ) : (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => setPage(label)}
-                    className={cn(
-                      "flex size-8 items-center justify-center rounded text-xs font-semibold tracking-[0.24px]",
-                      page === label
-                        ? "bg-primary text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
-                        : "border border-[#e2e8f0] bg-white text-[#191c1d] transition-colors hover:text-primary",
-                    )}
-                  >
-                    {label}
-                  </button>
-                ),
-              )}
+              {pageNumbers.map((label) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setPage(label)}
+                  className={cn(
+                    "flex size-8 items-center justify-center rounded text-xs font-semibold tracking-[0.24px]",
+                    safePage === label
+                      ? "bg-primary text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
+                      : "border border-[#e2e8f0] bg-white text-[#191c1d] transition-colors hover:text-primary",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
               <button
                 type="button"
-                onClick={() => setPage((p) => Math.min(15, p + 1))}
-                className="rounded border border-[#e2e8f0] bg-white p-[9px] text-[#424753] transition-colors hover:text-foreground"
+                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                disabled={safePage >= pageCount}
+                className="rounded border border-[#e2e8f0] bg-white p-[9px] text-[#424753] transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Next page"
               >
                 <ChevronRight className="size-3" />

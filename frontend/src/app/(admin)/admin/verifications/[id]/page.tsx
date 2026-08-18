@@ -10,10 +10,11 @@ import { fetchCustomers, fetchDocumentUrl, verifyCustomer } from "@/store/slices
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const statusPill: Record<"pending" | "approved" | "rejected", string> = {
+const statusPill: Record<string, string> = {
   pending: "bg-[rgba(255,193,7,0.1)] border-[rgba(255,193,7,0.2)] text-warning",
   approved: "bg-[rgba(76,175,80,0.1)] border-[rgba(76,175,80,0.2)] text-[#4caf50]",
   rejected: "bg-[rgba(244,67,54,0.1)] border-[rgba(244,67,54,0.2)] text-[#f44336]",
+  inactive: "bg-secondary border-[#e2e8f0] text-muted-foreground",
 };
 
 function InfoRow({ icon: Icon, label, value }: { icon: typeof Mail; label: string; value: string }) {

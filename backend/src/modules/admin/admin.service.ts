@@ -92,6 +92,13 @@ export async function getReportData(): Promise<ReportDto> {
       return map;
     }, {});
 
+  const activeByMechanic = jobCards
+    .filter((j) => j.mechanicId && j.status !== "COMPLETED" && j.status !== "READY")
+    .reduce<Record<string, number>>((map, j) => {
+      map[j.mechanicId!] = (map[j.mechanicId!] ?? 0) + 1;
+      return map;
+    }, {});
+
   const serviceCount = new Map<string, number>();
   for (const job of jobCards) {
     const services = (job.services ?? []) as { name?: string }[];
@@ -121,7 +128,7 @@ export async function getReportData(): Promise<ReportDto> {
     workloadByMechanic: mechanics.map((m) => ({
       mechanic: m.name,
       role: m.specialization ?? "Technician",
-      active: m._count.jobCardsAssigned,
+      active: activeByMechanic[m.id] ?? 0,
       completed: completedByMechanic[m.id] ?? 0,
     })),
     serviceDistribution,

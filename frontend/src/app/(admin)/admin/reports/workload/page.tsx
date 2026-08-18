@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { Clock, Download, Gauge, Users, Wrench } from "lucide-react";
+import { Download, Gauge, Info, Users, Wrench } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchReports } from "@/store/slices/reportsSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/table";
 
 const MAX_ACTIVE_JOBS = 5;
-const PEAK_HOURS = ["10:00 AM - 2:00 PM"];
 
 export default function WorkloadReportsPage() {
   const dispatch = useAppDispatch();
@@ -41,7 +40,10 @@ export default function WorkloadReportsPage() {
   const totalMechanics = employees.filter((e) => e.role === "mechanic").length;
   const activeNow = mechanics.reduce((sum, m) => sum + m.active, 0);
   const utilizations = mechanics.map((m) => Math.round((m.active / MAX_ACTIVE_JOBS) * 100));
-  const avgUtilization = Math.round(utilizations.reduce((sum, v) => sum + v, 0) / utilizations.length);
+  const avgUtilization =
+    utilizations.length > 0
+      ? Math.round(utilizations.reduce((sum, v) => sum + v, 0) / utilizations.length)
+      : 0;
 
   const summary = [
     { label: "Total Mechanics", value: totalMechanics, icon: Users },
@@ -153,21 +155,12 @@ export default function WorkloadReportsPage() {
                 </div>
               ))}
             </div>
-            <div className="flex flex-col gap-2.5 border-t border-[#e2e8f0] pt-4">
-              <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="size-[15px]" />
-                Peak Hours
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {PEAK_HOURS.map((hours) => (
-                  <span
-                    key={hours}
-                    className="rounded-xl bg-[rgba(255,193,7,0.1)] px-2.5 py-1 text-[11px] font-medium text-warning"
-                  >
-                    {hours}
-                  </span>
-                ))}
-              </div>
+            <div className="flex items-start gap-2.5 border-t border-[#e2e8f0] pt-4 text-sm text-muted-foreground">
+              <Info className="size-[15px] shrink-0 mt-0.5" />
+              <p>
+                Utilization shows active jobs against a per-mechanic capacity of {MAX_ACTIVE_JOBS}. Average hours per
+                job are shown when available.
+              </p>
             </div>
           </section>
         </div>

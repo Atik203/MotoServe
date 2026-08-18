@@ -7,7 +7,6 @@ import { KeyRound, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { useAppDispatch } from "@/store/hooks";
 import { createEmployee } from "@/store/slices/employeesSlice";
 
@@ -16,8 +15,6 @@ const inputBase =
   "h-10 rounded border-[#e2e8f0] bg-white text-sm text-[#111827] placeholder:text-[#9ca3af]";
 const selectBase =
   "h-10 w-full rounded border border-[#e2e8f0] bg-white px-[13px] text-sm text-[#424753] outline-none focus:border-primary";
-const textareaBase =
-  "h-24 w-full resize-none rounded border border-[#e2e8f0] bg-white px-[13px] py-[11px] text-sm text-[#111827] outline-none placeholder:text-[#9ca3af] focus:border-primary";
 
 interface MechanicForm {
   fullName: string;
@@ -26,8 +23,6 @@ interface MechanicForm {
   password: string;
   station: string;
   specialization: string;
-  skills: string;
-  certifications: string;
 }
 
 export default function AddMechanicPage() {
@@ -40,10 +35,7 @@ export default function AddMechanicPage() {
     password: "",
     station: "",
     specialization: "",
-    skills: "",
-    certifications: "",
   });
-  const [active, setActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   const set = (key: keyof MechanicForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -150,31 +142,6 @@ export default function AddMechanicPage() {
                 <option>General</option>
               </select>
             </label>
-            <label className="col-span-2 flex flex-col gap-1.5">
-              <span className={fieldLabel}>Skills</span>
-              <textarea
-                value={form.skills}
-                onChange={set("skills")}
-                placeholder="e.g. OEM diagnostic tools, hydraulic systems..."
-                className={textareaBase}
-              />
-            </label>
-            <label className="col-span-2 flex flex-col gap-1.5">
-              <span className={fieldLabel}>Certifications</span>
-              <textarea
-                value={form.certifications}
-                onChange={set("certifications")}
-                placeholder="e.g. ASE Master Technician, EV Certification..."
-                className={textareaBase}
-              />
-            </label>
-            <div className="col-span-2 flex items-center justify-between rounded border border-[#e5e7eb] bg-background px-[17px] py-3.5">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-semibold text-[#111827]">Active</span>
-                <span className="text-xs text-[#6b7280]">Employee can log in and receive work assignments</span>
-              </div>
-              <Switch checked={active} onCheckedChange={setActive} />
-            </div>
           </div>
         </div>
 

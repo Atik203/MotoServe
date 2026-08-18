@@ -7,7 +7,6 @@ import { KeyRound, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { useAppDispatch } from "@/store/hooks";
 import { createEmployee } from "@/store/slices/employeesSlice";
 
@@ -24,7 +23,6 @@ interface AdvisorForm {
   password: string;
   desk: string;
   team: string;
-  languages: string;
 }
 
 export default function AddServiceAdvisorPage() {
@@ -37,9 +35,7 @@ export default function AddServiceAdvisorPage() {
     password: "",
     desk: "",
     team: "",
-    languages: "",
   });
-  const [active, setActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   const set = (key: keyof AdvisorForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
@@ -143,17 +139,6 @@ export default function AddServiceAdvisorPage() {
                 <option>Retail</option>
               </select>
             </label>
-            <label className="col-span-2 flex flex-col gap-1.5">
-              <span className={fieldLabel}>Languages</span>
-              <Input value={form.languages} onChange={set("languages")} placeholder="e.g. English, Arabic" className={inputBase} />
-            </label>
-            <div className="col-span-2 flex items-center justify-between rounded border border-[#e5e7eb] bg-background px-[17px] py-3.5">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-semibold text-[#111827]">Active</span>
-                <span className="text-xs text-[#6b7280]">Employee can log in and manage appointments</span>
-              </div>
-              <Switch checked={active} onCheckedChange={setActive} />
-            </div>
           </div>
         </div>
 

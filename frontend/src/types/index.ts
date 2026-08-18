@@ -46,7 +46,7 @@ export interface Customer {
   email: string;
   nid: string;
   drivingLicense: string;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "inactive";
   verifiedAt: string | null;
   occupation?: string | null;
   street?: string | null;

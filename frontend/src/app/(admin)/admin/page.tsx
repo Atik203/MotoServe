@@ -5,12 +5,16 @@ import Link from "next/link";
 import { toast } from "sonner";
 import {
   Calendar,
+  DollarSign,
   Download,
   FileBarChart,
+  FileCheck,
   PackagePlus,
   Settings2,
   UserPlus,
   Users,
+  Wallet,
+  Wrench,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchReports } from "@/store/slices/reportsSlice";
@@ -21,12 +25,12 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const kpiIcon: Record<string, typeof Users> = {
-  "dollar-sign": FileBarChart,
-  wallet: Calendar,
-  car: Users,
-  "file-check": PackagePlus,
+  "dollar-sign": DollarSign,
+  wallet: Wallet,
+  car: FileBarChart,
+  "file-check": FileCheck,
   users: Users,
-  wrench: Settings2,
+  wrench: Wrench,
 };
 
 export default function AdminDashboardPage() {
@@ -47,12 +51,13 @@ export default function AdminDashboardPage() {
   );
 
   const chart = useMemo(() => {
-    if (!reports) return null;
+    if (!reports || reports.revenueByMonth.length === 0) return null;
     const data = reports.revenueByMonth;
     const max = Math.max(...data.map((d) => d.revenue));
+    if (max <= 0) return null;
     const w = 560;
     const h = 180;
-    const step = w / (data.length - 1);
+    const step = data.length > 1 ? w / (data.length - 1) : w;
     const points = data.map((d, i) => `${(i * step).toFixed(1)},${(h - (d.revenue / max) * (h - 20) - 10).toFixed(1)}`);
     return { data, points: points.join(" "), max };
   }, [reports]);
@@ -67,17 +72,19 @@ export default function AdminDashboardPage() {
 
   const donut = reports.serviceDistribution;
   const donutColors = ["#0052cc", "#ffc107", "#3b82f6", "#10b981"];
-  const totalPct = donut.reduce((s, d) => s + d.pct, 0);
-  const gradientStops = donut.reduce<{ acc: number; stops: string[] }>(
-    (state, d, i) => {
-      const from = (state.acc / totalPct) * 100;
-      const acc = state.acc + d.pct;
-      const to = (acc / totalPct) * 100;
-      state.stops.push(`${donutColors[i]} ${from}% ${to}%`);
-      return { acc, stops: state.stops };
-    },
-    { acc: 0, stops: [] },
-  ).stops.join(", ");
+  const totalPct = donut.reduce((s, d) => s + d.pct, 0) || 1;
+  const gradientStops = donut.length > 0 && totalPct > 0
+    ? donut.reduce<{ acc: number; stops: string[] }>(
+        (state, d, i) => {
+          const from = (state.acc / totalPct) * 100;
+          const acc = state.acc + d.pct;
+          const to = (acc / totalPct) * 100;
+          state.stops.push(`${donutColors[i]} ${from}% ${to}%`);
+          return { acc, stops: state.stops };
+        },
+        { acc: 0, stops: [] },
+      ).stops.join(", ")
+    : `${donutColors[0]} 0% 100%`;
 
   return (
     <div className="bg-background min-h-screen p-8">
@@ -88,10 +95,10 @@ export default function AdminDashboardPage() {
             <p className="text-sm text-muted-foreground">Real-time metrics and operational status.</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1 rounded border-[#e2e8f0] px-[17px] py-[9px] text-xs font-semibold tracking-[0.24px]">
-              <Calendar className="size-[13.5px]" />
-              This Year
-            </Button>
+            <span className="flex h-9 items-center gap-1.5 rounded border border-[#e2e8f0] bg-white px-[17px] text-xs font-semibold tracking-[0.24px] text-[#424753]">
+              <Calendar className="size-[13.5px] text-muted-foreground" />
+              {new Date().getFullYear()}
+            </span>
             <Button
               size="sm"
               onClick={() => {

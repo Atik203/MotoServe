@@ -218,9 +218,9 @@ export function buildKpis(role: KpiRole, ctx: KpiContext): KpiCard[] {
         },
         {
           id: "kpi-202",
-          label: "Today's Income",
+          label: "Monthly Revenue",
           value: fmtMoneyCompact(latestRevenue),
-          delta: "Latest month",
+          delta: `${reports?.revenueByMonth.length ?? 0} months tracked`,
           trend: "up",
           icon: "wallet",
         },

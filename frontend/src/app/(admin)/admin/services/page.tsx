@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreVertical, Pencil, Plus, Trash2, Wrench } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchServices, deleteService, updateService } from "@/store/slices/servicesSlice";
 import { cn } from "@/lib/utils";
@@ -41,18 +41,55 @@ const formatCategory = (category: Service["category"]) =>
 export default function ServicesPage() {
   const dispatch = useAppDispatch();
   const services = useAppSelector((s) => s.services.items);
+  const servicesStatus = useAppSelector((s) => s.services.status);
   const [page, setPage] = useState(0);
   const [editing, setEditing] = useState<Service | null>(null);
+  const [deleting, setDeleting] = useState<Service | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deletingBusy, setDeletingBusy] = useState(false);
 
   useEffect(() => {
     if (services.length === 0) dispatch(fetchServices());
   }, [dispatch, services.length]);
 
-  if (services.length === 0) {
+  if (servicesStatus === "loading" || servicesStatus === "idle") {
     return (
       <div className="bg-background min-h-screen p-8">
         <p className="text-muted-foreground">Loading services...</p>
+      </div>
+    );
+  }
+
+  if (services.length === 0) {
+    return (
+      <div className="bg-background min-h-screen p-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+          <div className="flex items-end justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-[-0.24px] text-foreground">Service Management</h1>
+              <p className="text-sm text-muted-foreground">Manage your workshop&apos;s service offerings and pricing.</p>
+            </div>
+            <Button asChild size="sm" className="gap-1 rounded px-4 py-[9px] text-xs font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <Link href="/admin/services/new">
+                <Plus className="size-[13.5px]" />
+                New Service
+              </Link>
+            </Button>
+          </div>
+          <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-[#e2e8f0] bg-white py-24 text-center">
+            <Wrench className="size-8 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">No services in the catalog</p>
+              <p className="mt-1 text-sm text-muted-foreground">Add your first service so customers can book appointments.</p>
+            </div>
+            <Button asChild size="sm" className="mt-2 gap-1 rounded px-4 py-[9px] text-xs font-semibold">
+              <Link href="/admin/services/new">
+                <Plus className="size-[13.5px]" />
+                New Service
+              </Link>
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -175,14 +212,7 @@ export default function ServicesPage() {
                       <button
                         type="button"
                         aria-label={`Delete ${service.name}`}
-                        onClick={async () => {
-                          try {
-                            await dispatch(deleteService(service.id)).unwrap();
-                            toast.success("Service deleted");
-                          } catch (err) {
-                            toast.error(err instanceof Error ? err.message : "Failed to delete service");
-                          }
-                        }}
+                        onClick={() => setDeleting(service)}
                         className="rounded p-1 text-muted-foreground transition-colors hover:bg-[rgba(244,67,54,0.1)] hover:text-[#f44336]"
                       >
                         <Trash2 className="size-3.5" />
@@ -229,6 +259,43 @@ export default function ServicesPage() {
             <DialogDescription className="text-sm text-muted-foreground">Update pricing, duration, or availability.</DialogDescription>
           </DialogHeader>
           <EditServiceForm service={editing} saving={saving} onSave={handleSave} onClose={() => setEditing(null)} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
+        <DialogContent className="max-w-md rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-foreground">Delete service?</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">{deleting?.name}</span> will be removed from the catalog. This
+              action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setDeleting(null)} className="rounded-lg">
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={deletingBusy}
+              onClick={async () => {
+                if (!deleting) return;
+                setDeletingBusy(true);
+                try {
+                  await dispatch(deleteService(deleting.id)).unwrap();
+                  toast.success("Service deleted");
+                  setDeleting(null);
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : "Failed to delete service");
+                } finally {
+                  setDeletingBusy(false);
+                }
+              }}
+              className="rounded-lg bg-[#f44336] hover:bg-[#d32f2f]"
+            >
+              {deletingBusy ? "Deleting..." : "Delete Service"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

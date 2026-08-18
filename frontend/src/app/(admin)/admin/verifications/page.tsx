@@ -18,17 +18,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const statusPill: Record<"pending" | "approved" | "rejected", string> = {
+const statusPill: Record<string, string> = {
   pending: "bg-[rgba(255,193,7,0.1)] border-[rgba(255,193,7,0.2)] text-warning",
   approved: "bg-[rgba(76,175,80,0.1)] border-[rgba(76,175,80,0.2)] text-[#4caf50]",
   rejected: "bg-[rgba(244,67,54,0.1)] border-[rgba(244,67,54,0.2)] text-[#f44336]",
+  inactive: "bg-secondary border-[#e2e8f0] text-muted-foreground",
 };
 
 export default function VerificationPage() {
   const dispatch = useAppDispatch();
   const customers = useAppSelector((s) => s.customers.items);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected" | "inactive">("all");
 
   useEffect(() => {
     dispatch(fetchCustomers());
@@ -139,6 +140,7 @@ export default function VerificationPage() {
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
+              <option value="inactive">Inactive</option>
             </select>
           </div>
 

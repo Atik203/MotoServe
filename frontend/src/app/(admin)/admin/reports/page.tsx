@@ -32,12 +32,13 @@ export default function AdminReportsPage() {
   }, [dispatch, reports]);
 
   const chart = useMemo(() => {
-    if (!reports) return null;
+    if (!reports || reports.revenueByMonth.length === 0) return null;
     const data = reports.revenueByMonth;
     const max = Math.max(...data.map((d) => d.revenue));
+    if (max <= 0) return null;
     const w = 560;
     const h = 180;
-    const step = w / (data.length - 1);
+    const step = data.length > 1 ? w / (data.length - 1) : w;
     const points = data.map((d, i) => `${(i * step).toFixed(1)},${(h - (d.revenue / max) * (h - 20) - 10).toFixed(1)}`);
     return { data, points: points.join(" ") };
   }, [reports]);
@@ -53,7 +54,7 @@ export default function AdminReportsPage() {
   const maxStatusCount = Math.max(...reports.jobsByStatus.map((s) => s.count));
 
   const kpis = [
-    { label: "Total Revenue", value: `$${reports.totalRevenue.toLocaleString()}`, delta: "This year", positive: true, icon: Wallet },
+    { label: "Total Revenue", value: `$${reports.totalRevenue.toLocaleString()}`, delta: "Paid invoices only", positive: true, icon: Wallet },
     { label: "Active Jobs", value: String(reports.activeJobs), delta: "In workshop", positive: true, icon: Wrench },
     { label: "Registered Customers", value: String(reports.registeredCustomers), delta: "All time", positive: true, icon: Users },
     { label: "Active Employees", value: String(reports.activeEmployees), delta: "On staff", positive: true, icon: Star },
@@ -85,14 +86,10 @@ export default function AdminReportsPage() {
             <p className="text-sm text-muted-foreground">Financial and operational insights across the workshop.</p>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1 rounded border-[#e2e8f0] px-[17px] py-[9px] text-xs font-semibold tracking-[0.24px]"
-            >
-              <CalendarDays className="size-[13.5px]" />
-              This Year
-            </Button>
+            <span className="flex h-9 items-center gap-1.5 rounded border border-[#e2e8f0] bg-white px-[17px] text-xs font-semibold tracking-[0.24px] text-[#424753]">
+              <CalendarDays className="size-[13.5px] text-muted-foreground" />
+              {new Date().getFullYear()}
+            </span>
             <Button
               size="sm"
               onClick={exportCsv}
@@ -207,7 +204,7 @@ export default function AdminReportsPage() {
                     <div className="h-2 flex-1 overflow-hidden rounded-xl bg-[#eff6ff]">
                       <div
                         className="h-full rounded-xl bg-primary"
-                        style={{ width: `${(status.count / maxStatusCount) * 100}%` }}
+                        style={{ width: `${maxStatusCount > 0 ? (status.count / maxStatusCount) * 100 : 0}%` }}
                       />
                     </div>
                     <span className="w-5 shrink-0 text-right text-xs font-semibold text-muted-foreground">
