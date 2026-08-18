@@ -1,14 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { ArrowLeft, ClipboardList, MessageSquare, Package, Stethoscope } from "lucide-react";
+import { toast } from "sonner";
+import { ArrowLeft, ClipboardList, MessageSquare, Package, Star, Stethoscope } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchJobs } from "@/store/slices/jobsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchEstimates } from "@/store/slices/estimatesSlice";
+import { fetchRatings, rateJob } from "@/store/slices/ratingsSlice";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -18,17 +23,59 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+function Stars({
+  rating,
+  size = "h-5 w-5",
+  onSelect,
+}: {
+  rating: number;
+  size?: string;
+  onSelect?: (value: number) => void;
+}) {
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <button
+          key={i}
+          type="button"
+          disabled={!onSelect}
+          onClick={() => onSelect?.(i)}
+          className={cn(!onSelect && "cursor-default")}
+        >
+          <Star
+            className={cn(size, i <= Math.floor(rating) ? "fill-amber-400 text-amber-400" : "text-[#e1e3e4]")}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const statusMeta: Record<string, { label: string; className: string }> = {
+  received: { label: "In Progress - Received", className: "border-[rgba(255,193,7,0.2)] bg-[rgba(255,193,7,0.1)] text-[#8b5000]" },
+  inspecting: { label: "In Progress - Inspecting", className: "border-[rgba(255,193,7,0.2)] bg-[rgba(255,193,7,0.1)] text-[#8b5000]" },
+  repairing: { label: "In Progress - Repairing", className: "border-[rgba(255,193,7,0.2)] bg-[rgba(255,193,7,0.1)] text-[#8b5000]" },
+  testing: { label: "In Progress - Testing", className: "border-[rgba(255,193,7,0.2)] bg-[rgba(255,193,7,0.1)] text-[#8b5000]" },
+  ready: { label: "Ready for Pickup", className: "border-[rgba(0,74,49,0.2)] bg-[rgba(0,74,49,0.1)] text-[#004a31]" },
+  completed: { label: "Completed", className: "border-[rgba(76,175,80,0.2)] bg-[rgba(76,175,80,0.1)] text-[#4caf50]" },
+};
+
 export default function ServiceDetailsPage() {
   const params = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const jobs = useAppSelector((s) => s.jobs.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const estimates = useAppSelector((s) => s.estimates.items);
+  const ratings = useAppSelector((s) => s.ratings.items);
+  const [score, setScore] = useState(5);
+  const [review, setReview] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (jobs.length === 0) dispatch(fetchJobs());
     if (vehicles.length === 0) dispatch(fetchVehicles());
     if (estimates.length === 0) dispatch(fetchEstimates());
+    dispatch(fetchRatings());
   }, [dispatch, jobs.length, vehicles.length, estimates.length]);
 
   const job = jobs.find((j) => j.id === params.id);
@@ -40,6 +87,27 @@ export default function ServiceDetailsPage() {
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">Loading service...</div>;
   }
   const estimate = estimates.find((e) => e.jobId === job.id) ?? null;
+  const existingRating = ratings.find((r) => r.jobId === job.id) ?? null;
+
+  const submitRating = async () => {
+    setSubmitting(true);
+    try {
+      await dispatch(
+        rateJob({
+          jobId: job.id,
+          score,
+          review: review.trim(),
+          serviceName: job.services[0]?.name ?? "Vehicle Service",
+        }),
+      ).unwrap();
+      toast.success(existingRating ? "Review updated" : "Thanks for rating!");
+      await dispatch(fetchRatings());
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to submit rating");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="bg-background min-h-screen p-8">
@@ -52,12 +120,12 @@ export default function ServiceDetailsPage() {
             </Link>
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-semibold tracking-[-0.24px] text-foreground">Service Details: #{job.id}</h1>
-              <span className="flex items-center gap-1.5 rounded-xl border border-[rgba(255,193,7,0.2)] bg-[rgba(255,193,7,0.1)] px-[13px] py-[5px] text-xs font-semibold tracking-[0.24px] text-[#8b5000]">
-                <span className="size-1.5 rounded-full bg-warning" />
-                {job.status === "received" || job.status === "inspecting" || job.status === "repairing" || job.status === "testing"
-                  ? "In Progress - "
-                  : ""}
-                {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+              <span className={cn(
+                "flex items-center gap-1.5 rounded-xl border px-[13px] py-[5px] text-xs font-semibold tracking-[0.24px]",
+                statusMeta[job.status]?.className ?? "border-[rgba(255,193,7,0.2)] bg-[rgba(255,193,7,0.1)] text-[#8b5000]",
+              )}>
+                <span className="size-1.5 rounded-full bg-current" />
+                {statusMeta[job.status]?.label ?? job.status.charAt(0).toUpperCase() + job.status.slice(1)}
               </span>
             </div>
           </div>
@@ -101,9 +169,20 @@ export default function ServiceDetailsPage() {
                   </div>
                   <div className="flex-1 rounded border border-border bg-secondary p-[9px]">
                     <p className="text-[11px] font-medium tracking-[0.55px] text-[#727784] uppercase">Inspection Notes</p>
-                    <p className="pt-1 text-sm leading-5 text-foreground">
-                      {job.notes[0]?.text ?? "No inspection notes recorded yet."}
-                    </p>
+                    <div className="flex flex-col gap-2 pt-1">
+                      {(job.notes ?? []).length === 0 ? (
+                        <p className="text-sm leading-5 text-foreground">No inspection notes recorded yet.</p>
+                      ) : (
+                        (job.notes ?? []).map((note) => (
+                          <div key={note.id} className="rounded bg-white p-2.5">
+                            <p className="text-sm leading-5 text-foreground">{note.text}</p>
+                            <p className="pt-0.5 text-[11px] font-medium text-muted-foreground">
+                              {note.author} • {note.time}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
               </section>
@@ -132,7 +211,7 @@ export default function ServiceDetailsPage() {
                         </TableCell>
                       </TableRow>
                     )}
-                    {job.services.map((item) => (
+                    {(job.services ?? []).map((item) => (
                       <TableRow key={item.id} className="border-border">
                         <TableCell className="px-4 py-3 text-sm font-medium text-foreground">{item.name}</TableCell>
                         <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">1</TableCell>
@@ -194,6 +273,30 @@ export default function ServiceDetailsPage() {
                   Chat with Advisor
                 </Link>
               </section>
+
+              {job.status === "completed" && (
+                <section className="flex flex-col gap-3 rounded-xl border border-border bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+                  <h2 className="text-sm font-semibold text-foreground">
+                    {existingRating ? "Your Review" : "Rate This Service"}
+                  </h2>
+                  <div className="flex flex-col gap-2">
+                    <Stars rating={score} size="h-6 w-6" onSelect={setScore} />
+                    <Textarea
+                      value={review}
+                      onChange={(e) => setReview(e.target.value)}
+                      placeholder="Tell us about your experience..."
+                      className="min-h-20 resize-none rounded-lg border-border bg-white text-sm"
+                    />
+                    <Button
+                      onClick={() => void submitRating()}
+                      disabled={submitting}
+                      className="rounded-lg text-sm font-semibold"
+                    >
+                      {submitting ? "Submitting..." : existingRating ? "Update Review" : "Submit Rating"}
+                    </Button>
+                  </div>
+                </section>
+              )}
             </div>
           </div>
         </div>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Check, Clock, Download, FileCheck, MapPin, MessageSquare, Phone, Wrench } from "lucide-react";
+import { ArrowLeft, Check, Clock, Download, FileCheck, MessageSquare, Wrench } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchJobs } from "@/store/slices/jobsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
@@ -27,8 +27,16 @@ export default function ServiceTrackingPage() {
   }, [dispatch, jobs.length, vehicles.length, estimates.length, invoices.length]);
 
   const activeJobs = jobs.filter((j) => !["completed", "ready"].includes(j.status));
-  const job = activeJobs[0] ?? jobs[0];
+  const job = activeJobs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] ?? jobs[0];
   const vehicle = vehicles.find((v) => v.id === job?.vehicleId);
+  const estimatedCompletion = job?.expectedDate
+    ? new Date(job.expectedDate.replace(" ", "T")).toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : null;
 
   if (!job || !vehicle) {
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">No active service found.</div>;
@@ -54,7 +62,10 @@ export default function ServiceTrackingPage() {
                 {vehicle.regNo}
               </span>
             </div>
-            <p className="text-sm text-[#424753]">Job Card #{job.id} • Est. Completion: Today, 4:30 PM</p>
+            <p className="text-sm text-[#424753]">
+              Job Card #{job.id}
+              {estimatedCompletion ? ` • Est. Completion: ${estimatedCompletion}` : ""}
+            </p>
           </div>
           <span className="flex items-center gap-2 rounded-xl border border-[rgba(0,82,204,0.2)] bg-[rgba(0,82,204,0.1)] px-[13px] py-[7px] text-xs font-semibold tracking-[0.24px] text-primary">
             <span className="size-2 rounded-full bg-primary" />
@@ -210,20 +221,24 @@ export default function ServiceTrackingPage() {
                 <div className="h-[17px] py-2">
                   <div className="h-px w-full bg-[#e2e8f0]" />
                 </div>
-                <a href="tel:+15550198" className="flex items-center justify-center gap-2 rounded bg-[#edeeef] px-4 py-3 text-xs font-semibold tracking-[0.24px] text-[#424753]">
-                  <Phone className="size-[15px]" />
-                  Call Workshop
-                </a>
+                <Link
+                  href="/dashboard/services"
+                  className="flex items-center justify-center gap-2 rounded bg-[#edeeef] px-4 py-3 text-xs font-semibold tracking-[0.24px] text-[#424753]"
+                >
+                  <Wrench className="size-[15px]" />
+                  View All Services
+                </Link>
               </div>
               <div className="flex gap-3 rounded border border-border bg-[#f8f9fa] px-[17px] pt-[25px] pb-[17px]">
-                <MapPin className="size-5 shrink-0 text-primary" />
+                <MessageSquare className="size-5 shrink-0 text-primary" />
                 <div>
-                  <p className="text-xs font-semibold tracking-[0.24px] text-foreground">MotoServe Main Hub</p>
+                  <p className="text-xs font-semibold tracking-[0.24px] text-foreground">Questions about this job?</p>
                   <p className="text-[11px] font-medium text-muted-foreground">
-                    123 Industrial Pkwy
-                    <br />
-                    Open until 6:00 PM
+                    Message your advisor anytime for updates on your vehicle&apos;s progress.
                   </p>
+                  <Link href="/dashboard/chat" className="inline-flex items-center gap-1 pt-2 text-xs font-semibold text-primary hover:underline">
+                    Open Chat
+                  </Link>
                 </div>
               </div>
             </section>

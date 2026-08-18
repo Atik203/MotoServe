@@ -138,6 +138,7 @@ export interface JobCard {
   fuelLevel?: number | null;
   keysReceived?: boolean | null;
   accessories?: string | null;
+  createdAt: string;
 }
 
 export interface Part {

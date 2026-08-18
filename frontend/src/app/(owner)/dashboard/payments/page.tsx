@@ -110,7 +110,7 @@ export default function PaymentInvoicePage() {
     try {
       if (method === "card") {
         const res = await dispatch(createCheckoutSession(invoice.id)).unwrap();
-        window.location.href = res.url;
+        window.open(res.url, "_self");
         return;
       }
       await dispatch(payInvoice({ id: invoice.id, method: method as "cash" | "mobile" })).unwrap();

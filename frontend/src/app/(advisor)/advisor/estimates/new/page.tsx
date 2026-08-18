@@ -295,7 +295,6 @@ function LineItemEditor({ job, estimates }: EditorProps) {
 }
 
 export default function SendEstimatePage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const jobs = useAppSelector((s) => s.jobs.items);
