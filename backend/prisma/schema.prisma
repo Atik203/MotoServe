@@ -189,6 +189,7 @@ model JobCard {
   mechanicId     String?
   mechanic       User?      @relation("MechanicJobs", fields: [mechanicId], references: [id])
   station        String?
+  assignmentNotes String?
   priority       JobPriority @default(MEDIUM)
   status         JobStatus  @default(RECEIVED)
   issues         String
@@ -257,15 +258,16 @@ model Part {
 }
 
 model Estimate {
-  id         String          @id
-  jobCardId  String
-  jobCard    JobCard         @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
-  customerId String
-  advisorId  String
-  createdAt  DateTime        @default(now())
-  status     EstimateStatus  @default(PENDING)
-  summary    String
-  total      Float
+  id            String          @id
+  jobCardId     String
+  jobCard       JobCard         @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
+  customerId    String
+  advisorId     String
+  createdAt     DateTime        @default(now())
+  status        EstimateStatus  @default(PENDING)
+  summary       String
+  internalNotes String?
+  total         Float
 
   items EstimateItem[]
 }

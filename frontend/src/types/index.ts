@@ -118,6 +118,7 @@ export interface JobCard {
   advisorId: string;
   mechanicId: string | null;
   station: string | null;
+  assignmentNotes?: string | null;
   priority: JobPriority;
   status: JobStatus;
   services: JobServiceLine[];
@@ -192,6 +193,7 @@ export interface Estimate {
   createdAt: string;
   status: "pending" | "approved" | "rejected";
   summary: string;
+  internalNotes?: string | null;
   items: EstimateItem[];
   total: number;
   jobCard?: { id: string; vehicle?: Vehicle };

@@ -29,10 +29,12 @@ export interface CreateCustomerBody {
 export interface AssignMechanicBody {
   mechanicId: string;
   station?: string;
+  notes?: string;
 }
 
 export interface CreateEstimateBody {
   jobId: string;
   summary?: string;
+  internalNotes?: string;
   items: { description: string; category: "service" | "parts" | "labor"; amount: number }[];
 }

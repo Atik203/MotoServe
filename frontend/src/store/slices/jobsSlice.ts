@@ -58,8 +58,8 @@ export const createJobCard = createAsyncThunk(
 
 export const assignMechanic = createAsyncThunk(
   "jobs/assign",
-  async ({ id, mechanicId, station }: { id: string; mechanicId: string; station?: string }) => {
-    return await api.post<{ id: string }>(`/jobs/${id}/assign`, { mechanicId, station });
+  async ({ id, mechanicId, station, notes }: { id: string; mechanicId: string; station?: string; notes?: string }) => {
+    return await api.post<{ id: string }>(`/jobs/${id}/assign`, { mechanicId, station, notes });
   },
 );
 

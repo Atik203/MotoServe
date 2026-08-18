@@ -36,6 +36,7 @@ export const assignMechanicSchema = z.object({
   body: z.object({
     mechanicId: z.string(),
     station: z.string().optional(),
+    notes: z.string().optional(),
   }),
 });
 
@@ -43,6 +44,7 @@ export const createEstimateSchema = z.object({
   body: z.object({
     jobId: z.string(),
     summary: z.string().optional(),
+    internalNotes: z.string().optional(),
     items: z
       .array(
         z.object({

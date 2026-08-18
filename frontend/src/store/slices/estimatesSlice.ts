@@ -23,6 +23,7 @@ export const createEstimate = createAsyncThunk(
   async (data: {
     jobId: string;
     summary?: string;
+    internalNotes?: string;
     items: { description: string; category: "service" | "parts" | "labor"; amount: number }[];
   }) => {
     return await api.post<Estimate>("/estimates", data);

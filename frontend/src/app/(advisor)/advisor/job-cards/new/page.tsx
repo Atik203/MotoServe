@@ -11,6 +11,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createJobCard } from "@/store/slices/jobsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
+import { fetchServices } from "@/store/slices/servicesSlice";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 
 const priorities = [
@@ -28,21 +29,36 @@ export default function CreateJobCardPage() {
   const dispatch = useAppDispatch();
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const customers = useAppSelector((s) => s.customers.items);
+  const services = useAppSelector((s) => s.services.items);
+  const user = useAppSelector((s) => s.auth.user);
   const [customerId, setCustomerId] = useState("");
   const [vehicleId, setVehicleId] = useState("");
   const [issues, setIssues] = useState("");
-  const [station, setStation] = useState("Main Bay / Station 04");
+  const [station, setStation] = useState(user?.station ?? "");
   const [priority, setPriority] = useState<(typeof priorities)[number]["key"]>("medium");
+  const [serviceIds, setServiceIds] = useState<string[]>([]);
+  const [expectedDate, setExpectedDate] = useState("");
+  const [expectedTime, setExpectedTime] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [stationPrefilled, setStationPrefilled] = useState(false);
+
+  if (!stationPrefilled && user?.station) {
+    setStation(user.station);
+    setStationPrefilled(true);
+  }
 
   useEffect(() => {
     dispatch(fetchVehicles());
     dispatch(fetchCustomers());
+    dispatch(fetchServices());
   }, [dispatch]);
 
   const customer = customers.find((c) => c.id === customerId) ?? null;
   const customerVehicles = vehicles.filter((v) => v.ownerId === customerId);
   const vehicle = vehicles.find((v) => v.id === vehicleId) ?? null;
+
+  const toggleService = (id: string) =>
+    setServiceIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,10 +70,22 @@ export default function CreateJobCardPage() {
       toast.error("Please describe the reported issues");
       return;
     }
+    if (serviceIds.length === 0) {
+      toast.error("Select at least one service to perform");
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await dispatch(
-        createJobCard({ vehicleId, customerId, issues: issues.trim(), priority, station }),
+        createJobCard({
+          vehicleId,
+          customerId,
+          issues: issues.trim(),
+          priority,
+          station: station.trim() || user?.station || undefined,
+          serviceIds,
+          expectedDate: expectedDate ? (expectedTime ? `${expectedDate} ${expectedTime}` : expectedDate) : undefined,
+        }),
       ).unwrap();
       toast.success(`Job card ${res.id} created`);
       router.push("/advisor");
@@ -156,14 +184,9 @@ export default function CreateJobCardPage() {
             <div className="flex flex-col gap-4">
               <button
                 type="button"
-                className="flex w-full items-center justify-center gap-2 rounded border border-[#727784] py-2.5 text-xs font-semibold text-primary"
-              >
-                <User className="size-3.5" />
-                View Customer Profile
-              </button>
-              <button
-                type="button"
-                className="flex w-full items-center justify-center gap-2 rounded border border-[#727784] py-2.5 text-xs font-semibold text-primary"
+                onClick={() => router.push(`/advisor/jobs?customer=${customerId}`)}
+                disabled={!customerId}
+                className="flex w-full items-center justify-center gap-2 rounded border border-[#727784] py-2.5 text-xs font-semibold text-primary disabled:opacity-40"
               >
                 <History className="size-3.5" />
                 View Service History
@@ -237,17 +260,66 @@ export default function CreateJobCardPage() {
                   Expected Completion Date
                 </Label>
                 <div className="relative">
-                  <Input placeholder="mm/dd/yyyy" className={cn(inputBase, "bg-[#f3f4f5]")} />
-                  <CalendarDays className="absolute top-1/2 right-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="date"
+                    value={expectedDate}
+                    onChange={(e) => setExpectedDate(e.target.value)}
+                    className={cn(inputBase, "bg-white pr-8")}
+                  />
+                  <CalendarDays className="pointer-events-none absolute top-1/2 right-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
                 </div>
               </div>
               <div className="flex flex-col gap-[8.5px]">
                 <Label className="text-xs font-semibold tracking-[0.24px] text-[#424753]">
-                  Estimated Completion Time
+                  Expected Completion Time
                 </Label>
                 <div className="relative">
-                  <Input placeholder="--:--:--" className={cn(inputBase, "bg-[#f3f4f5]")} />
-                  <Clock className="absolute top-1/2 right-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="time"
+                    value={expectedTime}
+                    onChange={(e) => setExpectedTime(e.target.value)}
+                    className={cn(inputBase, "bg-white pr-8")}
+                  />
+                  <Clock className="pointer-events-none absolute top-1/2 right-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                </div>
+              </div>
+
+              <div className="col-span-2 flex flex-col gap-[8.5px]">
+                <Label className="text-xs font-semibold tracking-[0.24px] text-[#424753]">
+                  Services to Perform *
+                </Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {services.map((s) => {
+                    const selected = serviceIds.includes(s.id);
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => toggleService(s.id)}
+                        className={cn(
+                          "flex items-center justify-between gap-2 rounded border px-3 py-2 text-left transition-colors",
+                          selected
+                            ? "border-primary bg-[#eff6ff]"
+                            : "border-[#e2e8f0] bg-[#f8f9fa] hover:border-primary/40",
+                        )}
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-medium text-[#191c1d]">{s.name}</span>
+                          <span className="block text-xs text-[#64748b]">
+                            ${s.basePrice.toFixed(2)} · {s.durationMins}min
+                          </span>
+                        </span>
+                        <span
+                          className={cn(
+                            "flex size-4 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold",
+                            selected ? "border-primary bg-primary text-white" : "border-[#cbd5e1] text-transparent",
+                          )}
+                        >
+                          ✓
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

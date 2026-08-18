@@ -61,8 +61,8 @@ const statusPills: Record<JobStatus, { label: string; className: string }> = {
     className: "border-[rgba(255,193,7,0.2)] bg-[rgba(255,193,7,0.1)] text-[#ffc107]",
   },
   testing: {
-    label: "Waiting Parts",
-    className: "border-[rgba(244,67,54,0.2)] bg-[rgba(244,67,54,0.1)] text-[#f44336]",
+    label: "Testing",
+    className: "border-[rgba(255,193,7,0.2)] bg-[rgba(255,193,7,0.1)] text-[#8b5000]",
   },
   ready: {
     label: "Ready for Pickup",
@@ -256,7 +256,7 @@ export default function AdvisorDashboardPage() {
               </Table>
 
               <Link
-                href="/advisor/job-cards/assign"
+                href="/advisor/jobs"
                 className="flex w-full items-center justify-center border-t border-[#e5e7eb] bg-[#f8f9fa] px-2 pt-[14.5px] pb-2.5 text-xs font-semibold tracking-[0.24px] text-primary hover:underline"
               >
                 View All Active Jobs

@@ -186,7 +186,10 @@ export default function AdvisorAppointmentDetailsPage() {
                   <p className="text-sm font-semibold text-[#4caf50]">
                     Converted to job card <span className="font-mono">{linkedJob.id}</span>
                   </p>
-                  <Link href="/advisor/job-cards" className="flex items-center text-xs font-semibold text-[#4caf50] hover:underline">
+                  <Link
+                    href={`/advisor/estimates/new?job=${linkedJob.id}`}
+                    className="flex items-center text-xs font-semibold text-[#4caf50] hover:underline"
+                  >
                     Manage job <ChevronRight className="size-3.5" />
                   </Link>
                 </div>

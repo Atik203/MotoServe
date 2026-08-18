@@ -85,15 +85,16 @@ export async function createCustomer(body: CreateCustomerBody) {
 }
 
 export function assignMechanic(id: string, body: AssignMechanicBody) {
-  return prisma.jobCard.update({
-    where: { id },
-    data: { mechanicId: body.mechanicId, station: body.station },
-  });
+  const data: Prisma.JobCardUncheckedUpdateInput = { mechanicId: body.mechanicId };
+  if (body.station) data.station = body.station;
+  if (body.notes) data.assignmentNotes = body.notes;
+  return prisma.jobCard.update({ where: { id }, data });
 }
 
 export async function createEstimate(advisorId: string, body: CreateEstimateBody) {
-  const job = await prisma.jobCard.findUnique({ where: { id: body.jobId }, select: { customerId: true } });
+  const job = await prisma.jobCard.findUnique({ where: { id: body.jobId }, select: { customerId: true, status: true } });
   if (!job) throw new ApiError(404, "Job not found");
+  if (job.status === "COMPLETED") throw new ApiError(400, "Cannot estimate a completed job");
   const maxNum = await nextSequentialId("ES-", 3300, prisma.estimate.findMany);
   const total = body.items.reduce((sum, i) => sum + i.amount, 0);
   return prisma.estimate.create({
@@ -103,6 +104,7 @@ export async function createEstimate(advisorId: string, body: CreateEstimateBody
       customerId: job.customerId,
       advisorId,
       summary: body.summary ?? "",
+      internalNotes: body.internalNotes,
       total,
       items: {
         create: body.items.map((i) => ({

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchJobs, assignMechanic } from "@/store/slices/jobsSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
+import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +49,7 @@ export default function AssignMechanicPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [jobId, setJobId] = useState("");
   const [search, setSearch] = useState("");
+  const [availableOnly, setAvailableOnly] = useState(false);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -78,10 +80,10 @@ export default function AssignMechanicPage() {
 
   const filteredMechanics = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return query
-      ? mechanics.filter((m) => m.name.toLowerCase().includes(query))
-      : mechanics;
-  }, [mechanics, search]);
+    return mechanics.filter(
+      (m) => (!query || m.name.toLowerCase().includes(query)) && (!availableOnly || workloadOf(m) < WORKLOAD_LIMIT),
+    );
+  }, [mechanics, search, availableOnly, workloadOf]);
 
   const selectedMechanic = mechanics.find((m) => m.id === selectedId) ?? null;
 
@@ -90,7 +92,11 @@ export default function AssignMechanicPage() {
     setSubmitting(true);
     try {
       await dispatch(
-        assignMechanic({ id: job.id, mechanicId: selectedMechanic.id, station: "Main Bay / Station 04" }),
+        assignMechanic({
+          id: job.id,
+          mechanicId: selectedMechanic.id,
+          notes: notes.trim() || undefined,
+        }),
       ).unwrap();
       toast.success(`Assigned ${selectedMechanic.name} to job ${job.id}`);
       router.push("/advisor");
@@ -190,10 +196,10 @@ export default function AssignMechanicPage() {
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-[11px] text-[#727784]">Est. Time</span>
+                  <span className="text-[11px] text-[#727784]">Services</span>
                   <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
                     <Clock className="size-3.5 text-[#727784]" />
-                    {job?.services.length ? `${job.services.length} services` : "TBD"}
+                    {job?.services.length ? `${job.services.length} service${job.services.length > 1 ? "s" : ""}` : "TBD"}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
@@ -202,9 +208,11 @@ export default function AssignMechanicPage() {
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-[11px] text-[#727784]">Job Status</span>
-                  <span className="self-start rounded-full bg-[rgba(255,193,7,0.1)] px-2.5 py-0.75 text-xs font-semibold text-[#6a3c00]">
-                    {job?.status ?? "—"}
-                  </span>
+                  {job ? (
+                    <StatusBadge status={job.status} />
+                  ) : (
+                    <span className="text-sm font-medium text-[#727784]">—</span>
+                  )}
                 </div>
               </div>
             </section>
@@ -225,10 +233,14 @@ export default function AssignMechanicPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-[38px] gap-2 rounded-lg border-[#e5e7eb] bg-white px-3.5 text-[13px] font-medium text-[#191c1d]"
+                    onClick={() => setAvailableOnly((v) => !v)}
+                    className={cn(
+                      "h-[38px] gap-2 rounded-lg border-[#e5e7eb] bg-white px-3.5 text-[13px] font-medium text-[#191c1d]",
+                      availableOnly && "border-primary bg-[#eff6ff] text-primary",
+                    )}
                   >
                     <Filter className="size-3.5" />
-                    Filter
+                    {availableOnly ? "Showing available" : "Filter"}
                   </Button>
                 </div>
               </div>
