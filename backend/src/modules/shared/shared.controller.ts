@@ -46,12 +46,16 @@ function mapJob(job: {
   status: string;
   priority: string;
   progress: { step: string }[];
+  services?: unknown;
+  photos?: unknown;
   [key: string]: unknown;
 }) {
   return {
     ...job,
     status: job.status.toLowerCase(),
     priority: job.priority.toLowerCase(),
+    services: (job.services ?? []) as never,
+    photos: (job.photos ?? []) as never,
     progress: job.progress.map((p) => ({ ...p, step: p.step.toLowerCase() })),
   };
 }
@@ -66,6 +70,9 @@ export async function getJob(req: Request, res: Response): Promise<void> {
   if (!job) {
     res.status(404).json({ error: "Job not found" });
     return;
+  }
+  if (req.user?.role === "OWNER" && job.customerId !== req.user.userId) {
+    throw new ApiError(403, "Insufficient permissions");
   }
   res.json(mapJob(job));
 }
@@ -113,6 +120,7 @@ export async function getEstimates(req: Request, res: Response): Promise<void> {
   res.json(
     estimates.map((e) => ({
       ...e,
+      jobId: e.jobCardId,
       status: e.status.toLowerCase(),
       items: e.items.map((i) => ({ ...i, category: i.category.toLowerCase() })),
     })),

@@ -56,6 +56,7 @@ export async function createJobCard(advisorId: string, body: CreateJobCardBody) 
       { jobCardId: job.id, step: "INSPECTING", label: "Initial Inspection", done: false },
       { jobCardId: job.id, step: "REPAIRING", label: "Repairing", done: false },
       { jobCardId: job.id, step: "TESTING", label: "Testing", done: false },
+      { jobCardId: job.id, step: "READY", label: "Ready for Pickup", done: false },
       { jobCardId: job.id, step: "COMPLETED", label: "Completed", done: false },
     ],
   });

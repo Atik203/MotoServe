@@ -4,7 +4,14 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { JobProgressStep } from "@/types";
 
-const STEP_LABELS = ["Received", "Inspecting", "Repairing", "Testing", "Completed"];
+const STEP_LABELS: Record<string, string> = {
+  received: "Received",
+  inspecting: "Inspecting",
+  repairing: "Repairing",
+  testing: "Testing",
+  ready: "Ready",
+  completed: "Completed",
+};
 
 interface ProgressStepperProps {
   steps: JobProgressStep[];
@@ -49,7 +56,7 @@ export function ProgressStepper({ steps, size = "lg" }: ProgressStepperProps) {
                   isActive && !isDone ? "font-bold text-primary" : isDone ? "font-medium text-foreground" : "text-muted-foreground",
                 )}
               >
-                {STEP_LABELS[i]}
+                {STEP_LABELS[step.step] ?? step.label ?? step.step}
               </span>
             </div>
           );

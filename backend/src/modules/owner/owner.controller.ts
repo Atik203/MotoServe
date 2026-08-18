@@ -55,14 +55,16 @@ export async function bookAppointmentController(req: Request, res: Response): Pr
 }
 
 export async function decideEstimateController(req: Request, res: Response): Promise<void> {
+  if (!req.user) throw new ApiError(401, "Authentication required");
   const { decision } = req.body.body as DecideEstimateBody;
-  const estimate = await decideEstimate(req.params.id as string, decision);
+  const estimate = await decideEstimate(req.params.id as string, decision, req.user.userId);
   res.json({ id: estimate.id, status: estimate.status.toLowerCase() });
 }
 
 export async function payInvoiceController(req: Request, res: Response): Promise<void> {
+  if (!req.user) throw new ApiError(401, "Authentication required");
   const { method } = req.body.body as PayInvoiceBody;
-  const invoice = await payInvoice(req.params.id as string, method);
+  const invoice = await payInvoice(req.params.id as string, method, req.user.userId);
   await logAudit(req.user?.name ?? "owner", `Paid invoice ${invoice.id} (${method})`);
   res.json({ id: invoice.id, status: "paid" });
 }

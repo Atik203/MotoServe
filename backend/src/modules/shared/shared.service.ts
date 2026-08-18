@@ -98,6 +98,18 @@ export async function updateAppointment(
 export function listEmployees(role?: string) {
   return prisma.user.findMany({
     where: role ? { role: role.toUpperCase() as never } : { role: { in: ["ADVISOR", "MECHANIC"] } },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      phone: true,
+      avatar: true,
+      station: true,
+      specialization: true,
+      status: true,
+      joinedAt: true,
+    },
     orderBy: { name: "asc" },
   });
 }

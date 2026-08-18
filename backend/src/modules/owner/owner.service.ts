@@ -53,30 +53,45 @@ export function bookAppointment(ownerId: string, body: BookAppointmentBody) {
   });
 }
 
-export function decideEstimate(id: string, decision: DecideEstimateBody["decision"]) {
+export async function decideEstimate(id: string, decision: DecideEstimateBody["decision"], customerId: string) {
+  const estimate = await prisma.estimate.findUnique({ where: { id } });
+  if (!estimate) throw new ApiError(404, "Estimate not found");
+  if (estimate.customerId !== customerId) throw new ApiError(403, "Insufficient permissions");
   return prisma.estimate.update({
     where: { id },
     data: { status: decision.toUpperCase() as never },
   });
 }
 
-export async function payInvoice(id: string, method: PayInvoiceBody["method"]) {
+export async function payInvoice(id: string, method: PayInvoiceBody["method"], userId: string) {
   const invoice = await prisma.invoice.findUniqueOrThrow({ where: { id } });
+  if (invoice.customerId !== userId) throw new ApiError(403, "Insufficient permissions");
+  if (invoice.status === "PAID") throw new ApiError(409, "Invoice is already paid");
   await prisma.$transaction([
     prisma.payment.create({
       data: { invoiceId: invoice.id, jobCardId: invoice.jobId, amount: invoice.total, method: method.toUpperCase() as never },
     }),
     prisma.invoice.update({
       where: { id: invoice.id },
-      data: { status: "PAID", paymentMethod: method.toUpperCase() as never, last4: "4242", paidAt: new Date() },
+      data: {
+        status: "PAID",
+        paymentMethod: method.toUpperCase() as never,
+        last4: method === "card" ? "4242" : null,
+        paidAt: new Date(),
+      },
     }),
   ]);
   return invoice;
 }
 
-export function rateJob(jobId: string, customerId: string, body: RateJobBody) {
-  return prisma.rating.create({
-    data: { jobId, customerId, score: body.score, review: body.review, serviceName: body.serviceName },
+export async function rateJob(jobId: string, customerId: string, body: RateJobBody) {
+  const job = await prisma.jobCard.findUnique({ where: { id: jobId } });
+  if (!job) throw new ApiError(404, "Job not found");
+  if (job.customerId !== customerId) throw new ApiError(403, "Insufficient permissions");
+  return prisma.rating.upsert({
+    where: { jobId_customerId: { jobId, customerId } },
+    update: { score: body.score, review: body.review, serviceName: body.serviceName, date: new Date() },
+    create: { jobId, customerId, score: body.score, review: body.review, serviceName: body.serviceName },
   });
 }
 

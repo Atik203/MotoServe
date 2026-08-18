@@ -347,6 +347,8 @@ model Rating {
   score       Int
   review      String
   date        DateTime @default(now())
+
+  @@unique([jobId, customerId])
 }
 
 model Testimonial {

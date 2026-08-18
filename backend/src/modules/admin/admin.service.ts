@@ -137,7 +137,7 @@ async function getDashboardStats() {
   const [activeJobs, totalRevenue, revenueByMonthRaw, customers, employees] = await Promise.all([
     prisma.jobCard.count({ where: { status: { notIn: ["COMPLETED", "READY"] } } }),
     prisma.invoice.aggregate({ _sum: { total: true }, where: { status: "PAID" } }),
-    prisma.invoice.findMany({ select: { issuedAt: true, total: true } }),
+    prisma.invoice.findMany({ select: { issuedAt: true, total: true }, where: { status: "PAID" } }),
     prisma.user.count({ where: { role: "OWNER" } }),
     prisma.user.count({ where: { role: { in: ["ADVISOR", "MECHANIC"] }, status: "ACTIVE" } }),
   ]);

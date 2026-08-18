@@ -186,6 +186,7 @@ export interface EstimateItem {
 export interface Estimate {
   id: string;
   jobId: string;
+  jobCardId: string;
   customerId: string;
   advisorId: string;
   createdAt: string;

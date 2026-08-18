@@ -42,7 +42,7 @@ const kpiChip: Record<string, string> = {
   "check-circle": "bg-[rgba(76,175,80,0.1)] text-[#4caf50]",
 };
 
-const STEP_ORDER = ["received", "inspecting", "repairing", "testing", "completed"];
+const STEP_ORDER = ["received", "inspecting", "repairing", "testing", "ready", "completed"];
 
 const quickActions: { label: string; icon: LucideIcon; href?: string }[] = [
   { label: "Repair Progress", icon: Wrench, href: "/mechanic/jobs" },
