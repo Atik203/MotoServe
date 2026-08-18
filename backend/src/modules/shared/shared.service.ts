@@ -23,7 +23,10 @@ export function listVehicles(ownerId?: string) {
 
 export function listJobs(role?: string, userId?: string) {
   return prisma.jobCard.findMany({
-    where: { mechanicId: role === "mechanic" ? userId : undefined },
+    where: {
+      mechanicId: role === "mechanic" ? userId : undefined,
+      customerId: role === "owner" ? userId : undefined,
+    },
     include: {
       vehicle: true,
       customer: { select: { id: true, name: true } },
