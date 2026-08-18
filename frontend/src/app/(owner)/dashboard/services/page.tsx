@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import { CheckCircle2, ChevronRight, Gauge } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchJobs } from "@/store/slices/jobsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
+import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
 import { ProgressStepper } from "@/components/roles/mechanic/ProgressStepper";
 
@@ -53,7 +53,7 @@ export default function ServiceTrackingListPage() {
                       className="flex items-center gap-6 rounded-lg border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
                     >
                       <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded bg-secondary">
-                        {vehicle && <Image src={vehicle.image} alt={`${vehicle.make} ${vehicle.model}`} fill className="object-cover" />}
+                        {vehicle && <VehicleImage src={vehicle.image} alt={`${vehicle.make} ${vehicle.model}`} fill className="object-cover" />}
                       </div>
                       <div className="flex min-w-0 flex-1 flex-col gap-2">
                         <div className="flex items-center gap-3">

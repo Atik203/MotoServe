@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
@@ -9,6 +8,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchJobs } from "@/store/slices/jobsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchEstimates } from "@/store/slices/estimatesSlice";
+import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import {
   Table,
   TableBody,
@@ -66,7 +66,7 @@ export default function ServiceDetailsPage() {
             <div className="col-span-8 flex flex-col gap-6">
               <div className="flex h-[140px] items-start overflow-hidden rounded-xl border border-border bg-white shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
                 <div className="relative h-full w-48 shrink-0 bg-secondary">
-                  <Image src={vehicle.image} alt={vehicle.model} fill className="object-cover" />
+                  <VehicleImage src={vehicle.image} alt={vehicle.model} fill className="object-cover" />
                   <span className="absolute bottom-2 left-2 rounded-sm border border-[rgba(114,119,132,0.3)] bg-[#191c1d] px-[9px] py-0.75 text-[11px] font-medium text-white">
                     {vehicle.regNo}
                   </span>

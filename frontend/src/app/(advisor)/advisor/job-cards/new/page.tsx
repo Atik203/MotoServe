@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -12,6 +11,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createJobCard } from "@/store/slices/jobsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
+import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 
 const priorities = [
   { key: "low", label: "Low", active: "border-[#0052cc] bg-primary/10 text-primary" },
@@ -87,7 +87,7 @@ export default function CreateJobCardPage() {
 
               <div className="relative mt-4 h-32 overflow-hidden rounded bg-[#e1e3e4]">
                 {vehicle ? (
-                  <Image
+                  <VehicleImage
                     src={vehicle.image || "/images/cars/ford-f150.png"}
                     alt={`${vehicle.make} ${vehicle.model}`}
                     fill

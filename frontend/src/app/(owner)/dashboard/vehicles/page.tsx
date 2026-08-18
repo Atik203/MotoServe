@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -8,6 +7,7 @@ import { CalendarPlus, History, Pencil, Plus, Trash2 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchVehicles, updateVehicle, deleteVehicle } from "@/store/slices/vehiclesSlice";
 import { fetchJobs } from "@/store/slices/jobsSlice";
+import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -107,7 +107,7 @@ export default function MyVehiclesPage() {
                   className="overflow-hidden rounded-lg border border-border bg-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
                 >
                   <div className="relative h-40 w-full bg-secondary">
-                    <Image src={vehicle.image} alt={`${vehicle.make} ${vehicle.model}`} fill className="object-cover" />
+                    <VehicleImage src={vehicle.image} alt={`${vehicle.make} ${vehicle.model}`} fill className="object-cover" />
                     <span className="absolute right-3 bottom-3 rounded-sm bg-[rgba(46,49,50,0.8)] px-2.5 py-1 text-[11px] font-semibold tracking-[0.5px] text-white">
                       {vehicle.regNo}
                     </span>

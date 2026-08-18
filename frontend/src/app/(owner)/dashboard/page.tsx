@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { ArrowUpRight, Bell, Calendar, Car, Check, ChevronRight, FileCheck, Gauge, Wrench } from "lucide-react";
@@ -13,6 +12,7 @@ import { fetchServices } from "@/store/slices/servicesSlice";
 import { buildKpis } from "@/lib/kpis";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
+import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 
 const TIMELINE = ["Received", "Inspecting", "Repairing", "Testing", "Ready"];
 
@@ -106,7 +106,7 @@ export default function OwnerDashboardPage() {
               {activeJob && activeVehicle ? (
                 <>
                   <div className="flex items-center rounded-lg border border-[#e2e8f0] bg-secondary p-[17px]">
-                    <Image src={activeVehicle.image} alt={activeVehicle.model} width={64} height={64} className="rounded-md object-cover" />
+                    <VehicleImage src={activeVehicle.image} alt={activeVehicle.model} width={64} height={64} className="rounded-md object-cover" />
                     <div className="flex-1 pl-4">
                       <p className="text-xs font-semibold tracking-[0.24px] text-foreground">
                         {activeVehicle.year} {activeVehicle.make} {activeVehicle.model}
@@ -179,7 +179,7 @@ export default function OwnerDashboardPage() {
                 {vehicles.map((vehicle) => (
                   <div key={vehicle.id} className="flex-1 overflow-hidden rounded-xl border border-[#e2e8f0] bg-white shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
                     <div className="relative h-32 bg-secondary">
-                      <Image src={vehicle.image} alt={vehicle.model} fill className="object-cover" />
+                      <VehicleImage src={vehicle.image} alt={vehicle.model} fill className="object-cover" />
                       <span className="absolute top-2 right-2 rounded-md border border-[#e2e8f0] bg-white/90 px-2 py-0.75 text-[11px] font-medium text-foreground backdrop-blur-[4px]">
                         {vehicle.regNo}
                       </span>

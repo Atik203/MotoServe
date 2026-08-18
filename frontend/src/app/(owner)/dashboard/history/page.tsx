@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -10,6 +9,7 @@ import { fetchInvoices } from "@/store/slices/invoicesSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchJobs } from "@/store/slices/jobsSlice";
 import { fetchRatings, rateJob } from "@/store/slices/ratingsSlice";
+import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { cn } from "@/lib/utils";
 import { downloadInvoicePdf } from "@/lib/pdf";
 import { Button } from "@/components/ui/button";
@@ -246,7 +246,7 @@ export default function ServiceHistoryPage() {
 
               <div className="flex h-[220px] items-start overflow-hidden rounded-lg border border-[#e2e8f0] bg-white shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
                 <div className="relative h-full w-48 shrink-0 bg-secondary p-4">
-                  <Image src={entry.vehicle.image} alt={entry.vehicle.model} fill className="object-cover opacity-80 mix-blend-multiply" />
+                  <VehicleImage src={entry.vehicle.image} alt={entry.vehicle.model} fill className="object-cover opacity-80 mix-blend-multiply" />
                   <span className="absolute top-2 right-2 rounded-xl border border-[#e2e8f0] bg-white/80 px-[9px] py-[5px] text-[11px] font-medium text-foreground backdrop-blur-[2px]">
                     {entry.vehicle.make} {entry.vehicle.model}
                   </span>

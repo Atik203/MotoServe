@@ -1,15 +1,33 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { CalendarCheck, Car, ChevronDown, ImagePlus, Upload, Wrench } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchVehicles, addVehicle } from "@/store/slices/vehiclesSlice";
+import { uploadDocument } from "@/store/slices/authSlice";
+import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { FuelType } from "@/types";
+
+const FUEL_OPTIONS = [
+  { value: "gasoline", label: "Gasoline" },
+  { value: "diesel", label: "Diesel" },
+  { value: "hybrid", label: "Hybrid" },
+  { value: "electric", label: "Electric" },
+];
+
+const TRANSMISSION_OPTIONS = [
+  { value: "Automatic", label: "Automatic" },
+  { value: "Manual", label: "Manual" },
+  { value: "CVT", label: "CVT" },
+];
+
+const selectBase =
+  "h-[38px] w-full cursor-pointer appearance-none rounded border-[#6b7280] bg-[#f8f9fa] pr-8 text-sm text-foreground outline-none";
 
 export default function RegisterVehiclePage() {
   const router = useRouter();
@@ -23,10 +41,14 @@ export default function RegisterVehiclePage() {
     regNo: "",
     color: "",
     mileage: "0",
-    fuelType: "Gasoline",
+    fuelType: "gasoline" as FuelType,
     transmission: "Automatic",
     vin: "",
   });
+  const [photo, setPhoto] = useState<{ name: string; key: string; preview: string } | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (vehicles.length === 0) dispatch(fetchVehicles());
@@ -35,28 +57,65 @@ export default function RegisterVehiclePage() {
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
+  const handlePhotoPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!["image/png", "image/jpeg", "application/pdf"].includes(file.type)) {
+      toast.error("Only JPG, PNG or PDF photos are allowed");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Photo exceeds 5MB limit");
+      return;
+    }
+    setPhotoUploading(true);
+    try {
+      const res = await dispatch(
+        uploadDocument({ fileName: file.name, fileType: file.type, purpose: "image" }),
+      ).unwrap();
+      const put = await fetch(res.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!put.ok) throw new Error("Upload to storage failed");
+      setPhoto({ name: file.name, key: res.key, preview: URL.createObjectURL(file) });
+      toast.success("Vehicle photo uploaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.make.trim() || !form.model.trim() || !form.regNo.trim()) {
       toast.error("Please fill in brand, model and registration number");
       return;
     }
+    setSubmitting(true);
     try {
       await dispatch(
         addVehicle({
           make: form.make.trim(),
           model: form.model.trim(),
           year: Number(form.year) || 2024,
-          regNo: form.regNo.trim(),
-          fuelType: "gasoline",
+          regNo: form.regNo.trim().toUpperCase(),
+          color: form.color.trim() || undefined,
+          fuelType: form.fuelType,
           mileage: Number(form.mileage) || 0,
-          image: "/images/cars/toyota-camry.png",
+          transmission: form.transmission,
+          vin: form.vin.trim().toUpperCase() || undefined,
+          image: photo?.key ?? "/images/cars/toyota-camry.png",
         }),
       ).unwrap();
       toast.success("Vehicle registered successfully");
-      router.push("/dashboard");
+      router.push("/dashboard/vehicles");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to register vehicle");
+      setSubmitting(false);
     }
   };
 
@@ -95,17 +154,41 @@ export default function RegisterVehiclePage() {
                 </div>
               ))}
 
-              {(["fuelType", "transmission"] as const).map((key) => (
-                <div key={key} className="flex flex-col gap-[8.5px]">
-                  <Label className="text-xs font-semibold tracking-[0.24px] text-[#424753]">
-                    {key === "fuelType" ? "Fuel Type" : "Transmission"}
-                  </Label>
-                  <div className="relative">
-                    <Input value={form[key]} readOnly className="h-[38px] cursor-pointer rounded border-[#6b7280] bg-[#f8f9fa]" />
-                    <ChevronDown className="absolute top-1/2 right-3 size-3 -translate-y-1/2 text-muted-foreground" />
-                  </div>
+              <div className="flex flex-col gap-[8.5px]">
+                <Label className="text-xs font-semibold tracking-[0.24px] text-[#424753]">Fuel Type</Label>
+                <div className="relative">
+                  <select
+                    value={form.fuelType}
+                    onChange={(e) => setForm((f) => ({ ...f, fuelType: e.target.value as FuelType }))}
+                    className={selectBase}
+                  >
+                    {FUEL_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-3 -translate-y-1/2 text-muted-foreground" />
                 </div>
-              ))}
+              </div>
+
+              <div className="flex flex-col gap-[8.5px]">
+                <Label className="text-xs font-semibold tracking-[0.24px] text-[#424753]">Transmission</Label>
+                <div className="relative">
+                  <select
+                    value={form.transmission}
+                    onChange={(e) => setForm((f) => ({ ...f, transmission: e.target.value }))}
+                    className={selectBase}
+                  >
+                    {TRANSMISSION_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-3 -translate-y-1/2 text-muted-foreground" />
+                </div>
+              </div>
             </div>
 
             <div className="flex flex-col gap-1">
@@ -118,19 +201,57 @@ export default function RegisterVehiclePage() {
 
             <div className="flex flex-col gap-[8.5px]">
               <Label className="text-xs font-semibold tracking-[0.24px] text-[#424753]">Upload Vehicle, Insurance and Registration Photo</Label>
-              <div className="flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border bg-[#f8f9fa] p-[26px]">
-                <ImagePlus className="size-6 text-muted-foreground" />
-                <p className="text-sm text-foreground">
-                  Drag & drop an image here, or <span className="font-medium text-primary">browse</span>
-                </p>
-                <p className="text-[11px] font-medium text-muted-foreground">Supports JPG, PNG (Max 5MB)</p>
-              </div>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/png,image/jpeg,application/pdf"
+                className="hidden"
+                onChange={handlePhotoPick}
+              />
+              {photo ? (
+                <div className="flex items-center gap-4 rounded-lg border border-[#c2c6d5] bg-[#f8f9fa] p-[17px]">
+                  <img src={photo.preview} alt={photo.name} className="h-16 w-24 rounded object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{photo.name}</p>
+                    <p className="text-xs text-muted-foreground">Photo uploaded — click the tile to change</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      URL.revokeObjectURL(photo.preview);
+                      setPhoto(null);
+                    }}
+                    className="text-[#ba1a1a]"
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={photoUploading}
+                  onClick={() => photoInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border bg-[#f8f9fa] p-[26px] transition-colors hover:border-primary/50 disabled:opacity-60"
+                >
+                  <ImagePlus className="size-6 text-muted-foreground" />
+                  <p className="text-sm text-foreground">
+                    {photoUploading ? "Uploading..." : (
+                      <>
+                        Drag & drop an image here, or <span className="font-medium text-primary">browse</span>
+                      </>
+                    )}
+                  </p>
+                  <p className="text-[11px] font-medium text-muted-foreground">Supports JPG, PNG, PDF (Max 5MB)</p>
+                </button>
+              )}
             </div>
 
             <div className="flex justify-end border-t border-border pt-[25px]">
-              <Button type="submit" className="gap-2 rounded px-6 shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <Button type="submit" disabled={submitting} className="gap-2 rounded px-6 shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
                 <Upload className="size-[15px]" />
-                Register Vehicle
+                {submitting ? "Registering..." : "Register Vehicle"}
               </Button>
             </div>
           </form>
@@ -143,10 +264,15 @@ export default function RegisterVehiclePage() {
               </h2>
               <span className="text-[11px] font-medium text-primary">View All</span>
             </div>
+            {vehicles.length === 0 && (
+              <div className="rounded-lg border border-dashed border-border bg-white px-6 py-10 text-center text-sm text-muted-foreground">
+                No vehicles registered yet — your registered vehicles will appear here.
+              </div>
+            )}
             {vehicles.map((vehicle) => (
               <div key={vehicle.id} className="w-full overflow-hidden rounded-lg border border-border bg-white shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
                 <div className="relative h-32 bg-[#e1e3e4]">
-                  <Image src={vehicle.image} alt={vehicle.model} fill className="object-cover" />
+                  <VehicleImage src={vehicle.image} alt={vehicle.model} fill className="object-cover" />
                   <span className="absolute bottom-2 left-2 rounded-sm border border-border bg-white/90 px-[9px] py-0.75 text-[11px] font-semibold text-foreground backdrop-blur-[2px]">
                     {vehicle.regNo}
                   </span>
@@ -158,7 +284,8 @@ export default function RegisterVehiclePage() {
                         {vehicle.year} {vehicle.make} {vehicle.model}
                       </p>
                       <p className="text-[11px] font-medium text-muted-foreground">
-                        {vehicle.fuelType.charAt(0).toUpperCase() + vehicle.fuelType.slice(1)} • {vehicle.mileage.toLocaleString()} mi
+                        {vehicle.fuelType.charAt(0).toUpperCase() + vehicle.fuelType.slice(1)}
+                        {vehicle.transmission ? ` • ${vehicle.transmission}` : ""} • {vehicle.mileage.toLocaleString()} mi
                       </p>
                     </div>
                     <Wrench className="size-3.5 text-muted-foreground" />

@@ -22,6 +22,7 @@ const PAYMENT_METHODS = [
 export default function PaymentInvoicePage() {
   const dispatch = useAppDispatch();
   const invoices = useAppSelector((s) => s.invoices.items);
+  const invoicesStatus = useAppSelector((s) => s.invoices.status);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const jobs = useAppSelector((s) => s.jobs.items);
   const [method, setMethod] = useState("card");
@@ -48,8 +49,36 @@ export default function PaymentInvoicePage() {
 
   const invoice = invoices.find((i) => i.status === "unpaid") ?? invoices[0] ?? null;
 
-  if (!invoice) {
+  if (invoicesStatus === "loading" || invoicesStatus === "idle") {
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">Loading invoice...</div>;
+  }
+
+  if (!invoice) {
+    return (
+      <div className="bg-background min-h-screen p-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+          <div>
+            <p className="text-sm font-medium tracking-[0.7px] text-[#444651]">
+              Dashboard › Service Details › <span className="font-bold text-primary">Payment</span>
+            </p>
+            <h1 className="text-[32px] font-bold tracking-[-0.64px] text-foreground">Payment & Invoice</h1>
+          </div>
+          <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-border bg-white py-20">
+            <ReceiptText className="size-8 text-muted-foreground" />
+            <p className="text-sm font-medium text-foreground">No invoices yet</p>
+            <p className="max-w-sm text-center text-sm text-muted-foreground">
+              Your invoice will appear here automatically once a vehicle service is completed.
+            </p>
+            <Link
+              href="/dashboard/appointments/book"
+              className="rounded bg-primary px-4 py-2 text-xs font-semibold text-white"
+            >
+              Book a Service
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const vehicle = vehicles.find((v) => v.id === invoice.vehicleId) ?? null;

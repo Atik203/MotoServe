@@ -136,6 +136,7 @@ model Vehicle {
   color        String?
   transmission String?
   image        String?
+  photos       Json?
 
   appointments Appointment[]
   jobCards     JobCard[]

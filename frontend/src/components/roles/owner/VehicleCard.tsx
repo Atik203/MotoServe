@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { Check, Plus } from "lucide-react";
+import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { cn } from "@/lib/utils";
 import type { Vehicle } from "@/types";
 
@@ -24,7 +24,7 @@ export function VehicleCard({ vehicle, selected, onSelect }: VehicleCardProps) {
       )}
     >
       <div className="relative h-24 w-full bg-secondary">
-        <Image src={vehicle.image} alt={`${vehicle.make} ${vehicle.model}`} fill className="object-cover" />
+        <VehicleImage src={vehicle.image} alt={`${vehicle.make} ${vehicle.model}`} fill className="object-cover" />
         {selected && (
           <span className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-primary px-2 py-1 text-xs font-medium text-white">
             <Check className="size-2.5" />
