@@ -2,21 +2,24 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Clock } from "lucide-react";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchServices } from "@/store/slices/servicesSlice";
+import { api } from "@/lib/api";
+import type { Service } from "@/types";
 import { cn } from "@/lib/utils";
 
 export default function ServicesPage() {
-  const dispatch = useAppDispatch();
-  const services = useAppSelector((s) => s.services.items);
+  const [services, setServices] = useState<Service[]>([]);
 
   useEffect(() => {
-    if (services.length === 0) dispatch(fetchServices());
-  }, [dispatch, services.length]);
+    api.get<{ data: Service[] }>("/content/services").then((r) => setServices(r.data)).catch(() => setServices([]));
+  }, []);
 
   const featured = services.filter((s) => s.marketing);
+
+  if (services.length === 0) {
+    return <div className="p-8 text-muted-foreground">Loading services...</div>;
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-12 px-8 py-12">

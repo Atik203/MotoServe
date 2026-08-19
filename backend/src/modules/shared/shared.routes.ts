@@ -15,6 +15,7 @@ import {
   getRatings,
   getServices,
   getTestimonials,
+  getContent,
   getThreads,
   getVehicles,
   markThreadReadController,
@@ -51,3 +52,4 @@ router.post("/chat/threads/:id/read", requireAuth, requireRole("owner", "advisor
 router.get("/parts", requireAuth, getParts);
 router.get("/ratings", requireAuth, getRatings);
 router.get("/testimonials", getTestimonials);
+router.get("/content/:key", getContent);

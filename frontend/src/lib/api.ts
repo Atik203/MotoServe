@@ -13,20 +13,21 @@ export class ApiError extends Error {
 }
 
 export function setAuthToken(token: string | null): void {
+  const secure = typeof location !== "undefined" && location.protocol === "https:" ? "; secure" : "";
   if (token) {
     try {
       localStorage.setItem(TOKEN_STORAGE, token);
     } catch {
       // ignore storage errors
     }
-    document.cookie = `${TOKEN_COOKIE}=${encodeURIComponent(token)}; path=/; samesite=lax`;
+    document.cookie = `${TOKEN_COOKIE}=${encodeURIComponent(token)}; path=/; samesite=lax${secure}`;
   } else {
     try {
       localStorage.removeItem(TOKEN_STORAGE);
     } catch {
       // ignore storage errors
     }
-    document.cookie = `${TOKEN_COOKIE}=; path=/; samesite=lax; max-age=0`;
+    document.cookie = `${TOKEN_COOKIE}=; path=/; samesite=lax${secure}; max-age=0`;
   }
 }
 

@@ -11,6 +11,7 @@ import {
   listRatings,
   listServices,
   listTestimonials,
+  getSiteContent,
   listThreads,
   listVehicles,
   findJobById,
@@ -143,6 +144,12 @@ export async function getInvoices(req: Request, res: Response): Promise<void> {
         : null,
     })),
   );
+}
+
+export async function getContent(req: Request, res: Response): Promise<void> {
+  const content = await getSiteContent(req.params.key as string);
+  if (!content) throw new ApiError(404, "Content not found");
+  res.json({ data: content.data });
 }
 
 export async function getThreads(req: Request, res: Response): Promise<void> {

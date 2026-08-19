@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { BookOpen, ChevronDown, Headset, Search } from "lucide-react";
-import demoData from "@/lib/demo-data";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-type FaqsData = Awaited<ReturnType<typeof demoData.load<"faqs">>>;
+type FaqItem = { id: string; category: string; question: string; answer: string };
+type FaqsData = { categories: string[]; faqs: FaqItem[]; cta: { title: string; subtitle: string } };
 
 export default function FaqPage() {
   const [data, setData] = useState<FaqsData | null>(null);
@@ -14,10 +15,10 @@ export default function FaqPage() {
   const [openItem, setOpenItem] = useState<string | null>(null);
 
   useEffect(() => {
-    demoData.load("faqs").then((d) => {
-      setData(d);
-      setOpenItem(d.faqs[0]?.id ?? null);
-    });
+    api.get<{ data: FaqsData }>("/content/faqs").then((r) => {
+      setData(r.data);
+      setOpenItem(r.data.faqs[0]?.id ?? null);
+    }).catch(() => setData(null));
   }, []);
 
   const filtered = useMemo(() => {

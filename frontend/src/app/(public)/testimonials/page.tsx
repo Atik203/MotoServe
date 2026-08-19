@@ -4,10 +4,24 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, Play, Star, TrendingUp } from "lucide-react";
-import demoData from "@/lib/demo-data";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-type TestimonialsData = Awaited<ReturnType<typeof demoData.load<"testimonials">>>;
+type Review = { id: string; name: string; role: string; rating: number; avatar?: string; initials?: string; review: string };
+type TestimonialsData = {
+  hero: { title: string; subtitle: string };
+  video: { image: string; quote: string; author: string };
+  stats: {
+    rating: string;
+    ratingLabel: string;
+    ratingNote: string;
+    efficiency: string;
+    efficiencyLabel: string;
+    efficiencyNote: string;
+  };
+  reviews: Review[];
+  cta: { title: string; subtitle: string; button: string };
+};
 
 function Stars({ rating, size = "h-[19px] w-5" }: { rating: number; size?: string }) {
   return (
@@ -32,7 +46,7 @@ function Stars({ rating, size = "h-[19px] w-5" }: { rating: number; size?: strin
 export default function TestimonialsPage() {
   const [data, setData] = useState<TestimonialsData | null>(null);
   useEffect(() => {
-    demoData.load("testimonials").then(setData);
+    api.get<{ data: TestimonialsData }>("/content/testimonials").then((r) => setData(r.data)).catch(() => setData(null));
   }, []);
 
   if (!data) {

@@ -142,7 +142,7 @@ export function VehicleForm({ initial, submitLabel = "Register Vehicle", onSubmi
         fuelType: form.fuelType,
         transmission: form.transmission,
         vin: form.vin.trim().toUpperCase() || undefined,
-        image: photos[0]?.key ?? (initial?.image?.startsWith("/") ? initial.image : "/images/cars/toyota-camry.png"),
+        image: photos[0]?.key ?? (initial?.image?.startsWith("/") ? initial.image : ""),
         photos: photos.map((p) => p.key),
       });
       toast.success(initial ? "Vehicle updated successfully" : "Vehicle registered successfully");

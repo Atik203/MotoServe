@@ -2,6 +2,8 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client.js";
 import bcrypt from "bcryptjs";
+import fs from "fs";
+import path from "path";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -107,7 +109,30 @@ async function main() {
     data: SERVICES.map((s) => ({ ...s, category: s.category as never })),
   });
 
+  await seedSiteContent();
+
   console.log("Seed complete.");
+}
+
+const CONTENT_KEYS = ["home", "services", "faqs", "pricing", "testimonials"] as const;
+
+async function seedSiteContent() {
+  const demoDir = path.resolve(process.cwd(), "../frontend/public/demo");
+  for (const key of CONTENT_KEYS) {
+    const file = path.join(demoDir, `${key}.json`);
+    if (!fs.existsSync(file)) {
+      console.warn(`Skipping content seed for "${key}" (missing ${file})`);
+      continue;
+    }
+    const raw = JSON.parse(fs.readFileSync(file, "utf8")) as Record<string, unknown>;
+    const data = (raw[key] ?? raw) as object;
+    await prisma.siteContent.upsert({
+      where: { key },
+      update: { data },
+      create: { key, data },
+    });
+    console.log(`Seeded site content: ${key}`);
+  }
 }
 
 main()

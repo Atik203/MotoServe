@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const COOKIE_NAME = "motoserve_token";
-const AUTH_PAGES = ["/login", "/register", "/forgot-password"];
+const AUTH_PAGES = ["/login", "/register", "/forgot-password", "/reset-password"];
 const ROLE_HOME: Record<string, string> = {
   owner: "/dashboard",
   advisor: "/advisor",
@@ -67,5 +67,6 @@ export const config = {
     "/login/:path*",
     "/register/:path*",
     "/forgot-password/:path*",
+    "/reset-password/:path*",
   ],
 };

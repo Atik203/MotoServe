@@ -4,7 +4,6 @@ import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   CalendarCheck,
   ChevronRight,
   CircleDashed,

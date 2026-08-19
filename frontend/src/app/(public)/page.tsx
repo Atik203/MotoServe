@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Activity, FileText, Package, Receipt, ShieldCheck, Zap, type LucideIcon } from "lucide-react";
-import demoData from "@/lib/demo-data";
+import { api } from "@/lib/api";
 
 const featureIcons: Record<string, LucideIcon> = {
   "shield-check": ShieldCheck,
@@ -19,7 +19,10 @@ export default function HomePage() {
   const [features, setFeatures] = useState<{ id: string; title: string; description: string; icon: string }[]>([]);
 
   useEffect(() => {
-    demoData.load("home").then((data) => setFeatures(data.features));
+    api
+      .get<{ data: { features: { id: string; title: string; description: string; icon: string }[] } }>("/content/home")
+      .then((res) => setFeatures(res.data.features))
+      .catch(() => setFeatures([]));
   }, []);
 
   return (

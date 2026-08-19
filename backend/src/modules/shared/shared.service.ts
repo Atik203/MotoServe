@@ -197,6 +197,10 @@ export function listTestimonials() {
   return prisma.testimonial.findMany({ orderBy: { date: "desc" } });
 }
 
+export function getSiteContent(key: string) {
+  return prisma.siteContent.findUnique({ where: { key } });
+}
+
 export function mapCustomerStatus(status: string): CustomerStatus {
   if (status === "ACTIVE") return "approved";
   if (status === "REJECTED") return "rejected";

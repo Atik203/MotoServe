@@ -3,15 +3,37 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Check, ChevronDown, Clock, Disc3, Droplet, Gauge, Truck, type LucideIcon } from "lucide-react";
-import demoData from "@/lib/demo-data";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const cardIcons: Record<string, LucideIcon> = { droplet: Droplet, disc: Disc3, gauge: Gauge, truck: Truck };
 
+type PricingCard = {
+  id: string;
+  title: string;
+  subtitle: string;
+  price: string;
+  priceSuffix: string;
+  duration: string;
+  icon: string;
+  badge: string | null;
+  highlight: boolean;
+  accent?: "brown";
+  features: string[];
+  cta: string;
+  ctaVariant?: "outline" | "brown";
+};
+type PricingData = {
+  hero: { title: string; subtitle: string };
+  cards: PricingCard[];
+  pricingFaq: { question: string; answer: string }[];
+  cta: { title: string; subtitle: string; button: string };
+};
+
 export default function PricingPage() {
-  const [data, setData] = useState<Awaited<ReturnType<typeof demoData.load<"pricing">>> | null>(null);
+  const [data, setData] = useState<PricingData | null>(null);
   useEffect(() => {
-    demoData.load("pricing").then(setData);
+    api.get<{ data: PricingData }>("/content/pricing").then((r) => setData(r.data)).catch(() => setData(null));
   }, []);
 
   if (!data) {

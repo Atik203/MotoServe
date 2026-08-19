@@ -122,34 +122,9 @@ export async function load<K extends DemoFile>(file: K): Promise<DemoMap[K]> {
   return unwrapped;
 }
 
-export async function loadAll(): Promise<Record<DemoFile, DemoMap[DemoFile]>> {
-  const files = [
-    "services",
-    "vehicles",
-    "customers",
-    "employees",
-    "jobs",
-    "parts",
-    "appointments",
-    "estimates",
-    "invoices",
-    "messages",
-    "ratings",
-    "kpis",
-    "reports",
-    "testimonials",
-    "faqs",
-    "pricing",
-    "home",
-  ] as const;
-
-  const entries = await Promise.all(files.map(async (f) => [f, await load(f)] as const));
-  return Object.fromEntries(entries) as Record<DemoFile, DemoMap[DemoFile]>;
-}
-
 export function clearCache(): void {
   cache.clear();
 }
 
-const demoData = { load, loadAll, clearCache };
+const demoData = { load, clearCache };
 export default demoData;

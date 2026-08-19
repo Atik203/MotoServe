@@ -362,6 +362,12 @@ model Testimonial {
   date    DateTime @default(now())
 }
 
+model SiteContent {
+  key       String   @id
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
 model AuditLog {
   id     String   @id @default(cuid())
   user   String

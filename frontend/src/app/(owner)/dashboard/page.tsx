@@ -122,7 +122,6 @@ export default function OwnerDashboardPage() {
     const items: ActivityItem[] = [];
     let i = 0;
     for (const e of pendingEstimates) {
-      const v = vehicleById(e.jobCard?.vehicle?.id);
       items.push({
         id: `est-${e.id}`,
         icon: FileCheck,
@@ -186,11 +185,6 @@ export default function OwnerDashboardPage() {
     }
     return items.sort((a, b) => b.at - a.at).slice(0, 5);
   }, [pendingEstimates, jobs, upcomingAppointments, dueInvoices, invoices, now]);
-
-  const bookService = (vehicleId?: string) => {
-    if (vehicleId) dispatch(selectVehicle(vehicleId));
-    router.push(vehicles.length > 0 ? "/dashboard/appointments/book" : "/dashboard/vehicles/new");
-  };
 
   return (
     <div className="bg-background min-h-screen p-8">
