@@ -39,6 +39,5 @@
     "prisma": "7.9.1",
     "tsx": "^4.20.3",
     "typescript": "^5.9.0"
-  },
-  "packageManager": "pnpm@11.3.0"
+  }
 }

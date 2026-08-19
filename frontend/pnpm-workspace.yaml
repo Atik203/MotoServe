@@ -1,5 +1,0 @@
-allowBuilds:
-  core-js: true
-  unrs-resolver: true
-onlyBuiltDependencies:
-  - core-js

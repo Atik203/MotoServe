@@ -16,9 +16,9 @@ Status flow: `received → inspecting → repairing → testing → ready/comple
 
 ## Tech stack (pinned — do not bump majors without asking)
 
-- Frontend: Next.js 16.3.0 · React 19.2.8 · Tailwind CSS 4.3.3 (CSS-first `@theme`, no tailwind.config.js) · shadcn/ui (CLI 4.x) · @reduxjs/toolkit 2.12.0 + react-redux · lucide-react · sonner 2.0.8 · react-hook-form + Zod 4.4.3 · pnpm
+- Frontend: Next.js 16.3.0 · React 19.2.8 · Tailwind CSS 4.3.3 (CSS-first `@theme`, no tailwind.config.js) · shadcn/ui (CLI 4.x) · @reduxjs/toolkit 2.12.0 + react-redux · lucide-react · sonner 2.0.8 · react-hook-form + Zod 4.4.3 · npm
 - Backend: Express 5.2.1 · Prisma 7.9.1 + @prisma/adapter-pg · PostgreSQL · Zod 4.4.3 · jsonwebtoken + bcryptjs · socket.io · pdfkit (later)
-- Node 24 LTS · TypeScript strict · Inter font · brand blue `#0052cc`
+- Node 24 LTS · TypeScript strict · Inter font · brand blue `#0052cc` · npm (single package manager)
 
 ## Folder layout
 

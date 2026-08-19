@@ -53,33 +53,31 @@ MotoServe is a full-stack vehicle workshop management platform connecting four u
 | **Payments** | Stripe Checkout (card) |
 | **Storage** | AWS S3 (presigned URLs) |
 | **Deploy** | Vercel (frontend + backend) |
-| **Tooling** | TypeScript strict · pnpm 11.x · Node 24 LTS |
+| **Tooling** | TypeScript strict · npm · Node 24 LTS |
 
 ## Quick Start
 
-**Prerequisites:** Node 24 LTS, pnpm 11.x, PostgreSQL running
+**Prerequisites:** Node 24 LTS, npm, PostgreSQL running
 
 ```bash
 # Clone the repo
 git clone https://github.com/atik203/motoserve.git
 cd motoserve
 
-# Install dependencies
-cd frontend && pnpm install
-cd ../backend && pnpm install
+# Install dependencies (frontend, backend, root concurrently)
+npm install --prefix frontend
+npm install --prefix backend
+npm install
 
 # Set up environment
-cd ../backend
-cp .env.example .env        # edit DATABASE_URL
+cp backend/.env.example backend/.env   # edit DATABASE_URL
 
-# Initialize database
-pnpm db:generate
-pnpm db:migrate
-pnpm db:seed
+# Initialize database (from backend/)
+cd backend && npm run db:generate && npm run db:push && npm run db:seed
 
-# Start development
-cd ../frontend && pnpm dev   # http://localhost:3500
-cd ../backend  && pnpm dev   # http://localhost:4000
+# Start BOTH servers from the repo root
+cd ..
+npm run dev        # api http://localhost:4000  ·  web http://localhost:3500
 ```
 
 ## Project Structure
@@ -119,16 +117,16 @@ motoserve/
 
 ## Scripts
 
-| Command | Frontend | Backend |
-|---|---|---|
-| **Dev** | `pnpm dev` | `pnpm dev` |
-| **Build** | `pnpm build` | `pnpm build` |
-| **Start** | `pnpm start` | `pnpm start` |
-| **Lint** | `pnpm lint` | — |
-| **Typecheck** | `pnpm typecheck` | `pnpm typecheck` |
-| **DB Generate** | — | `pnpm db:generate` |
-| **DB Migrate** | — | `pnpm db:migrate` |
-| **DB Seed** | — | `pnpm db:seed` |
+| Command | Frontend | Backend | Root |
+|---|---|---|---|
+| **Dev** | `npm run dev` | `npm run dev` | `npm run dev` (both) |
+| **Build** | `npm run build` | `npm run build` | — |
+| **Start** | `npm run start` | `npm run start` | — |
+| **Lint** | `npm run lint` | — | — |
+| **Typecheck** | `npm run typecheck` | `npm run typecheck` | `npm run typecheck` (both) |
+| **DB Generate** | — | `npm run db:generate` | `npm run build` |
+| **DB Push** | — | `npm run db:push` | — |
+| **DB Seed** | — | `npm run db:seed` | — |
 
 ## Demo Accounts
 
