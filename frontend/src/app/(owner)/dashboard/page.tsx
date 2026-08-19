@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowUpRight,
   Bell,
@@ -88,7 +88,10 @@ export default function OwnerDashboardPage() {
 
   const firstName = user?.name?.split(" ")[0] ?? "there";
 
-  const vehicleById = (id?: string | null) => (id ? vehicles.find((v) => v.id === id) : undefined);
+  const vehicleById = useCallback(
+    (id?: string | null) => (id ? vehicles.find((v) => v.id === id) : undefined),
+    [vehicles],
+  );
 
   const [now] = useState(() => Date.now());
 
@@ -184,7 +187,7 @@ export default function OwnerDashboardPage() {
       });
     }
     return items.sort((a, b) => b.at - a.at).slice(0, 5);
-  }, [pendingEstimates, jobs, upcomingAppointments, dueInvoices, invoices, now]);
+  }, [pendingEstimates, jobs, upcomingAppointments, dueInvoices, now, vehicleById]);
 
   return (
     <div className="bg-background min-h-screen p-8">
