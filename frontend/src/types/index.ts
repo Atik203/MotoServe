@@ -220,7 +220,7 @@ export interface Invoice {
   subtotal: number;
   tax: number;
   total: number;
-  payment: { method: "card" | "cash"; paidAt: string; last4: string | null } | null;
+  payment: { method: "card" | "cash" | "mobile"; paidAt: string | null; last4: string | null } | null;
 }
 
 export interface ChatMessage {

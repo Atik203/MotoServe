@@ -24,11 +24,8 @@ export default function ForgotPasswordPage() {
     }
     setSubmitting(true);
     try {
-      const res = await dispatch(forgotPassword(email.trim())).unwrap();
-      toast.success("Reset link sent — check your inbox");
-      if (res.resetToken) {
-        router.push(`/reset-password?token=${encodeURIComponent(res.resetToken)}`);
-      }
+      await dispatch(forgotPassword(email.trim())).unwrap();
+      toast.success("If an account exists for that email, a reset link has been sent");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to send reset link");
       setSubmitting(false);

@@ -119,7 +119,7 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
     if (!q) return threads;
     return threads.filter((thread) => {
       const name = otherName(thread).toLowerCase();
-      const lastText = thread.messages[thread.messages.length - 1]?.text.toLowerCase() ?? "";
+      const lastText = (thread.messages.at(-1)?.text ?? "").toLowerCase();
       return thread.subject.toLowerCase().includes(q) || name.includes(q) || lastText.includes(q);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

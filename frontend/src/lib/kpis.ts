@@ -206,7 +206,7 @@ export function buildKpis(role: KpiRole, ctx: KpiContext): KpiCard[] {
     case "admin":
     default: {
       const totalRevenue = reports?.totalRevenue ?? 0;
-      const latestRevenue = reports?.revenueByMonth[reports.revenueByMonth.length - 1]?.revenue ?? 0;
+      const latestRevenue = reports?.revenueByMonth.at(-1)?.revenue ?? 0;
       return [
         {
           id: "kpi-201",

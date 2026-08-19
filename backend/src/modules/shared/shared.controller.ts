@@ -130,7 +130,19 @@ export async function getEstimates(req: Request, res: Response): Promise<void> {
 export async function getInvoices(req: Request, res: Response): Promise<void> {
   const customerId = req.user?.role === "OWNER" ? req.user.userId : undefined;
   const invoices = await listInvoices(customerId);
-  res.json(invoices.map((i) => ({ ...i, status: i.status.toLowerCase() })));
+  res.json(
+    invoices.map((i) => ({
+      ...i,
+      status: i.status.toLowerCase(),
+      payment: i.paymentMethod
+        ? {
+            method: i.paymentMethod.toLowerCase() as "card" | "cash" | "mobile",
+            paidAt: i.paidAt ?? i.payment?.paidAt ?? null,
+            last4: i.last4 ?? null,
+          }
+        : null,
+    })),
+  );
 }
 
 export async function getThreads(req: Request, res: Response): Promise<void> {
@@ -150,8 +162,18 @@ export async function getThreads(req: Request, res: Response): Promise<void> {
   );
 }
 
+async function getParticipantThread(threadId: string, userId: string | undefined) {
+  const thread = await prisma.chatThread.findUnique({ where: { id: threadId } });
+  if (!thread) throw new ApiError(404, "Conversation not found");
+  if (!userId || (thread.ownerId !== userId && thread.advisorId !== userId)) {
+    throw new ApiError(403, "You are not a participant of this conversation");
+  }
+  return thread;
+}
+
 export async function sendMessage(req: Request, res: Response): Promise<void> {
   const { threadId, text } = req.body.body as { threadId: string; text: string };
+  await getParticipantThread(threadId, req.user?.userId);
   const sender: "ADVISOR" | "OWNER" = req.user?.role === "OWNER" ? "OWNER" : "ADVISOR";
   const message = await prisma.message.create({ data: { threadId, sender, text } });
   await prisma.chatThread.update({
@@ -167,6 +189,7 @@ export async function sendMessage(req: Request, res: Response): Promise<void> {
 }
 
 export async function markThreadReadController(req: Request, res: Response): Promise<void> {
+  await getParticipantThread(req.params.id as string, req.user?.userId);
   await markThreadRead(req.params.id as string, req.user?.role);
   res.json({ ok: true });
 }

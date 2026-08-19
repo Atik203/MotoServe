@@ -86,7 +86,7 @@ export default function OwnerDashboardPage() {
     dispatch(fetchInvoices());
   }, [dispatch]);
 
-  const firstName = user?.name.split(" ")[0] ?? "there";
+  const firstName = user?.name?.split(" ")[0] ?? "there";
 
   const vehicleById = (id?: string | null) => (id ? vehicles.find((v) => v.id === id) : undefined);
 

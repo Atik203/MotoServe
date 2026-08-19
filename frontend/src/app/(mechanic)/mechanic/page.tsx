@@ -91,7 +91,7 @@ export default function MechanicDashboardPage() {
     );
   }
 
-  const firstName = user?.name.split(" ")[0] ?? "Mechanic";
+  const firstName = user?.name?.split(" ")[0] ?? "Mechanic";
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
   const todayLabel = new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });

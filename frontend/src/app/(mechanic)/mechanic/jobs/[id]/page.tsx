@@ -21,17 +21,25 @@ export default function RepairProgressPage() {
   const dispatch = useAppDispatch();
 
   const jobs = useAppSelector((s) => s.jobs.items);
+  const jobsStatus = useAppSelector((s) => s.jobs.status);
   const user = useAppSelector((s) => s.auth.user);
   const job = jobs.find((j) => j.id === jobId);
 
   useEffect(() => {
-    if (jobs.length === 0) dispatch(fetchJobs());
-  }, [dispatch, jobs.length]);
+    if (jobsStatus === "idle") dispatch(fetchJobs());
+  }, [dispatch, jobsStatus]);
 
-  if (!job) {
+  if (jobsStatus === "loading" && !job) {
     return (
       <div className="bg-background min-h-screen p-8">
         <p className="text-muted-foreground">Loading job card...</p>
+      </div>
+    );
+  }
+  if (!job) {
+    return (
+      <div className="bg-background min-h-screen p-8">
+        <p className="text-muted-foreground">Job card not found.</p>
       </div>
     );
   }

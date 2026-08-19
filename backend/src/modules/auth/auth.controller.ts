@@ -50,12 +50,15 @@ export function logout(_req: Request, res: Response): void {
 export async function forgotPassword(req: Request, res: Response): Promise<void> {
   const { email } = req.body.body as ForgotPasswordBody;
   const user = await findUserByEmail(email);
-  if (!user) {
-    res.json({ ok: true });
-    return;
+  if (user) {
+    const resetToken = signToken({ userId: user.id, role: user.role, name: user.name, purpose: "password-reset" }, "15m");
+    const base = process.env.CLIENT_URL ?? "http://localhost:3500";
+    const link = `${base}/reset-password?token=${encodeURIComponent(resetToken)}`;
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`[password-reset] Reset link for ${email}: ${link}`);
+    }
   }
-  const resetToken = signToken({ userId: user.id, role: user.role, name: user.name, purpose: "password-reset" }, "15m");
-  res.json({ ok: true, resetToken });
+  res.json({ ok: true });
 }
 
 export async function resetPassword(req: Request, res: Response): Promise<void> {

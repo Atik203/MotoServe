@@ -88,7 +88,7 @@ export const roleNav: Record<Role, RoleNavConfig> = {
       { label: "Help", href: "/faqs", icon: LifeBuoy },
       { label: "Logout", href: "/login", icon: LogOut },
     ],
-    actionButton: { label: "Clock Out" },
+    actionButton: { label: "Logout" },
   },
   admin: {
     brand: "MotoServe",

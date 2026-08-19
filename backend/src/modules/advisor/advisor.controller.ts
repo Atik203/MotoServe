@@ -34,7 +34,7 @@ export async function assignMechanicController(req: Request, res: Response): Pro
 
 export async function createEstimateController(req: Request, res: Response): Promise<void> {
   if (!req.user) throw new ApiError(401, "Authentication required");
-  const estimate = await createEstimate(req.user.userId, req.body.body as CreateEstimateBody);
+  const estimate = await createEstimate(req.user.userId, req.user.role, req.body.body as CreateEstimateBody);
   await logAudit(req.user.name, `Sent estimate ${estimate.id}`);
   res.status(201).json(estimate);
 }

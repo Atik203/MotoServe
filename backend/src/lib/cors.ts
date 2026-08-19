@@ -8,10 +8,14 @@ export function isAllowedOrigin(origin: string | undefined, callback: (err: Erro
     callback(null, true);
     return;
   }
-  const allow =
-    allowedOrigins.includes(origin) ||
-    origin.startsWith("http://localhost") ||
-    origin.startsWith("http://127.0.0.1") ||
-    origin.endsWith(".vercel.app");
-  callback(null, allow);
+  if (allowedOrigins.includes(origin)) {
+    callback(null, true);
+    return;
+  }
+  // Vercel preview deployments are only trusted outside of production.
+  if (process.env.NODE_ENV !== "production" && origin.endsWith(".vercel.app")) {
+    callback(null, true);
+    return;
+  }
+  callback(null, false);
 }

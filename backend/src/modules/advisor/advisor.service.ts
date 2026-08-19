@@ -2,19 +2,9 @@ import { prisma } from "../../lib/prisma.js";
 import { ApiError } from "../../middleware/error.js";
 import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
-import type { Prisma } from "../../generated/prisma/client.js";
+import type { Estimate, JobCard, Prisma } from "../../generated/prisma/client.js";
+import { createWithSequentialId } from "../../lib/ids.js";
 import type { AssignMechanicBody, CreateCustomerBody, CreateEstimateBody, CreateJobCardBody } from "./advisor.types.js";
-
-type IdRow = { id: string };
-type FindManyIds = (args: { select: { id: true } }) => Promise<IdRow[]>;
-
-async function nextSequentialId(prefix: string, base: number, findMany: FindManyIds): Promise<number> {
-  const rows = await findMany({ select: { id: true } });
-  return rows.reduce((max, row) => {
-    const match = new RegExp(`^${prefix.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}(\\d+)$`).exec(row.id);
-    return match ? Math.max(max, parseInt(match[1], 10)) : max;
-  }, base);
-}
 
 export async function createJobCard(advisorId: string, body: CreateJobCardBody) {
   if (body.appointmentId) {
@@ -27,9 +17,7 @@ export async function createJobCard(advisorId: string, body: CreateJobCardBody) 
   const serviceLines = body.serviceIds?.length
     ? await prisma.service.findMany({ where: { id: { in: body.serviceIds } } })
     : [];
-  const maxNum = await nextSequentialId("JC-", 1040, prisma.jobCard.findMany);
-  const id = `JC-${maxNum + 1}`;
-  const job = await prisma.jobCard.create({
+  const job = await createWithSequentialId<JobCard>(prisma.jobCard, "JC-", 1040, (id) => ({
     data: {
       id,
       vehicleId: body.vehicleId,
@@ -49,7 +37,7 @@ export async function createJobCard(advisorId: string, body: CreateJobCardBody) 
         : undefined,
       status: "RECEIVED",
     },
-  });
+  }));
   await prisma.jobProgress.createMany({
     data: [
       { jobCardId: job.id, step: "RECEIVED", label: "Vehicle Received", done: true },
@@ -84,22 +72,27 @@ export async function createCustomer(body: CreateCustomerBody) {
   });
 }
 
-export function assignMechanic(id: string, body: AssignMechanicBody) {
+export async function assignMechanic(id: string, body: AssignMechanicBody) {
+  const mechanic = await prisma.user.findUnique({ where: { id: body.mechanicId } });
+  if (!mechanic) throw new ApiError(404, "Mechanic not found");
+  if (mechanic.role !== "MECHANIC") throw new ApiError(400, "Selected user is not a mechanic");
   const data: Prisma.JobCardUncheckedUpdateInput = { mechanicId: body.mechanicId };
   if (body.station) data.station = body.station;
   if (body.notes) data.assignmentNotes = body.notes;
   return prisma.jobCard.update({ where: { id }, data });
 }
 
-export async function createEstimate(advisorId: string, body: CreateEstimateBody) {
-  const job = await prisma.jobCard.findUnique({ where: { id: body.jobId }, select: { customerId: true, status: true } });
+export async function createEstimate(advisorId: string, role: string, body: CreateEstimateBody) {
+  const job = await prisma.jobCard.findUnique({ where: { id: body.jobId }, select: { customerId: true, status: true, advisorId: true } });
   if (!job) throw new ApiError(404, "Job not found");
   if (job.status === "COMPLETED") throw new ApiError(400, "Cannot estimate a completed job");
-  const maxNum = await nextSequentialId("ES-", 3300, prisma.estimate.findMany);
+  if (role === "ADVISOR" && job.advisorId !== advisorId) {
+    throw new ApiError(403, "You can only create estimates for jobs assigned to you");
+  }
   const total = body.items.reduce((sum, i) => sum + i.amount, 0);
-  return prisma.estimate.create({
+  return createWithSequentialId<Estimate>(prisma.estimate, "ES-", 3300, (id) => ({
     data: {
-      id: `ES-${maxNum + 1}`,
+      id,
       jobCardId: body.jobId,
       customerId: job.customerId,
       advisorId,
@@ -115,5 +108,5 @@ export async function createEstimate(advisorId: string, body: CreateEstimateBody
       },
     },
     include: { items: true },
-  });
+  }));
 }

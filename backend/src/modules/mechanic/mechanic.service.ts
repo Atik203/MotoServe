@@ -1,33 +1,42 @@
 import { prisma } from "../../lib/prisma.js";
+import { createWithSequentialId } from "../../lib/ids.js";
+import { ApiError } from "../../middleware/error.js";
+import type { Invoice } from "../../generated/prisma/client.js";
 import type { AddJobNoteBody, AddPartUsedBody, UpdateJobStatusBody } from "./mechanic.types.js";
 
 const STATUS_ORDER = ["RECEIVED", "INSPECTING", "REPAIRING", "TESTING", "READY", "COMPLETED"];
 
 export async function updateJobStatus(id: string, status: UpdateJobStatusBody["status"]) {
-  const job = await prisma.jobCard.findUniqueOrThrow({ where: { id } });
+  const job = await prisma.jobCard.findUnique({ where: { id } });
+  if (!job) throw new ApiError(404, "Job not found");
   const targetIdx = STATUS_ORDER.indexOf(status.toUpperCase());
-  const updated = await prisma.jobCard.update({
-    where: { id: job.id },
-    data: { status: status.toUpperCase() as never },
-  });
+  if (targetIdx < 0) throw new ApiError(400, "Invalid job status");
+  const currentIdx = STATUS_ORDER.indexOf(job.status);
+  if (job.status === "COMPLETED") throw new ApiError(400, "Job is already completed");
+  if (targetIdx < currentIdx) throw new ApiError(400, "Cannot move a job backwards through its lifecycle");
   const progress = await prisma.jobProgress.findMany({ where: { jobCardId: job.id } });
-  for (const step of progress) {
+  const ops = progress.map((step) => {
     const idx = STATUS_ORDER.indexOf(step.step);
-    await prisma.jobProgress.update({
+    const done = idx <= targetIdx;
+    return prisma.jobProgress.update({
       where: { id: step.id },
       data: {
-        done: idx <= targetIdx,
+        done,
         timestamp:
-          idx <= targetIdx && !step.timestamp
+          done && !step.timestamp
             ? new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
             : step.timestamp,
       },
     });
-  }
+  });
+  await prisma.$transaction([
+    prisma.jobCard.update({ where: { id: job.id }, data: { status: status.toUpperCase() as never } }),
+    ...ops,
+  ]);
   if (status.toUpperCase() === "COMPLETED") {
     await ensureInvoiceForJob(job.id);
   }
-  return updated;
+  return prisma.jobCard.findUniqueOrThrow({ where: { id: job.id } });
 }
 
 export async function ensureInvoiceForJob(jobId: string) {
@@ -52,12 +61,15 @@ export async function ensureInvoiceForJob(jobId: string) {
   const total = subtotal + tax;
 
   const year = new Date().getFullYear();
-  const rows = await prisma.invoice.findMany({ select: { id: true } });
-  const maxNum = rows.reduce((max, row) => {
-    const match = new RegExp(`^INV-${year}-(\\d+)$`).exec(row.id);
-    return match ? Math.max(max, parseInt(match[1], 10)) : max;
-  }, 0);
-  const id = `INV-${year}-${String(maxNum + 1).padStart(4, "0")}`;
+
+  const laborItems = (estimate?.items ?? [])
+    .filter((i) => i.category === "LABOR")
+    .map((i) => ({
+      id: i.id ?? `lab-${crypto.randomUUID().slice(0, 8)}`,
+      description: i.description ?? "Labor",
+      category: "service",
+      amount: i.amount,
+    }));
 
   const items = [
     ...services.map((sv) => ({
@@ -66,6 +78,7 @@ export async function ensureInvoiceForJob(jobId: string) {
       category: "service",
       amount: sv.price,
     })),
+    ...laborItems,
     ...job.partsUsed.map((p) => ({
       id: p.id,
       description: p.name,
@@ -74,7 +87,7 @@ export async function ensureInvoiceForJob(jobId: string) {
     })),
   ];
 
-  return prisma.invoice.create({
+  return createWithSequentialId<Invoice>(prisma.invoice, `INV-${year}-`, 0, (id) => ({
     data: {
       id,
       jobId: job.id,
@@ -88,7 +101,7 @@ export async function ensureInvoiceForJob(jobId: string) {
       total,
       status: "UNPAID",
     },
-  });
+  }));
 }
 
 export function addJobNote(id: string, body: AddJobNoteBody) {

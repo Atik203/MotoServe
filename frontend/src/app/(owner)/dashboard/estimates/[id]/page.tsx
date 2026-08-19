@@ -15,19 +15,23 @@ export default function EstimateApprovalPage() {
   const params = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const estimates = useAppSelector((s) => s.estimates.items);
+  const estimatesStatus = useAppSelector((s) => s.estimates.status);
   const employees = useAppSelector((s) => s.employees.items);
   const jobs = useAppSelector((s) => s.jobs.items);
 
   useEffect(() => {
-    if (estimates.length === 0) dispatch(fetchEstimates());
+    if (estimatesStatus === "idle") dispatch(fetchEstimates());
     if (employees.length === 0) dispatch(fetchEmployees());
     if (jobs.length === 0) dispatch(fetchJobs());
-  }, [dispatch, estimates.length, employees.length, jobs.length]);
+  }, [dispatch, estimatesStatus, employees.length, jobs.length]);
 
   const estimate = estimates.find((e) => e.id === params.id) ?? null;
 
-  if (!estimate) {
+  if (estimatesStatus === "loading" && !estimate) {
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">Loading estimate...</div>;
+  }
+  if (!estimate) {
+    return <div className="bg-background min-h-screen p-8 text-muted-foreground">Estimate not found.</div>;
   }
 
   const job = jobs.find((j) => j.id === estimate.jobId);
