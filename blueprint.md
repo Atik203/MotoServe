@@ -1,6 +1,6 @@
 # MotoServe — Blueprint
 
-Source of truth for screens, design references, build status, and data model. Agents: read this + `AGENTS.md`, cache both, extend "Design notes" per screen instead of re-fetching Figma.
+Source of truth for screens, design references, build status, and data model. Agents: read this + `AGENTS.md`, cache both, extend "Design notes" per screen instead of Figma.
 
 ## Stakeholders & permissions
 
