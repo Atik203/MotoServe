@@ -43,7 +43,8 @@ export async function me(req: Request, res: Response): Promise<void> {
 }
 
 export function logout(_req: Request, res: Response): void {
-  res.clearCookie(COOKIE_NAME, { path: "/" });
+  const { maxAge: _maxAge, ...clearOptions } = cookieOptions;
+  res.clearCookie(COOKIE_NAME, clearOptions);
   res.json({ ok: true });
 }
 

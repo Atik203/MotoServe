@@ -23,7 +23,7 @@ export function AppSidebar({ role }: AppSidebarProps) {
     } catch {
       // ignore
     }
-    router.push("/login");
+    router.replace("/login");
   };
 
   const isActive = (href: string) => {

@@ -32,7 +32,7 @@ export function UserMenu() {
     } catch {
       // ignore
     }
-    router.push("/login");
+    router.replace("/login");
   };
 
   return (
