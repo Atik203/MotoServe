@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import {
   findAppointmentById,
   listAppointments,
+  listArchivedJobs,
   listCustomers,
   listEmployees,
   listEstimates,
@@ -63,6 +64,12 @@ function mapJob(job: {
 
 export async function getJobs(req: Request, res: Response): Promise<void> {
   const jobs = await listJobs(req.user?.role, req.user?.userId);
+  res.json(jobs.map(mapJob));
+}
+
+export async function getArchivedJobs(req: Request, res: Response): Promise<void> {
+  if (!req.user) throw new ApiError(401, "Authentication required");
+  const jobs = await listArchivedJobs(req.user.userId);
   res.json(jobs.map(mapJob));
 }
 

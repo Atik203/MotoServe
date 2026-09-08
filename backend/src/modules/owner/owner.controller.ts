@@ -4,17 +4,22 @@ import { safeEmit } from "../../lib/socket.js";
 import { logAudit } from "../../lib/audit.js";
 import { prisma } from "../../lib/prisma.js";
 import {
+  archiveJob,
   bookAppointment,
+  bulkArchiveJobs,
   createChatThread,
   createVehicle,
   decideEstimate,
+  deleteRating,
   deleteVehicle,
   payInvoice,
   rateJob,
+  restoreJob,
   updateVehicle,
 } from "./owner.service.js";
 import type {
   BookAppointmentBody,
+  BulkArchiveJobsBody,
   CreateThreadBody,
   CreateVehicleBody,
   DecideEstimateBody,
@@ -73,6 +78,31 @@ export async function rateJobController(req: Request, res: Response): Promise<vo
   if (!req.user) throw new ApiError(401, "Authentication required");
   const rating = await rateJob(req.params.id as string, req.user.userId, req.body.body as RateJobBody);
   res.status(201).json(rating);
+}
+
+export async function deleteRatingController(req: Request, res: Response): Promise<void> {
+  if (!req.user) throw new ApiError(401, "Authentication required");
+  await deleteRating(req.params.id as string, req.user.userId);
+  res.json({ ok: true });
+}
+
+export async function archiveJobController(req: Request, res: Response): Promise<void> {
+  if (!req.user) throw new ApiError(401, "Authentication required");
+  const job = await archiveJob(req.params.id as string, req.user.userId);
+  res.json({ id: job.id, ownerArchivedAt: job.ownerArchivedAt });
+}
+
+export async function restoreJobController(req: Request, res: Response): Promise<void> {
+  if (!req.user) throw new ApiError(401, "Authentication required");
+  const job = await restoreJob(req.params.id as string, req.user.userId);
+  res.json({ id: job.id, ownerArchivedAt: job.ownerArchivedAt });
+}
+
+export async function bulkArchiveJobsController(req: Request, res: Response): Promise<void> {
+  if (!req.user) throw new ApiError(401, "Authentication required");
+  const result = await bulkArchiveJobs((req.body.body as BulkArchiveJobsBody).ids, req.user.userId);
+  await logAudit(req.user?.name ?? "owner", `Archived ${result.archived} job(s) from history`);
+  res.json(result);
 }
 
 export async function createThreadController(req: Request, res: Response): Promise<void> {

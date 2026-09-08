@@ -40,3 +40,7 @@ export interface CreateThreadBody {
   subject?: string;
   text: string;
 }
+
+export interface BulkArchiveJobsBody {
+  ids: string[];
+}

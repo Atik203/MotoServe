@@ -4,12 +4,14 @@ import type { JobCard, JobNote, JobStatus, PartUsed } from "@/types";
 
 interface JobsState {
   items: JobCard[];
+  archivedItems: JobCard[];
   status: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
 }
 
 const initialState: JobsState = {
   items: [],
+  archivedItems: [],
   status: "idle",
   error: null,
 };
@@ -34,6 +36,10 @@ export const fetchJobs = createAsyncThunk("jobs/fetchAll", async () => {
 
 export const fetchJob = createAsyncThunk("jobs/fetchOne", async (id: string) => {
   return await api.get<JobCard>(`/jobs/${id}`);
+});
+
+export const fetchArchivedJobs = createAsyncThunk("jobs/fetchArchived", async () => {
+  return await api.get<JobCard[]>("/jobs/archived");
 });
 
 export const createJobCard = createAsyncThunk(
@@ -92,6 +98,18 @@ export const addJobPhoto = createAsyncThunk(
   },
 );
 
+export const archiveJob = createAsyncThunk("jobs/archive", async (id: string) => {
+  return await api.patch<{ id: string; ownerArchivedAt: string | null }>(`/jobs/${id}/archive`);
+});
+
+export const restoreJob = createAsyncThunk("jobs/restore", async (id: string) => {
+  return await api.patch<{ id: string; ownerArchivedAt: string | null }>(`/jobs/${id}/restore`);
+});
+
+export const bulkArchiveJobs = createAsyncThunk("jobs/bulkArchive", async (ids: string[]) => {
+  return await api.post<{ archived: number }>("/jobs/archive", { ids });
+});
+
 const jobsSlice = createSlice({
   name: "jobs",
   initialState,
@@ -137,6 +155,36 @@ const jobsSlice = createSlice({
       .addCase(addJobPhoto.fulfilled, (state, action) => {
         const job = state.items.find((j) => j.id === action.meta.arg.id);
         if (job) job.photos = action.payload.photos;
+      })
+      .addCase(fetchArchivedJobs.fulfilled, (state, action) => {
+        state.archivedItems = action.payload;
+      })
+      .addCase(archiveJob.fulfilled, (state, action) => {
+        const i = state.items.findIndex((j) => j.id === action.payload.id);
+        if (i !== -1) {
+          const [job] = state.items.splice(i, 1);
+          state.archivedItems.unshift({ ...job, ownerArchivedAt: action.payload.ownerArchivedAt });
+        }
+      })
+      .addCase(restoreJob.fulfilled, (state, action) => {
+        const i = state.archivedItems.findIndex((j) => j.id === action.payload.id);
+        if (i !== -1) {
+          const [job] = state.archivedItems.splice(i, 1);
+          state.items.unshift({ ...job, ownerArchivedAt: null });
+        } else {
+          const job = state.items.find((j) => j.id === action.payload.id);
+          if (job) job.ownerArchivedAt = action.payload.ownerArchivedAt;
+        }
+      })
+      .addCase(bulkArchiveJobs.fulfilled, (state, action) => {
+        const archivedAt = new Date().toISOString();
+        for (const id of action.meta.arg) {
+          const i = state.items.findIndex((j) => j.id === id);
+          if (i !== -1) {
+            const [job] = state.items.splice(i, 1);
+            state.archivedItems.unshift({ ...job, ownerArchivedAt: archivedAt });
+          }
+        }
       });
   },
 });

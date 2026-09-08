@@ -88,11 +88,51 @@ export async function rateJob(jobId: string, customerId: string, body: RateJobBo
   const job = await prisma.jobCard.findUnique({ where: { id: jobId } });
   if (!job) throw new ApiError(404, "Job not found");
   if (job.customerId !== customerId) throw new ApiError(403, "Insufficient permissions");
+  if (job.status !== "COMPLETED" && job.status !== "READY") {
+    throw new ApiError(409, "Only completed or ready jobs can be rated");
+  }
   return prisma.rating.upsert({
     where: { jobId_customerId: { jobId, customerId } },
     update: { score: body.score, review: body.review, serviceName: body.serviceName, date: new Date() },
     create: { jobId, customerId, score: body.score, review: body.review, serviceName: body.serviceName },
   });
+}
+
+export async function deleteRating(jobId: string, customerId: string) {
+  const job = await prisma.jobCard.findUnique({ where: { id: jobId } });
+  if (!job) throw new ApiError(404, "Job not found");
+  if (job.customerId !== customerId) throw new ApiError(403, "Insufficient permissions");
+  await prisma.rating.deleteMany({ where: { jobId, customerId } });
+}
+
+export async function archiveJob(jobId: string, customerId: string) {
+  const job = await prisma.jobCard.findUnique({ where: { id: jobId } });
+  if (!job) throw new ApiError(404, "Job not found");
+  if (job.customerId !== customerId) throw new ApiError(403, "Insufficient permissions");
+  if (job.status !== "COMPLETED" && job.status !== "READY") {
+    throw new ApiError(409, "Only completed or ready jobs can be archived");
+  }
+  return prisma.jobCard.update({ where: { id: jobId }, data: { ownerArchivedAt: new Date() } });
+}
+
+export async function restoreJob(jobId: string, customerId: string) {
+  const job = await prisma.jobCard.findUnique({ where: { id: jobId } });
+  if (!job) throw new ApiError(404, "Job not found");
+  if (job.customerId !== customerId) throw new ApiError(403, "Insufficient permissions");
+  return prisma.jobCard.update({ where: { id: jobId }, data: { ownerArchivedAt: null } });
+}
+
+export async function bulkArchiveJobs(ids: string[], customerId: string) {
+  if (ids.length === 0) throw new ApiError(400, "No jobs selected");
+  const jobs = await prisma.jobCard.findMany({ where: { id: { in: ids } }, select: { id: true, customerId: true, status: true } });
+  if (jobs.length !== ids.length || jobs.some((j) => j.customerId !== customerId)) {
+    throw new ApiError(403, "Insufficient permissions");
+  }
+  if (jobs.some((j) => j.status !== "COMPLETED" && j.status !== "READY")) {
+    throw new ApiError(409, "Only completed or ready jobs can be archived");
+  }
+  const res = await prisma.jobCard.updateMany({ where: { id: { in: ids } }, data: { ownerArchivedAt: new Date() } });
+  return { archived: res.count };
 }
 
 export function createChatThread(ownerId: string, advisorId: string, subject: string | undefined, text: string) {

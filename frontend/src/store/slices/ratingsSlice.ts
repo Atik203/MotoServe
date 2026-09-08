@@ -25,6 +25,11 @@ export const rateJob = createAsyncThunk(
   },
 );
 
+export const deleteRating = createAsyncThunk("ratings/delete", async (jobId: string) => {
+  await api.delete(`/jobs/${jobId}/rate`);
+  return { jobId };
+});
+
 const ratingsSlice = createSlice({
   name: "ratings",
   initialState,
@@ -46,6 +51,9 @@ const ratingsSlice = createSlice({
         const idx = state.items.findIndex((r) => r.jobId === action.payload.jobId);
         if (idx !== -1) state.items[idx] = action.payload;
         else state.items.unshift(action.payload);
+      })
+      .addCase(deleteRating.fulfilled, (state, action) => {
+        state.items = state.items.filter((r) => r.jobId !== action.payload.jobId);
       });
   },
 });

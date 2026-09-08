@@ -22,10 +22,12 @@ export function listVehicles(ownerId?: string) {
 }
 
 export function listJobs(role?: string, userId?: string) {
+  const normalized = role?.toLowerCase();
   return prisma.jobCard.findMany({
     where: {
-      mechanicId: role === "mechanic" ? userId : undefined,
-      customerId: role === "owner" ? userId : undefined,
+      mechanicId: normalized === "mechanic" ? userId : undefined,
+      customerId: normalized === "owner" ? userId : undefined,
+      ownerArchivedAt: normalized === "owner" ? null : undefined,
     },
     include: {
       vehicle: true,
@@ -56,6 +58,23 @@ export function findJobById(id: string) {
       estimates: { include: { items: true } },
       invoices: true,
     },
+  });
+}
+
+export function listArchivedJobs(userId: string) {
+  return prisma.jobCard.findMany({
+    where: { customerId: userId, ownerArchivedAt: { not: null } },
+    include: {
+      vehicle: true,
+      customer: { select: { id: true, name: true } },
+      advisor: { select: { id: true, name: true } },
+      mechanic: { select: { id: true, name: true } },
+      appointment: true,
+      progress: { orderBy: { id: "asc" } },
+      notes: { orderBy: { id: "desc" } },
+      partsUsed: true,
+    },
+    orderBy: { createdAt: "desc" },
   });
 }
 
@@ -163,8 +182,9 @@ export function listInvoices(customerId?: string) {
 }
 
 export function listThreads(role?: string, userId?: string) {
+  const normalized = role?.toLowerCase();
   return prisma.chatThread.findMany({
-    where: { ownerId: role === "owner" ? userId : undefined, advisorId: role === "advisor" ? userId : undefined },
+    where: { ownerId: normalized === "owner" ? userId : undefined, advisorId: normalized === "advisor" ? userId : undefined },
     include: {
       owner: { select: { id: true, name: true, avatar: true } },
       advisor: { select: { id: true, name: true, avatar: true } },

@@ -203,6 +203,7 @@ model JobCard {
   fuelLevel      Int?
   keysReceived   Boolean?
   accessories    String?
+  ownerArchivedAt DateTime?
 
   progress       JobProgress[]
   notes          JobNote[]
