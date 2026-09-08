@@ -61,13 +61,13 @@ This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDU
 6. **Start the dev servers**:
    ```bash
    # Terminal 1 — Frontend
-   cd frontend && pnpm dev    # http://localhost:3500
+   cd frontend && pnpm dev    # http://localhost:3000
 
    # Terminal 2 — Backend
    cd backend && pnpm dev     # http://localhost:4000
    ```
 
-7. **Verify** everything works by visiting `http://localhost:3500`.
+7. **Verify** everything works by visiting `http://localhost:3000`.
 
 ## Development Workflow
 

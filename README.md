@@ -77,14 +77,14 @@ cd backend && npm run db:generate && npm run db:push && npm run db:seed
 
 # Start BOTH servers from the repo root
 cd ..
-npm run dev        # api http://localhost:4000  ·  web http://localhost:3500
+npm run dev        # api http://localhost:4000  ·  web http://localhost:3000
 ```
 
 ## Project Structure
 
 ```
 motoserve/
-├── frontend/                 # Next.js 16 app (port 3500)
+├── frontend/                 # Next.js 16 app (port 3000)
 │   ├── src/
 │   │   ├── app/              # App Router routes by role
 │   │   │   ├── (public)/     # Marketing pages
