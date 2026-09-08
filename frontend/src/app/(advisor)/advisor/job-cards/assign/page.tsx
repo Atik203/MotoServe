@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Car, Check, Clock, Filter, Search } from "lucide-react";
+import { Car, Check, Clock, Filter, Info, Search, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchJobs, assignMechanic } from "@/store/slices/jobsSlice";
@@ -347,33 +347,133 @@ export default function AssignMechanicPage() {
           </div>
 
           <div className="col-span-4 flex flex-col gap-6 lg:sticky lg:top-22">
-            <section className="flex flex-col gap-3 rounded-lg border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
-              <h2 className="text-xl font-semibold text-foreground">Assignment Notes</h2>
+            <section className="overflow-hidden rounded-[12px] border border-[#e2e8f0] bg-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <div className="relative h-16 bg-gradient-to-r from-[#004492] to-[#005bbf]">
+                {!selectedMechanic && (
+                  <span className="absolute bottom-3 left-4 text-xs font-semibold tracking-[0.55px] text-[#c8d8ff] uppercase">
+                    Selected Mechanic
+                  </span>
+                )}
+              </div>
+              <div className="px-[25px] pb-[25px]">
+                {selectedMechanic ? (
+                  <>
+                    <div className="relative -mt-10 flex items-end gap-3">
+                      <div className="relative shrink-0">
+                        <Avatar className="size-20 rounded-2xl border-4 border-white after:rounded-2xl">
+                          <AvatarImage src={selectedMechanic.avatar} alt={selectedMechanic.name} className="rounded-2xl" />
+                          <AvatarFallback className="rounded-2xl bg-[rgba(0,68,146,0.1)] text-xl font-bold text-[#004492]">
+                            {initials(selectedMechanic.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span
+                          className={cn(
+                            "absolute right-1.5 bottom-1.5 size-3.5 rounded-full ring-2 ring-white",
+                            workloadOf(selectedMechanic) >= WORKLOAD_LIMIT
+                              ? "bg-[#ba1a1a]"
+                              : workloadOf(selectedMechanic) >= 2
+                                ? "bg-[#ffc107]"
+                                : "bg-[#4caf50]",
+                          )}
+                        />
+                      </div>
+                      <div className="flex flex-1 items-end justify-between gap-2 pb-1">
+                        <div>
+                          <p className="text-lg font-semibold text-foreground">{selectedMechanic.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {selectedMechanic.specialization ?? "Mechanic"}
+                          </p>
+                        </div>
+                        <span
+                          className={cn(
+                            "mb-0.5 shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                            availabilityFor(workloadOf(selectedMechanic)).className,
+                          )}
+                        >
+                          {availabilityFor(workloadOf(selectedMechanic)).label}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-col gap-2.5 border-t border-[#e2e8f0] pt-4 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-[#424753]">ID</span>
+                        <span className="font-medium text-foreground">{selectedMechanic.id.toUpperCase()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#424753]">Branch</span>
+                        <span className="font-medium text-foreground">{selectedMechanic.station ?? "—"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#424753]">Status</span>
+                        <span className="flex items-center gap-1.5 rounded-xl bg-[rgba(76,175,80,0.1)] px-2 py-0.5 text-[11px] font-semibold text-[#4caf50]">
+                          <span className="size-1.5 rounded-full bg-[#4caf50]" />
+                          On Shift
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[#424753]">Current Workload</span>
+                        <div className="flex items-center gap-2">
+                          <span className="rounded bg-[#edeeef] px-1.5 py-0.5 text-[11px] font-semibold text-foreground">
+                            {workloadOf(selectedMechanic)}/{WORKLOAD_LIMIT}
+                          </span>
+                          <span className="h-1.5 w-16 overflow-hidden rounded-full bg-[#edeeef]">
+                            <span
+                              className="block h-full rounded-full"
+                              style={{
+                                width: `${Math.min((workloadOf(selectedMechanic) / WORKLOAD_LIMIT) * 100, 100)}%`,
+                                backgroundColor: fillColorFor(workloadOf(selectedMechanic)),
+                              }}
+                            />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center gap-3 pt-10 pb-4 text-center">
+                    <span className="flex size-12 items-center justify-center rounded-full bg-[rgba(0,68,146,0.1)]">
+                      <UserCheck className="size-6 text-[#004492]" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">No mechanic selected</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        Pick a mechanic from the list to preview their profile here.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section className="flex flex-col gap-3 rounded-[12px] border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <h2 className="border-b border-[#e2e8f0] pb-[9px] text-xl font-semibold text-foreground">Assignment Notes</h2>
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Add internal notes about this assignment..."
-                className="min-h-24 rounded-lg border-[#e5e7eb] text-[13px]"
+                className="mt-3 min-h-24 rounded-[4px] border-[#e2e8f0] text-[13px]"
               />
             </section>
 
-            <section className="flex flex-col gap-3.5 rounded-lg border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
-              <div className="flex flex-col gap-1">
-                <span className="text-[11px] text-[#727784]">Job</span>
+            <section className="rounded-[12px] border border-[#e2e8f0] bg-[rgba(0,68,146,0.05)] p-[17px]">
+              <p className="flex items-start gap-2 text-sm leading-5 text-[#424753]">
+                <Info className="mt-0.5 size-4 shrink-0 text-[#004492]" />
+                The mechanic will be notified instantly. Once assigned, they can update repair progress and log parts as the job moves through the workshop.
+              </p>
+            </section>
+
+            <section className="flex flex-col gap-3.5 rounded-[12px] border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-3">
+                <span className="text-sm font-medium text-[#424753]">Job</span>
                 <span className="text-sm font-semibold text-foreground">#{job?.id ?? "—"}</span>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-[11px] text-[#727784]">Selected Mechanic</span>
-                <span className={cn("text-sm", selectedMechanic ? "font-semibold text-foreground" : "font-medium text-[#727784]")}>
-                  {selectedMechanic?.name ?? "None selected"}
-                </span>
               </div>
               <Button
                 type="button"
                 onClick={() => void handleConfirm()}
                 disabled={!selectedMechanic || submitting}
-                className="h-10 rounded-lg text-sm font-semibold"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-[4px] bg-[#004492] text-xs font-semibold tracking-[0.24px] text-white hover:bg-[#004492]/90"
               >
+                <UserCheck className="size-4" />
                 {submitting ? "Assigning..." : "Confirm Assignment"}
               </Button>
             </section>
