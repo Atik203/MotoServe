@@ -95,10 +95,11 @@ export const fetchMe = createAsyncThunk("auth/me", async () => {
 });
 
 export const logoutUser = createAsyncThunk("auth/logout", async () => {
+  setAuthToken(null);
   try {
     await api.post("/auth/logout");
-  } finally {
-    setAuthToken(null);
+  } catch {
+    // ignore — local session is already cleared
   }
 });
 
