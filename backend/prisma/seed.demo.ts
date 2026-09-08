@@ -114,6 +114,9 @@ const PARTS = [
   { name: "12V Car Battery", sku: "BAT-12V-004", unitPrice: 149.99, supplier: "VoltSource", stock: 0 },
   { name: "Engine Air Filter", sku: "AIR-FLT-005", unitPrice: 39.99, supplier: "FilterHub", stock: 30 },
   { name: "Wiper Blades (Pair)", sku: "WPR-BLD-006", unitPrice: 19.99, supplier: "ClearView", stock: 8 },
+  { name: "Oxygen Sensor", sku: "OXY-SNS-007", unitPrice: 59.99, supplier: "VoltSource", stock: 4 },
+  { name: "Brake Cleaner", sku: "BRK-CLN-008", unitPrice: 9.99, supplier: "AutoParts Co", stock: 15 },
+  { name: "Wiring Harness Tape Kit", sku: "WIR-TAP-009", unitPrice: 24.99, supplier: "VoltSource", stock: 6 },
 ];
 
 function money(n: number) {
@@ -148,7 +151,10 @@ async function main() {
     const { password, ...profile } = account;
     await prisma.user.upsert({
       where: { email: account.email },
-      update: {},
+      update: {
+        status: profile.status as never,
+        avatar: profile.avatar,
+      },
       create: {
         ...profile,
         role: profile.role as never,
@@ -680,6 +686,25 @@ async function main() {
     },
   });
   await prisma.chatThread.update({ where: { id: thread.id }, data: { lastMessageAt: new Date() } });
+
+  const alexReed = await prisma.user.findUniqueOrThrow({ where: { email: "alex.reed@motorserve.com" } });
+  const thread2 = await prisma.chatThread.create({
+    data: {
+      ownerId: davidT.id,
+      advisorId: alexReed.id,
+      subject: "Civic oil change follow-up (JC-1039)",
+      ownerUnread: 0,
+      advisorUnread: 1,
+      messages: {
+        create: [
+          { sender: "OWNER", text: "Thanks for the fast oil change last week — the Civic feels great!" },
+          { sender: "ADVISOR", text: "Glad to hear it, David! We'll send a reminder when your next service window opens." },
+          { sender: "OWNER", text: "Perfect. Also booking a brake check next month — I'll use the app." },
+        ],
+      },
+    },
+  });
+  await prisma.chatThread.update({ where: { id: thread2.id }, data: { lastMessageAt: new Date() } });
 
   console.log("Seeding demo activity log...");
   await prisma.auditLog.createMany({
