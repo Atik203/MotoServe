@@ -1,4 +1,4 @@
-const allowedOrigins = (process.env.CLIENT_URL ?? "http://localhost:3500")
+const allowedOrigins = (process.env.CLIENT_URL ?? "http://localhost:3000")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);

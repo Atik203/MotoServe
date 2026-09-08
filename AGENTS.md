@@ -29,11 +29,11 @@ root        AGENTS.md · README.md · blueprint.md (source of truth for screens/
 ## Commands
 
 ```bash
-# run BOTH servers from the repo root (concurrently) — api :4000 + web :3500
+# run BOTH servers from the repo root (concurrently) — api :4000 + web :3000
 npm run dev
 
 # frontend (from frontend/)
-npm run dev        # dev server (port 3500)
+npm run dev        # dev server (port 3000)
 npm run build && npm run start
 npm run lint       # eslint
 npm run typecheck  # tsc --noEmit
