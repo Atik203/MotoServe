@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { roleNav, type Role } from "@/lib/nav";
 import { useAppDispatch } from "@/store/hooks";
@@ -14,16 +14,11 @@ interface AppSidebarProps {
 export function AppSidebar({ role }: AppSidebarProps) {
   const config = roleNav[role];
   const pathname = usePathname();
-  const router = useRouter();
   const dispatch = useAppDispatch();
 
-  const handleLogout = async () => {
-    try {
-      await dispatch(logoutUser()).unwrap();
-    } catch {
-      // ignore
-    }
-    router.replace("/login");
+  const handleLogout = () => {
+    void dispatch(logoutUser());
+    window.location.assign("/login");
   };
 
   const isActive = (href: string) => {
