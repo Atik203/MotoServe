@@ -3,32 +3,83 @@
 import { useEffect, useMemo, useState } from "react";
 import { BookOpen, ChevronDown, Headset, Search } from "lucide-react";
 import { api } from "@/lib/api";
+import { load } from "@/lib/demo-data";
 import { cn } from "@/lib/utils";
 
 type FaqItem = { id: string; category: string; question: string; answer: string };
 type FaqsData = { categories: string[]; faqs: FaqItem[]; cta: { title: string; subtitle: string } };
+
+function isFaqsData(value: unknown): value is FaqsData {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return Array.isArray(v.categories) && Array.isArray(v.faqs);
+}
+
+function applyData(value: unknown): FaqsData | null {
+  if (!isFaqsData(value)) return null;
+  return value;
+}
 
 export default function FaqPage() {
   const [data, setData] = useState<FaqsData | null>(null);
   const [activeCategory, setActiveCategory] = useState("Booking");
   const [search, setSearch] = useState("");
   const [openItem, setOpenItem] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+    const useData = (value: unknown): boolean => {
+      const parsed = applyData(value);
+      if (!parsed || cancelled) return false;
+      setData(parsed);
+      setActiveCategory(parsed.categories[0] ?? "Booking");
+      setOpenItem(parsed.faqs[0]?.id ?? null);
+      return true;
+    };
     api.get<{ data: FaqsData }>("/content/faqs").then((r) => {
-      setData(r.data);
-      setOpenItem(r.data.faqs[0]?.id ?? null);
-    }).catch(() => setData(null));
+      if (cancelled) return;
+      if (useData(r.data)) return;
+      load("faqs").then((fallback) => {
+        if (!useData(fallback) && !cancelled) setFailed(true);
+      }).catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    }).catch(() => {
+      load("faqs").then((fallback) => {
+        if (!useData(fallback) && !cancelled) setFailed(true);
+      }).catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const filtered = useMemo(() => {
-    if (!data) return [];
+    if (!data || !Array.isArray(data.faqs)) return [];
     return data.faqs.filter((f) => {
       const matchCategory = f.category === activeCategory;
       const matchSearch = f.question.toLowerCase().includes(search.toLowerCase());
       return matchCategory && matchSearch;
     });
   }, [data, activeCategory, search]);
+
+  if (failed) {
+    return (
+      <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-8 text-center">
+        <p className="text-base font-semibold text-foreground">We couldn&apos;t load the FAQ right now.</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="rounded bg-primary px-6 py-2 text-sm font-semibold text-white"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
 
   if (!data) {
     return <div className="p-8 text-muted-foreground">Loading FAQ...</div>;

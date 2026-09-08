@@ -26,16 +26,184 @@
       "answer": "Yes, emergency roadside assistance is available around the clock for Premium Care members. Contact support anytime for immediate dispatch."
     },
     {
+      "id": "faq-007",
+      "category": "Booking",
+      "question": "Do I need an account to book a service?",
+      "answer": "Yes. Create a free owner account with your NID and driving license for verification. Once approved you can register vehicles and book instantly. Guests can browse services and pricing without an account."
+    },
+    {
+      "id": "faq-008",
+      "category": "Payments",
+      "question": "Which payment methods do you accept?",
+      "answer": "Pay securely by card online through Stripe Checkout, or with cash and mobile money at the workshop. Every payment issues a digital receipt instantly."
+    },
+    {
+      "id": "faq-009",
+      "category": "Payments",
+      "question": "Is paying online safe?",
+      "answer": "Yes. Card payments run on a Stripe-hosted checkout page, so we never see or store your card details."
+    },
+    {
+      "id": "faq-010",
+      "category": "Payments",
+      "question": "What happens if my online payment fails or I close the checkout?",
+      "answer": "Nothing is charged and your invoice stays UNPAID. You can retry anytime from the Payments page or settle the bill at vehicle pickup."
+    },
+    {
+      "id": "faq-011",
+      "category": "Payments",
+      "question": "Can I pay for multiple jobs separately?",
+      "answer": "Yes. Each completed job generates its own invoice, so fleet owners can settle vehicles one at a time as work finishes."
+    },
+    {
+      "id": "faq-012",
+      "category": "Repair Process",
+      "question": "What are the stages of my repair?",
+      "answer": "Every job moves through Received, Inspecting, Repairing, Testing, and Ready. Follow each step live from the Service Tracking page."
+    },
+    {
+      "id": "faq-013",
+      "category": "Repair Process",
+      "question": "How long will my service take?",
+      "answer": "Each service lists an estimated duration, for example Oil Change takes 30 minutes and Brake Service takes 2 hours. Your advisor confirms a completion estimate when your vehicle is received."
+    },
+    {
+      "id": "faq-014",
+      "category": "Repair Process",
+      "question": "Do you use genuine quality parts?",
+      "answer": "Yes. We fit quality parts from trusted suppliers only, and every part used is listed on your job card and invoice with its quantity and price."
+    },
+    {
+      "id": "faq-015",
+      "category": "Repair Process",
+      "question": "Can I visit or check on my vehicle during the repair?",
+      "answer": "The workshop floor is restricted for safety, but your advisor shares progress notes and repair photos, and you can message them anytime from the chat."
+    },
+    {
+      "id": "faq-016",
+      "category": "Repair Process",
+      "question": "What happens if the mechanic finds extra problems?",
+      "answer": "Work pauses and you receive a digital cost estimate for the additional repairs. Nothing extra is ever done without your explicit approval."
+    },
+    {
       "id": "faq-005",
       "category": "Cost Estimates",
       "question": "Can I approve extra repair costs before you start?",
       "answer": "Yes. If the workshop finds additional repairs needed, you'll get a digital estimate. You can approve or reject it — no work happens without your approval."
     },
     {
+      "id": "faq-017",
+      "category": "Cost Estimates",
+      "question": "How is my estimate calculated?",
+      "answer": "Services are priced from our published list, plus parts at supplier rates and labor, with 8.5% tax shown as a separate line. There are no hidden fees."
+    },
+    {
+      "id": "faq-018",
+      "category": "Cost Estimates",
+      "question": "How long do I have to decide on an estimate?",
+      "answer": "Estimates stay pending until you approve or reject them from the Estimates page. The related work simply waits until you decide."
+    },
+    {
+      "id": "faq-019",
+      "category": "Cost Estimates",
+      "question": "What happens if I reject an estimate?",
+      "answer": "Only the work you approved proceeds. Rejected items are removed from the job and the repair continues with the original agreed scope."
+    },
+    {
       "id": "faq-006",
       "category": "Service Tracking",
       "question": "How do I track my vehicle's repair progress?",
       "answer": "Follow your vehicle through the live status timeline: Received → Inspecting → Repairing → Testing → Ready. You can also chat with your service advisor anytime."
+    },
+    {
+      "id": "faq-020",
+      "category": "Service Tracking",
+      "question": "Will I be notified when the status changes?",
+      "answer": "Yes. The timeline updates in real time on your dashboard, and your advisor can message you directly in the Communication Center."
+    },
+    {
+      "id": "faq-021",
+      "category": "Service Tracking",
+      "question": "What should I do if my repair is taking longer than estimated?",
+      "answer": "Message your advisor from the job or chat page for an updated completion time. Delays such as parts sourcing are always communicated before you are charged anything extra."
+    },
+    {
+      "id": "faq-022",
+      "category": "Service Tracking",
+      "question": "Can I see the full service history of a vehicle?",
+      "answer": "Yes. Service History keeps every completed job per vehicle with its invoices, parts used, and your ratings, all in one place."
+    },
+    {
+      "id": "faq-023",
+      "category": "Warranty",
+      "question": "Do your repairs come with a warranty?",
+      "answer": "Yes. All workmanship is covered. If a fault with our repair recurs within the warranty period, bring the vehicle back for re-inspection free of charge."
+    },
+    {
+      "id": "faq-024",
+      "category": "Warranty",
+      "question": "Are the replaced parts covered too?",
+      "answer": "Yes. Parts carry their manufacturer or supplier warranty on top of our labor cover. Keep your invoice as proof of purchase."
+    },
+    {
+      "id": "faq-025",
+      "category": "Warranty",
+      "question": "What voids the warranty?",
+      "answer": "Later third-party modifications, accident damage, or normal wear outside the cover period. Your advisor always confirms coverage before any chargeable rework."
+    },
+    {
+      "id": "faq-026",
+      "category": "Warranty",
+      "question": "How do I claim warranty service?",
+      "answer": "Book a follow-up appointment referencing the original job card or invoice number. The advisor verifies coverage when your vehicle arrives."
+    },
+    {
+      "id": "faq-027",
+      "category": "Invoices",
+      "question": "When do I receive my invoice?",
+      "answer": "Automatically, as soon as your job is marked complete. Find it under Payments with full line items for services, parts, labor, and 8.5% tax."
+    },
+    {
+      "id": "faq-028",
+      "category": "Invoices",
+      "question": "Can I download or print my invoice?",
+      "answer": "Yes. Every invoice downloads as a PDF, handy for your records, fleet accounting, or reimbursement."
+    },
+    {
+      "id": "faq-029",
+      "category": "Invoices",
+      "question": "What do the PAID and UNPAID labels mean?",
+      "answer": "UNPAID invoices are awaiting settlement, either online by card or in person. PAID confirms receipt with the payment method and date recorded."
+    },
+    {
+      "id": "faq-030",
+      "category": "Invoices",
+      "question": "I think my invoice is wrong. What should I do?",
+      "answer": "Message your advisor from the invoice or chat page before paying. Corrections are issued as an updated invoice, never as an unexplained side charge."
+    },
+    {
+      "id": "faq-031",
+      "category": "Support",
+      "question": "How do I contact my service advisor?",
+      "answer": "Open the Communication Center from your dashboard to chat directly with your advisor. Every conversation stays linked to your vehicles and jobs."
+    },
+    {
+      "id": "faq-032",
+      "category": "Support",
+      "question": "My account is still pending verification. Why?",
+      "answer": "New owner accounts need a review of the NID and driving license documents you uploaded. This usually completes within one business day, and booking unlocks right after approval."
+    },
+    {
+      "id": "faq-033",
+      "category": "Support",
+      "question": "I forgot my password. How do I reset it?",
+      "answer": "Use the Forgot Password link on the login page and we will email you a secure reset link."
+    },
+    {
+      "id": "faq-034",
+      "category": "Support",
+      "question": "Where can I leave feedback about my service?",
+      "answer": "Rate any completed job from Service History with a score and review. Your feedback helps the workshop improve and guides other owners."
     }
   ],
   "cta": {

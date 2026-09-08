@@ -125,7 +125,8 @@ async function seedSiteContent() {
       continue;
     }
     const raw = JSON.parse(fs.readFileSync(file, "utf8")) as Record<string, unknown>;
-    const data = (raw[key] ?? raw) as object;
+    const wrapped = Object.keys(raw).length === 1 && key in raw;
+    const data = (wrapped ? raw[key] : raw) as object;
     await prisma.siteContent.upsert({
       where: { key },
       update: { data },

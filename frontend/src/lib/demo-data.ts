@@ -117,7 +117,8 @@ export async function load<K extends DemoFile>(file: K): Promise<DemoMap[K]> {
   const res = await fetch(`/demo/${file}.json`);
   if (!res.ok) throw new Error(`Failed to load demo data: ${file}`);
   const data = (await res.json()) as Record<string, unknown>;
-  const unwrapped = (data[file] ?? data) as DemoMap[K];
+  const wrapped = Object.keys(data).length === 1 && file in data;
+  const unwrapped = (wrapped ? data[file] : data) as DemoMap[K];
   cache.set(file, unwrapped);
   return unwrapped;
 }
