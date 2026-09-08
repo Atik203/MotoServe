@@ -163,6 +163,7 @@ export default function EmployeeManagementPage() {
       ).unwrap();
       toast.success("Employee updated");
       setDialog(null);
+      setDialog(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Update failed");
     } finally {
@@ -412,7 +413,13 @@ export default function EmployeeManagementPage() {
         </div>
       </div>
 
-      <EmployeeDialog dialog={dialog} saving={saving} onClose={() => setDialog(null)} onSave={handleSave} />
+      <EmployeeDialog
+        key={dialog ? `${dialog.employee.id}-${dialog.mode}` : "closed"}
+        dialog={dialog}
+        saving={saving}
+        onClose={() => setDialog(null)}
+        onSave={handleSave}
+      />
 
       <Dialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
         <DialogContent className="max-w-sm rounded-xl">
