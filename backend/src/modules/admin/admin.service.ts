@@ -44,10 +44,11 @@ const employeeSelect = {
 export async function createEmployee(data: CreateEmployeeBody) {
   const existing = await findUserByEmail(data.email);
   if (existing) throw new ApiError(409, "Email already registered");
-  const { password, role, ...profile } = data;
+  const { password, role, dateOfBirth, ...profile } = data;
   return prisma.user.create({
     data: {
       ...profile,
+      ...(dateOfBirth ? { dateOfBirth: new Date(dateOfBirth) } : {}),
       passwordHash: await bcrypt.hash(password, 10),
       role: role.toUpperCase() as never,
       status: "ACTIVE",
@@ -57,11 +58,12 @@ export async function createEmployee(data: CreateEmployeeBody) {
 }
 
 export function updateEmployee(id: string, data: UpdateEmployeeBody) {
-  const { password, status, ...rest } = data;
+  const { password, status, dateOfBirth, ...rest } = data;
   return prisma.user.update({
     where: { id },
     data: {
       ...rest,
+      ...(dateOfBirth ? { dateOfBirth: new Date(dateOfBirth) } : {}),
       ...(password ? { passwordHash: bcrypt.hashSync(password, 10) } : {}),
       ...(status ? { status: status.toUpperCase() as never } : {}),
     },

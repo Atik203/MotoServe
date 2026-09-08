@@ -31,6 +31,14 @@ export const createEmployeeSchema = z.object({
     station: z.string().optional(),
     specialization: z.string().optional(),
     avatar: z.string().optional(),
+    nid: z.string().optional(),
+    gender: z.string().optional(),
+    dateOfBirth: z.string().optional(),
+    street: z.string().optional(),
+    city: z.string().optional(),
+    district: z.string().optional(),
+    zip: z.string().optional(),
+    country: z.string().optional(),
   }),
 });
 
@@ -44,5 +52,13 @@ export const updateEmployeeSchema = z.object({
     specialization: z.string().optional(),
     avatar: z.string().nullable().optional(),
     status: z.enum(["active", "inactive"]).optional(),
+    nid: z.string().optional(),
+    gender: z.string().optional(),
+    dateOfBirth: z.string().optional(),
+    street: z.string().optional(),
+    city: z.string().optional(),
+    district: z.string().optional(),
+    zip: z.string().optional(),
+    country: z.string().optional(),
   }),
 });

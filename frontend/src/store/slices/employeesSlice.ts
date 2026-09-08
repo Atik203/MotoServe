@@ -29,6 +29,14 @@ export const createEmployee = createAsyncThunk(
     station?: string;
     specialization?: string;
     avatar?: string;
+    nid?: string;
+    gender?: string;
+    dateOfBirth?: string;
+    street?: string;
+    city?: string;
+    district?: string;
+    zip?: string;
+    country?: string;
   }) => {
     return await api.post<Employee>("/employees", data);
   },
