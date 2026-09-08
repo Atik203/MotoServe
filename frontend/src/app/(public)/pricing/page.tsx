@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Check, ChevronDown, Clock, Disc3, Droplet, Gauge, Truck, type LucideIcon } from "lucide-react";
 import { api } from "@/lib/api";
+import { load } from "@/lib/demo-data";
+import { PricingLoading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 
 const cardIcons: Record<string, LucideIcon> = { droplet: Droplet, disc: Disc3, gauge: Gauge, truck: Truck };
@@ -32,12 +34,36 @@ type PricingData = {
 
 export default function PricingPage() {
   const [data, setData] = useState<PricingData | null>(null);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
-    api.get<{ data: PricingData }>("/content/pricing").then((r) => setData(r.data)).catch(() => setData(null));
+    api.get<{ data: PricingData }>("/content/pricing").then((r) => {
+      if (r.data && Array.isArray(r.data.cards)) setData(r.data);
+      else throw new Error("bad shape");
+    }).catch(() => {
+      load("pricing").then((f) => {
+        if (f && Array.isArray(f.cards)) setData(f);
+        else setFailed(true);
+      }).catch(() => setFailed(true));
+    });
   }, []);
 
+  if (failed) {
+    return (
+      <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-8 text-center">
+        <p className="text-base font-semibold text-foreground">We couldn&apos;t load pricing right now.</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="rounded bg-primary px-6 py-2 text-sm font-semibold text-white"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
   if (!data) {
-    return <div className="p-8 text-muted-foreground">Loading pricing...</div>;
+    return <PricingLoading />;
   }
 
   return (

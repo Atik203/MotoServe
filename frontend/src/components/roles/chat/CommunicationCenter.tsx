@@ -16,6 +16,7 @@ import { fetchEmployees } from "@/store/slices/employeesSlice";
 import { useFileUrl } from "@/hooks/useFileUrl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ChatLoading } from "@/components/ui/loading";
 import {
   Dialog,
   DialogContent,
@@ -72,6 +73,7 @@ function Avatar({ name, src }: { name: string; src?: string | null }) {
 export function CommunicationCenter({ role }: CommunicationCenterProps) {
   const dispatch = useAppDispatch();
   const threads = useAppSelector((s) => s.chat.threads);
+  const chatStatus = useAppSelector((s) => s.chat.status);
   const activeThreadId = useAppSelector((s) => s.chat.activeThreadId);
   const employees = useAppSelector((s) => s.employees.items);
   const [search, setSearch] = useState("");
@@ -100,6 +102,7 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
   }, [activeThreadId, threads, dispatch]);
 
   const activeThread = threads.find((t) => t.id === activeThreadId) ?? null;
+  const threadsLoading = (chatStatus === "idle" || chatStatus === "loading") && threads.length === 0;
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -165,6 +168,10 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
       setSending(false);
     }
   };
+
+  if (threadsLoading) {
+    return <ChatLoading />;
+  }
 
   return (
     <div className="flex h-[calc(100vh-64px)] flex-col">

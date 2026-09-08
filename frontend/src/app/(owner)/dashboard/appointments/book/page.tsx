@@ -13,6 +13,7 @@ import { AddVehicleCard, VehicleCard } from "@/components/roles/owner/VehicleCar
 import { ServiceCard } from "@/components/roles/owner/ServiceCard";
 import { MonthCalendar } from "@/components/roles/owner/MonthCalendar";
 import { Button } from "@/components/ui/button";
+import { DetailLoading } from "@/components/ui/loading";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -54,7 +55,9 @@ export default function BookAppointmentPage() {
   const dispatch = useAppDispatch();
 
   const vehicles = useAppSelector((s) => s.vehicles.items);
+  const vehiclesStatus = useAppSelector((s) => s.vehicles.status);
   const services = useAppSelector((s) => s.services.items);
+  const servicesStatus = useAppSelector((s) => s.services.status);
   const selectedVehicleId = useAppSelector((s) => s.vehicles.selectedVehicleId);
 
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
@@ -142,6 +145,17 @@ export default function BookAppointmentPage() {
     toast.info("Register a new vehicle from My Vehicles");
     router.push("/dashboard/vehicles");
   };
+
+  const bookingLoading =
+    (vehiclesStatus === "idle" ||
+      vehiclesStatus === "loading" ||
+      servicesStatus === "idle" ||
+      servicesStatus === "loading") &&
+    vehicles.length === 0 &&
+    services.length === 0;
+  if (bookingLoading) {
+    return <DetailLoading label="Loading booking" />;
+  }
 
   return (
     <div className="bg-background min-h-screen p-6">

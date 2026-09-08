@@ -9,6 +9,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchCustomers, fetchDocumentUrl, verifyCustomer } from "@/store/slices/customersSlice";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { DetailLoading } from "@/components/ui/loading";
 
 const statusPill: Record<string, string> = {
   pending: "bg-[rgba(255,193,7,0.1)] border-[rgba(255,193,7,0.2)] text-warning",
@@ -74,7 +75,7 @@ export default function VerificationDetailPage() {
   };
 
   if (!customer) {
-    return <div className="bg-background min-h-screen p-8 text-muted-foreground">Loading owner details...</div>;
+    return <DetailLoading label="Loading owner details" />;
   }
 
   const fullAddress = [customer.street, customer.city, customer.district, customer.zip, customer.country].filter(Boolean).join(", ");

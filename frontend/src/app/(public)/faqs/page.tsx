@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BookOpen, ChevronDown, Headset, Search } from "lucide-react";
 import { api } from "@/lib/api";
 import { load } from "@/lib/demo-data";
+import { FaqLoading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 
 type FaqItem = { id: string; category: string; question: string; answer: string };
@@ -29,7 +30,7 @@ export default function FaqPage() {
 
   useEffect(() => {
     let cancelled = false;
-    const useData = (value: unknown): boolean => {
+    const applyLoaded = (value: unknown): boolean => {
       const parsed = applyData(value);
       if (!parsed || cancelled) return false;
       setData(parsed);
@@ -39,15 +40,15 @@ export default function FaqPage() {
     };
     api.get<{ data: FaqsData }>("/content/faqs").then((r) => {
       if (cancelled) return;
-      if (useData(r.data)) return;
+      if (applyLoaded(r.data)) return;
       load("faqs").then((fallback) => {
-        if (!useData(fallback) && !cancelled) setFailed(true);
+        if (!applyLoaded(fallback) && !cancelled) setFailed(true);
       }).catch(() => {
         if (!cancelled) setFailed(true);
       });
     }).catch(() => {
       load("faqs").then((fallback) => {
-        if (!useData(fallback) && !cancelled) setFailed(true);
+        if (!applyLoaded(fallback) && !cancelled) setFailed(true);
       }).catch(() => {
         if (!cancelled) setFailed(true);
       });
@@ -82,7 +83,7 @@ export default function FaqPage() {
   }
 
   if (!data) {
-    return <div className="p-8 text-muted-foreground">Loading FAQ...</div>;
+    return <FaqLoading />;
   }
 
   return (

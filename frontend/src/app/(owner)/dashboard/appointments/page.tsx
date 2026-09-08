@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchAppointments, updateAppointmentStatus } from "@/store/slices/appointmentsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
+import { RowsLoading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 
 const statusStyle: Record<string, string> = {
@@ -23,6 +24,7 @@ function formatDate(date: string) {
 export default function MyAppointmentsPage() {
   const dispatch = useAppDispatch();
   const appointments = useAppSelector((s) => s.appointments.items);
+  const appointmentsStatus = useAppSelector((s) => s.appointments.status);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const services = useAppSelector((s) => s.services.items);
 
@@ -40,6 +42,16 @@ export default function MyAppointmentsPage() {
       toast.error(err instanceof Error ? err.message : "Failed to cancel appointment");
     }
   };
+
+  if ((appointmentsStatus === "idle" || appointmentsStatus === "loading") && appointments.length === 0) {
+    return (
+      <div className="bg-background min-h-screen p-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+          <RowsLoading label="Loading appointments" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background min-h-screen p-8">

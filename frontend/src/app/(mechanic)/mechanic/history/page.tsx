@@ -14,11 +14,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TableLoading } from "@/components/ui/loading";
 
 export default function MechanicHistoryPage() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
   const jobs = useAppSelector((s) => s.jobs.items);
+  const jobsStatus = useAppSelector((s) => s.jobs.status);
   const vehicles = useAppSelector((s) => s.vehicles.items);
 
   useEffect(() => {
@@ -27,6 +29,10 @@ export default function MechanicHistoryPage() {
   }, [dispatch, vehicles.length]);
 
   const completed = jobs.filter((j) => ["completed", "ready"].includes(j.status) && (user ? j.mechanicId === user.id : true));
+
+  if ((jobsStatus === "idle" || jobsStatus === "loading") && jobs.length === 0) {
+    return <TableLoading label="Loading job history" />;
+  }
 
   return (
     <div className="bg-background min-h-screen p-8">

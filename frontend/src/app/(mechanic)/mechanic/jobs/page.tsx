@@ -7,11 +7,13 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchJobs } from "@/store/slices/jobsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { PriorityPill, StatusBadge } from "@/components/roles/mechanic/StatusBadge";
+import { RowsLoading } from "@/components/ui/loading";
 
 export default function MechanicJobsPage() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
   const jobs = useAppSelector((s) => s.jobs.items);
+  const jobsStatus = useAppSelector((s) => s.jobs.status);
   const vehicles = useAppSelector((s) => s.vehicles.items);
 
   useEffect(() => {
@@ -21,6 +23,16 @@ export default function MechanicJobsPage() {
 
   const assigned = jobs.filter((j) => (user ? j.mechanicId === user.id : !["completed", "ready"].includes(j.status)));
   const current = assigned.filter((j) => !["completed", "ready"].includes(j.status));
+
+  if ((jobsStatus === "idle" || jobsStatus === "loading") && jobs.length === 0) {
+    return (
+      <div className="bg-background min-h-screen p-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+          <RowsLoading label="Loading jobs" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background min-h-screen p-8">

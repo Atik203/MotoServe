@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchReports } from "@/store/slices/reportsSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
 import { Button } from "@/components/ui/button";
+import { TableLoading } from "@/components/ui/loading";
 import {
   Table,
   TableBody,
@@ -29,11 +30,7 @@ export default function WorkloadReportsPage() {
   }, [dispatch, reports, employees.length]);
 
   if (!reports || employees.length === 0) {
-    return (
-      <div className="bg-background min-h-screen p-8">
-        <p className="text-muted-foreground">Loading workload reports...</p>
-      </div>
-    );
+    return <TableLoading label="Loading workload reports" />;
   }
 
   const mechanics = reports.workloadByMechanic;

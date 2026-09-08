@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchServices, deleteService, updateService } from "@/store/slices/servicesSlice";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { TableLoading } from "@/components/ui/loading";
 import {
   Dialog,
   DialogContent,
@@ -53,11 +54,7 @@ export default function ServicesPage() {
   }, [dispatch, services.length]);
 
   if (servicesStatus === "loading" || servicesStatus === "idle") {
-    return (
-      <div className="bg-background min-h-screen p-8">
-        <p className="text-muted-foreground">Loading services...</p>
-      </div>
-    );
+    return <TableLoading label="Loading services" />;
   }
 
   if (services.length === 0) {

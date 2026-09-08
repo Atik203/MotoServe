@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchVehicles, updateVehicle } from "@/store/slices/vehiclesSlice";
 import { VehicleForm, type VehicleFormData } from "@/components/roles/owner/VehicleForm";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
+import { FormLoading } from "@/components/ui/loading";
 
 export default function EditVehiclePage() {
   const params = useParams<{ id: string }>();
@@ -22,10 +23,11 @@ export default function EditVehiclePage() {
   const vehicle = vehicles.find((v) => v.id === params.id) ?? null;
 
   if (!vehicle) {
+    if (vehicles.length === 0) {
+      return <FormLoading label="Loading vehicle" />;
+    }
     return (
-      <div className="bg-background min-h-screen p-8 text-sm text-muted-foreground">
-        {vehicles.length === 0 ? "Loading vehicle..." : "Vehicle not found."}
-      </div>
+      <div className="bg-background min-h-screen p-8 text-sm text-muted-foreground">Vehicle not found.</div>
     );
   }
 

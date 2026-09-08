@@ -10,11 +10,13 @@ import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchEstimates } from "@/store/slices/estimatesSlice";
 import { fetchInvoices } from "@/store/slices/invoicesSlice";
 import { downloadInvoicePdf } from "@/lib/pdf";
+import { DetailLoading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 
 export default function ServiceTrackingPage() {
   const dispatch = useAppDispatch();
   const jobs = useAppSelector((s) => s.jobs.items);
+  const jobsStatus = useAppSelector((s) => s.jobs.status);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const estimates = useAppSelector((s) => s.estimates.items);
   const invoices = useAppSelector((s) => s.invoices.items);
@@ -39,6 +41,9 @@ export default function ServiceTrackingPage() {
     : null;
 
   if (!job || !vehicle) {
+    if ((jobsStatus === "idle" || jobsStatus === "loading") && jobs.length === 0) {
+      return <DetailLoading label="Loading service tracking" />;
+    }
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">No active service found.</div>;
   }
 

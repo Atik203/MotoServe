@@ -27,6 +27,7 @@ import { fetchThreads } from "@/store/slices/chatSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
 import { buildKpis } from "@/lib/kpis";
+import { DashboardLoading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 import {
   Table,
@@ -89,6 +90,8 @@ export default function AdvisorDashboardPage() {
   const threads = useAppSelector((s) => s.chat.threads);
   const services = useAppSelector((s) => s.services.items);
   const customers = useAppSelector((s) => s.customers.items);
+  const jobsStatus = useAppSelector((s) => s.jobs.status);
+  const appointmentsStatus = useAppSelector((s) => s.appointments.status);
 
   useEffect(() => {
     dispatch(fetchJobs());
@@ -116,6 +119,17 @@ export default function AdvisorDashboardPage() {
     current: a.status === "pending",
   }));
   const unreadThread = threads.find((t) => t.unread > 0) ?? threads[0] ?? null;
+
+  const initialLoading =
+    (jobsStatus === "idle" ||
+      jobsStatus === "loading" ||
+      appointmentsStatus === "idle" ||
+      appointmentsStatus === "loading") &&
+    jobs.length === 0 &&
+    appointments.length === 0;
+  if (initialLoading) {
+    return <DashboardLoading label="Loading advisor dashboard" />;
+  }
 
   const setAppointmentStatus = async (id: string, status: "confirmed" | "cancelled") => {
     try {

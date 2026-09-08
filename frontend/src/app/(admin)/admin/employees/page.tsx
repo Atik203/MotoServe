@@ -23,6 +23,7 @@ import { deleteEmployee, fetchEmployees, updateEmployee } from "@/store/slices/e
 import type { Employee } from "@/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { TableLoading } from "@/components/ui/loading";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -74,6 +75,7 @@ function EmployeeAvatar({ employee }: { employee: Employee }) {
 export default function EmployeeManagementPage() {
   const dispatch = useAppDispatch();
   const employees = useAppSelector((s) => s.employees.items);
+  const employeesStatus = useAppSelector((s) => s.employees.status);
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -181,6 +183,10 @@ export default function EmployeeManagementPage() {
       setSaving(false);
     }
   };
+
+  if ((employeesStatus === "idle" || employeesStatus === "loading") && employees.length === 0) {
+    return <TableLoading label="Loading employees" />;
+  }
 
   return (
     <div className="bg-background min-h-screen p-8">

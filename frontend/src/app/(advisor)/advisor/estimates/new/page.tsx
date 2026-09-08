@@ -10,6 +10,7 @@ import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
 import { fetchEstimates, createEstimate } from "@/store/slices/estimatesSlice";
 import type { Customer, Estimate, EstimateItem, JobCard, Vehicle } from "@/types";
+import { FormLoading } from "@/components/ui/loading";
 
 const card =
   "flex flex-col gap-4 rounded-lg border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]";
@@ -298,6 +299,7 @@ function SendEstimatePage() {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const jobs = useAppSelector((s) => s.jobs.items);
+  const jobsStatus = useAppSelector((s) => s.jobs.status);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const customers = useAppSelector((s) => s.customers.items);
   const estimates = useAppSelector((s) => s.estimates.items);
@@ -327,6 +329,10 @@ function SendEstimatePage() {
           verifiedAt: null,
         }
       : null);
+
+  if ((jobsStatus === "idle" || jobsStatus === "loading") && jobs.length === 0) {
+    return <FormLoading label="Loading estimate builder" />;
+  }
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -418,7 +424,7 @@ function SendEstimatePage() {
 
 export default function SendEstimatePageWrapper() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-background p-8 text-muted-foreground">Loading estimate builder...</div>}>
+    <Suspense fallback={<FormLoading label="Loading estimate builder" />}>
       <SendEstimatePage />
     </Suspense>
   );

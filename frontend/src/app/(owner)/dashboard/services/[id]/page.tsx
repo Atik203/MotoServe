@@ -12,6 +12,7 @@ import { fetchEstimates } from "@/store/slices/estimatesSlice";
 import { fetchRatings, rateJob } from "@/store/slices/ratingsSlice";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { Button } from "@/components/ui/button";
+import { DetailLoading } from "@/components/ui/loading";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import {
@@ -84,7 +85,7 @@ export default function ServiceDetailsPage() {
   }
   const vehicle = vehicles.find((v) => v.id === job.vehicleId);
   if (!vehicle) {
-    return <div className="bg-background min-h-screen p-8 text-muted-foreground">Loading service...</div>;
+    return <DetailLoading label="Loading service" />;
   }
   const estimate = estimates.find((e) => e.jobId === job.id) ?? null;
   const existingRating = ratings.find((r) => r.jobId === job.id) ?? null;

@@ -9,10 +9,12 @@ import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
 import { ProgressStepper } from "@/components/roles/mechanic/ProgressStepper";
+import { RowsLoading } from "@/components/ui/loading";
 
 export default function ServiceTrackingListPage() {
   const dispatch = useAppDispatch();
   const jobs = useAppSelector((s) => s.jobs.items);
+  const jobsStatus = useAppSelector((s) => s.jobs.status);
   const vehicles = useAppSelector((s) => s.vehicles.items);
 
   const vehicleFilter =
@@ -27,6 +29,16 @@ export default function ServiceTrackingListPage() {
   const activeJobs = filteredJobs.filter((j) => !["completed", "ready"].includes(j.status));
   const pastJobs = filteredJobs.filter((j) => ["completed", "ready"].includes(j.status));
   const filterVehicle = vehicleFilter ? vehicles.find((v) => v.id === vehicleFilter) ?? null : null;
+
+  if ((jobsStatus === "idle" || jobsStatus === "loading") && jobs.length === 0) {
+    return (
+      <div className="bg-background min-h-screen p-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+          <RowsLoading label="Loading services" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background min-h-screen p-8">

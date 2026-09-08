@@ -10,6 +10,7 @@ import { fetchJobs } from "@/store/slices/jobsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
 import { Button } from "@/components/ui/button";
+import { TableLoading } from "@/components/ui/loading";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -199,7 +200,7 @@ function AdvisorJobsPage() {
 
 export default function AdvisorJobsPageWrapper() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-background p-8 text-muted-foreground">Loading jobs...</div>}>
+    <Suspense fallback={<TableLoading label="Loading jobs" />}>
       <AdvisorJobsPage />
     </Suspense>
   );

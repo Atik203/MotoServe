@@ -13,6 +13,7 @@ import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { cn } from "@/lib/utils";
 import { downloadInvoicePdf } from "@/lib/pdf";
 import { Button } from "@/components/ui/button";
+import { TableLoading } from "@/components/ui/loading";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -80,6 +81,7 @@ function Stars({
 export default function ServiceHistoryPage() {
   const dispatch = useAppDispatch();
   const invoices = useAppSelector((s) => s.invoices.items);
+  const invoicesStatus = useAppSelector((s) => s.invoices.status);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const jobs = useAppSelector((s) => s.jobs.items);
   const ratings = useAppSelector((s) => s.ratings.items);
@@ -174,6 +176,10 @@ export default function ServiceHistoryPage() {
       setSubmitting(false);
     }
   };
+
+  if ((invoicesStatus === "idle" || invoicesStatus === "loading") && invoices.length === 0) {
+    return <TableLoading label="Loading service history" />;
+  }
 
   return (
     <div className="bg-background min-h-screen p-8">

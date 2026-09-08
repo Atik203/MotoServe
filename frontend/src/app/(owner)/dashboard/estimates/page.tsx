@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchEstimates } from "@/store/slices/estimatesSlice";
 import { fetchJobs } from "@/store/slices/jobsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
+import { CardsGridLoading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 
 const statusStyle: Record<string, { className: string; icon: typeof Hourglass }> = {
@@ -18,6 +19,7 @@ const statusStyle: Record<string, { className: string; icon: typeof Hourglass }>
 export default function MyEstimatesPage() {
   const dispatch = useAppDispatch();
   const estimates = useAppSelector((s) => s.estimates.items);
+  const estimatesStatus = useAppSelector((s) => s.estimates.status);
   const jobs = useAppSelector((s) => s.jobs.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
 
@@ -26,6 +28,10 @@ export default function MyEstimatesPage() {
     if (jobs.length === 0) dispatch(fetchJobs());
     if (vehicles.length === 0) dispatch(fetchVehicles());
   }, [dispatch, estimates.length, jobs.length, vehicles.length]);
+
+  if ((estimatesStatus === "idle" || estimatesStatus === "loading") && estimates.length === 0) {
+    return <CardsGridLoading label="Loading estimates" count={4} />;
+  }
 
   return (
     <div className="bg-background min-h-screen p-8">

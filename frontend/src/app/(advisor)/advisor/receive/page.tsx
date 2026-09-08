@@ -23,6 +23,7 @@ import { fetchAppointments } from "@/store/slices/appointmentsSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
 import { VehicleForm, type VehicleFormData } from "@/components/roles/owner/VehicleForm";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
+import { FormLoading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 import type { Appointment, Customer, Service, Vehicle } from "@/types";
 
@@ -44,8 +45,10 @@ export default function ReceiveVehiclePage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const vehicles = useAppSelector((s) => s.vehicles.items);
+  const vehiclesStatus = useAppSelector((s) => s.vehicles.status);
   const customers = useAppSelector((s) => s.customers.items);
   const appointments = useAppSelector((s) => s.appointments.items);
+  const appointmentsStatus = useAppSelector((s) => s.appointments.status);
   const services = useAppSelector((s) => s.services.items);
 
   const [mode, setMode] = useState<"appointment" | "walkin">("appointment");
@@ -215,6 +218,17 @@ export default function ReceiveVehiclePage() {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+
+  const receiveLoading =
+    (vehiclesStatus === "idle" ||
+      vehiclesStatus === "loading" ||
+      appointmentsStatus === "idle" ||
+      appointmentsStatus === "loading") &&
+    vehicles.length === 0 &&
+    appointments.length === 0;
+  if (receiveLoading) {
+    return <FormLoading label="Loading receive vehicle" />;
+  }
 
   return (
     <div className="min-h-screen bg-background p-8">

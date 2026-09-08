@@ -27,6 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PriorityPill, StatusBadge } from "@/components/roles/mechanic/StatusBadge";
+import { DashboardLoading } from "@/components/ui/loading";
 
 const kpiIcon: Record<string, LucideIcon> = {
   "clipboard-list": ClipboardList,
@@ -84,11 +85,7 @@ export default function MechanicDashboardPage() {
   );
 
   if (jobsStatus === "loading" || jobsStatus === "idle" || (jobs.length > 0 && vehicles.length === 0)) {
-    return (
-      <div className="bg-background min-h-screen p-8">
-        <p className="text-muted-foreground">Loading dashboard...</p>
-      </div>
-    );
+    return <DashboardLoading label="Loading mechanic dashboard" />;
   }
 
   const firstName = user?.name?.split(" ")[0] ?? "Mechanic";

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, Play, Star, TrendingUp } from "lucide-react";
 import { api } from "@/lib/api";
+import { load } from "@/lib/demo-data";
+import { TestimonialsLoading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 
 type Review = { id: string; name: string; role: string; rating: number; avatar?: string; initials?: string; review: string };
@@ -45,12 +47,36 @@ function Stars({ rating, size = "h-[19px] w-5" }: { rating: number; size?: strin
 
 export default function TestimonialsPage() {
   const [data, setData] = useState<TestimonialsData | null>(null);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
-    api.get<{ data: TestimonialsData }>("/content/testimonials").then((r) => setData(r.data)).catch(() => setData(null));
+    api.get<{ data: TestimonialsData }>("/content/testimonials").then((r) => {
+      if (r.data && Array.isArray(r.data.reviews)) setData(r.data);
+      else throw new Error("bad shape");
+    }).catch(() => {
+      load("testimonials").then((f) => {
+        if (f && Array.isArray(f.reviews)) setData(f);
+        else setFailed(true);
+      }).catch(() => setFailed(true));
+    });
   }, []);
 
+  if (failed) {
+    return (
+      <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-8 text-center">
+        <p className="text-base font-semibold text-foreground">We couldn&apos;t load testimonials right now.</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="rounded bg-primary px-6 py-2 text-sm font-semibold text-white"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
   if (!data) {
-    return <div className="p-8 text-muted-foreground">Loading testimonials...</div>;
+    return <TestimonialsLoading />;
   }
 
   return (

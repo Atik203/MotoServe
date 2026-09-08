@@ -14,6 +14,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchReports } from "@/store/slices/reportsSlice";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { DashboardLoading } from "@/components/ui/loading";
 import {
   Table,
   TableBody,
@@ -44,11 +45,7 @@ export default function AdminReportsPage() {
   }, [reports]);
 
   if (!reports) {
-    return (
-      <div className="bg-background min-h-screen p-8">
-        <p className="text-muted-foreground">Loading reports...</p>
-      </div>
-    );
+    return <DashboardLoading label="Loading reports" />;
   }
 
   const maxStatusCount = Math.max(...reports.jobsByStatus.map((s) => s.count));

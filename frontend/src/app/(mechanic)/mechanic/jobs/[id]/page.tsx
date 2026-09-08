@@ -12,6 +12,7 @@ import { MechanicNotes } from "@/components/roles/mechanic/MechanicNotes";
 import { PartsUsedTable } from "@/components/roles/mechanic/PartsUsedTable";
 import { RepairPhotos } from "@/components/roles/mechanic/RepairPhotos";
 import { Button } from "@/components/ui/button";
+import { DetailLoading } from "@/components/ui/loading";
 
 const STATUS_ORDER = ["received", "inspecting", "repairing", "testing", "ready", "completed"];
 
@@ -30,11 +31,7 @@ export default function RepairProgressPage() {
   }, [dispatch, jobsStatus]);
 
   if (jobsStatus === "loading" && !job) {
-    return (
-      <div className="bg-background min-h-screen p-8">
-        <p className="text-muted-foreground">Loading job card...</p>
-      </div>
-    );
+    return <DetailLoading label="Loading job card" />;
   }
   if (!job) {
     return (

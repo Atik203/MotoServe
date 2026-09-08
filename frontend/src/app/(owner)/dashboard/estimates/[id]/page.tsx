@@ -10,6 +10,7 @@ import { fetchEstimates, decideEstimate } from "@/store/slices/estimatesSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
 import { fetchJobs } from "@/store/slices/jobsSlice";
 import { Button } from "@/components/ui/button";
+import { DetailLoading } from "@/components/ui/loading";
 
 export default function EstimateApprovalPage() {
   const params = useParams<{ id: string }>();
@@ -28,7 +29,7 @@ export default function EstimateApprovalPage() {
   const estimate = estimates.find((e) => e.id === params.id) ?? null;
 
   if (estimatesStatus === "loading" && !estimate) {
-    return <div className="bg-background min-h-screen p-8 text-muted-foreground">Loading estimate...</div>;
+    return <DetailLoading label="Loading estimate" />;
   }
   if (!estimate) {
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">Estimate not found.</div>;

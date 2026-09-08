@@ -12,6 +12,7 @@ import { createJobCard } from "@/store/slices/jobsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
+import { FormLoading } from "@/components/ui/loading";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 
 const priorities = [
@@ -28,6 +29,7 @@ export default function CreateJobCardPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const vehicles = useAppSelector((s) => s.vehicles.items);
+  const vehiclesStatus = useAppSelector((s) => s.vehicles.status);
   const customers = useAppSelector((s) => s.customers.items);
   const services = useAppSelector((s) => s.services.items);
   const user = useAppSelector((s) => s.auth.user);
@@ -94,6 +96,10 @@ export default function CreateJobCardPage() {
       setSubmitting(false);
     }
   };
+
+  if ((vehiclesStatus === "idle" || vehiclesStatus === "loading") && vehicles.length === 0) {
+    return <FormLoading label="Loading job card form" />;
+  }
 
   return (
     <div className="bg-background min-h-screen p-8">

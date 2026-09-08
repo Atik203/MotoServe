@@ -12,6 +12,7 @@ import { fetchJobs } from "@/store/slices/jobsSlice";
 import { downloadInvoicePdf } from "@/lib/pdf";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { TableLoading } from "@/components/ui/loading";
 import type { Invoice } from "@/types";
 
 const PAYMENT_METHODS = [
@@ -53,7 +54,7 @@ export default function PaymentInvoicePage() {
   }, [dispatch]);
 
   if (invoicesStatus === "loading" || invoicesStatus === "idle") {
-    return <div className="bg-background min-h-screen p-8 text-muted-foreground">Loading invoices...</div>;
+    return <TableLoading label="Loading invoices" />;
   }
 
   const sorted = [...invoices].sort(

@@ -23,6 +23,7 @@ import { fetchInvoices } from "@/store/slices/invoicesSlice";
 import { buildKpis } from "@/lib/kpis";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { DashboardLoading } from "@/components/ui/loading";
 
 const kpiIcon: Record<string, typeof Users> = {
   "dollar-sign": DollarSign,
@@ -63,11 +64,7 @@ export default function AdminDashboardPage() {
   }, [reports]);
 
   if (!reports) {
-    return (
-      <div className="bg-background min-h-screen p-8">
-        <p className="text-muted-foreground">Loading dashboard...</p>
-      </div>
-    );
+    return <DashboardLoading label="Loading admin dashboard" />;
   }
 
   const donut = reports.serviceDistribution;

@@ -5,20 +5,30 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, Clock } from "lucide-react";
 import { api } from "@/lib/api";
+import { load } from "@/lib/demo-data";
+import { ServicesLoading } from "@/components/ui/loading";
 import type { Service } from "@/types";
 import { cn } from "@/lib/utils";
 
 export default function ServicesPage() {
-  const [services, setServices] = useState<Service[]>([]);
+  const [services, setServices] = useState<Service[] | null>(null);
 
   useEffect(() => {
-    api.get<{ data: Service[] }>("/content/services").then((r) => setServices(r.data)).catch(() => setServices([]));
+    api.get<{ data: Service[] }>("/content/services").then((r) => {
+      setServices(Array.isArray(r.data) ? r.data : []);
+    }).catch(() => {
+      load("services").then((f) => setServices(Array.isArray(f) ? f : [])).catch(() => setServices([]));
+    });
   }, []);
 
-  const featured = services.filter((s) => s.marketing);
+  const featured = (services ?? []).filter((s) => s.marketing);
+
+  if (services === null) {
+    return <ServicesLoading />;
+  }
 
   if (services.length === 0) {
-    return <div className="p-8 text-muted-foreground">Loading services...</div>;
+    return <div className="p-8 text-center text-muted-foreground">No services available right now.</div>;
   }
 
   return (

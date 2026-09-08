@@ -5,6 +5,7 @@ import { Suspense, useState } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, KeyRound, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CenterCardLoading } from "@/components/ui/loading";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAppDispatch } from "@/store/hooks";
@@ -108,7 +109,7 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<CenterCardLoading label="Loading reset password" />}>
       <ResetPasswordForm />
     </Suspense>
   );

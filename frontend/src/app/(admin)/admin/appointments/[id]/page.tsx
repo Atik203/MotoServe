@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchAppointments, updateAppointmentStatus } from "@/store/slices/appointmentsSlice";
+import { DetailLoading } from "@/components/ui/loading";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
 import { fetchJobs } from "@/store/slices/jobsSlice";
@@ -50,10 +51,11 @@ export default function AdminAppointmentDetailsPage() {
   const linkedJob = appointment ? jobs.find((j) => j.appointmentId === appointment.id) : undefined;
 
   if (!appointment) {
+    if (appointments.length === 0) {
+      return <DetailLoading label="Loading appointment" />;
+    }
     return (
-      <div className="bg-background min-h-screen p-8 text-sm text-muted-foreground">
-        {appointments.length === 0 ? "Loading appointment..." : "Appointment not found."}
-      </div>
+      <div className="bg-background min-h-screen p-8 text-sm text-muted-foreground">Appointment not found.</div>
     );
   }
 

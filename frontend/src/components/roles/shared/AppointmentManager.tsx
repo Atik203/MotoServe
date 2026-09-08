@@ -9,6 +9,7 @@ import { fetchAppointments, updateAppointmentStatus } from "@/store/slices/appoi
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
+import { RowsLoading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 import type { Appointment } from "@/types";
 
@@ -33,6 +34,7 @@ interface AppointmentManagerProps {
 export function AppointmentManager({ title = "Appointments", subtitle, detailsBase, onIntake }: AppointmentManagerProps) {
   const dispatch = useAppDispatch();
   const appointments = useAppSelector((s) => s.appointments.items);
+  const appointmentsStatus = useAppSelector((s) => s.appointments.status);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const services = useAppSelector((s) => s.services.items);
   const customers = useAppSelector((s) => s.customers.items);
@@ -71,6 +73,16 @@ export function AppointmentManager({ title = "Appointments", subtitle, detailsBa
       toast.error(err instanceof Error ? err.message : "Update failed");
     }
   };
+
+  if ((appointmentsStatus === "idle" || appointmentsStatus === "loading") && appointments.length === 0) {
+    return (
+      <div className="bg-background min-h-screen p-8">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+          <RowsLoading label="Loading appointments" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background min-h-screen p-8">

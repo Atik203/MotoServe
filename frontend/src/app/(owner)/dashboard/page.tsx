@@ -26,6 +26,7 @@ import { fetchAppointments } from "@/store/slices/appointmentsSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
 import { fetchInvoices } from "@/store/slices/invoicesSlice";
 import { buildKpis } from "@/lib/kpis";
+import { DashboardLoading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
@@ -76,6 +77,8 @@ export default function OwnerDashboardPage() {
   const appointments = useAppSelector((s) => s.appointments.items);
   const invoices = useAppSelector((s) => s.invoices.items);
   const services = useAppSelector((s) => s.services.items);
+  const jobsStatus = useAppSelector((s) => s.jobs.status);
+  const vehiclesStatus = useAppSelector((s) => s.vehicles.status);
 
   useEffect(() => {
     dispatch(fetchVehicles());
@@ -188,6 +191,17 @@ export default function OwnerDashboardPage() {
     }
     return items.sort((a, b) => b.at - a.at).slice(0, 5);
   }, [pendingEstimates, jobs, upcomingAppointments, dueInvoices, now, vehicleById]);
+
+  const initialLoading =
+    (jobsStatus === "idle" ||
+      jobsStatus === "loading" ||
+      vehiclesStatus === "idle" ||
+      vehiclesStatus === "loading") &&
+    jobs.length === 0 &&
+    vehicles.length === 0;
+  if (initialLoading) {
+    return <DashboardLoading label="Loading dashboard" />;
+  }
 
   return (
     <div className="bg-background min-h-screen p-8">

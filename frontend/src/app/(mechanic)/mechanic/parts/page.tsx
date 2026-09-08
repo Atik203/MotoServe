@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TableLoading } from "@/components/ui/loading";
 
 function stockPill(stock: number) {
   if (stock <= 0) return { label: "Out of Stock", className: "bg-[rgba(186,26,26,0.1)] text-[#ba1a1a]" };
@@ -24,6 +25,7 @@ function stockPill(stock: number) {
 export default function PartsInventoryPage() {
   const dispatch = useAppDispatch();
   const parts = useAppSelector((s) => s.parts.items);
+  const partsStatus = useAppSelector((s) => s.parts.status);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -39,6 +41,10 @@ export default function PartsInventoryPage() {
   }, [parts, search]);
 
   const lowStock = parts.filter((p) => p.stock <= 10).length;
+
+  if ((partsStatus === "idle" || partsStatus === "loading") && parts.length === 0) {
+    return <TableLoading label="Loading parts inventory" />;
+  }
 
   return (
     <div className="bg-background min-h-screen p-8">

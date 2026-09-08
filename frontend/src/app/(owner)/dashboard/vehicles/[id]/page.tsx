@@ -24,6 +24,7 @@ import { fetchJobs } from "@/store/slices/jobsSlice";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
 import { Button } from "@/components/ui/button";
+import { DetailLoading } from "@/components/ui/loading";
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -45,11 +46,12 @@ export default function VehicleDetailsPage() {
   const completedCount = vehicleJobs.filter((j) => ["completed", "ready"].includes(j.status)).length;
 
   if (!vehicle) {
+    if (vehicles.length === 0) {
+      return <DetailLoading label="Loading vehicle" />;
+    }
     return (
       <div className="bg-background min-h-screen p-8">
-        <div className="mx-auto max-w-7xl text-sm text-muted-foreground">
-          {vehicles.length === 0 ? "Loading vehicle..." : "Vehicle not found."}
-        </div>
+        <div className="mx-auto max-w-7xl text-sm text-muted-foreground">Vehicle not found.</div>
       </div>
     );
   }

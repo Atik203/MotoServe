@@ -11,6 +11,7 @@ import { fetchEmployees } from "@/store/slices/employeesSlice";
 import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { DetailLoading } from "@/components/ui/loading";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Employee, JobCard } from "@/types";
@@ -45,7 +46,9 @@ export default function AssignMechanicPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const jobs = useAppSelector((s) => s.jobs.items);
+  const jobsStatus = useAppSelector((s) => s.jobs.status);
   const employees = useAppSelector((s) => s.employees.items);
+  const employeesStatus = useAppSelector((s) => s.employees.status);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [jobId, setJobId] = useState("");
   const [search, setSearch] = useState("");
@@ -106,6 +109,17 @@ export default function AssignMechanicPage() {
       setSubmitting(false);
     }
   };
+
+  const assignLoading =
+    (jobsStatus === "idle" ||
+      jobsStatus === "loading" ||
+      employeesStatus === "idle" ||
+      employeesStatus === "loading") &&
+    jobs.length === 0 &&
+    employees.length === 0;
+  if (assignLoading) {
+    return <DetailLoading label="Loading assign mechanic" />;
+  }
 
   return (
     <div className="bg-background min-h-screen p-8">

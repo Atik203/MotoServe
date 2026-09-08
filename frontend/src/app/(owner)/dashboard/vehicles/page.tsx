@@ -10,6 +10,7 @@ import { fetchJobs } from "@/store/slices/jobsSlice";
 import { useRouter } from "next/navigation";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { Button } from "@/components/ui/button";
+import { CardsGridLoading } from "@/components/ui/loading";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,7 @@ export default function MyVehiclesPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const vehicles = useAppSelector((s) => s.vehicles.items);
+  const vehiclesStatus = useAppSelector((s) => s.vehicles.status);
   const jobs = useAppSelector((s) => s.jobs.items);
   const [deleting, setDeleting] = useState<Vehicle | null>(null);
   const [saving, setSaving] = useState(false);
@@ -53,6 +55,10 @@ export default function MyVehiclesPage() {
       setSaving(false);
     }
   };
+
+  if ((vehiclesStatus === "idle" || vehiclesStatus === "loading") && vehicles.length === 0) {
+    return <CardsGridLoading label="Loading vehicles" count={3} />;
+  }
 
   return (
     <div className="bg-background min-h-screen p-8">

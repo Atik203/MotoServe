@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchCustomers, verifyCustomer } from "@/store/slices/customersSlice";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { TableLoading } from "@/components/ui/loading";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -28,6 +29,7 @@ const statusPill: Record<string, string> = {
 export default function VerificationPage() {
   const dispatch = useAppDispatch();
   const customers = useAppSelector((s) => s.customers.items);
+  const customersStatus = useAppSelector((s) => s.customers.status);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected" | "inactive">("all");
 
@@ -67,6 +69,10 @@ export default function VerificationPage() {
     { label: "Rejected Accounts", value: counts.rejected, icon: UserX },
     { label: "Total Registered", value: counts.total, icon: Users },
   ];
+
+  if ((customersStatus === "idle" || customersStatus === "loading") && customers.length === 0) {
+    return <TableLoading label="Loading verifications" />;
+  }
 
   return (
     <div className="bg-background min-h-screen p-8">

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Activity, FileText, Package, Receipt, ShieldCheck, Zap, type LucideIcon } from "lucide-react";
 import { api } from "@/lib/api";
+import { load } from "@/lib/demo-data";
+import { HomeFeaturesLoading } from "@/components/ui/loading";
 
 const featureIcons: Record<string, LucideIcon> = {
   "shield-check": ShieldCheck,
@@ -16,13 +18,17 @@ const featureIcons: Record<string, LucideIcon> = {
 };
 
 export default function HomePage() {
-  const [features, setFeatures] = useState<{ id: string; title: string; description: string; icon: string }[]>([]);
+  const [features, setFeatures] = useState<
+    { id: string; title: string; description: string; icon: string }[] | null
+  >(null);
 
   useEffect(() => {
     api
       .get<{ data: { features: { id: string; title: string; description: string; icon: string }[] } }>("/content/home")
-      .then((res) => setFeatures(res.data.features))
-      .catch(() => setFeatures([]));
+      .then((res) => setFeatures(Array.isArray(res.data.features) ? res.data.features : []))
+      .catch(() => {
+        load("home").then((f) => setFeatures(Array.isArray(f.features) ? f.features : [])).catch(() => setFeatures([]));
+      });
   }, []);
 
   return (
@@ -67,6 +73,9 @@ export default function HomePage() {
       </section>
 
       <section className="border-y border-[#e2e8f0] bg-[#f3f4f5] py-[49px]">
+        {features === null ? (
+          <HomeFeaturesLoading />
+        ) : (
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-12 px-8">
           <h2 className="text-center text-2xl font-semibold tracking-[-0.24px] text-foreground">Why Choose Us</h2>
           <div className="grid grid-cols-3 gap-6">
@@ -87,6 +96,7 @@ export default function HomePage() {
             })}
           </div>
         </div>
+        )}
       </section>
     </>
   );
