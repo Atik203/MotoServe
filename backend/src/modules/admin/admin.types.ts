@@ -20,6 +20,33 @@ export interface CreateEmployeeBody {
   station?: string;
   specialization?: string;
   avatar?: string;
+  nid?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  street?: string;
+  city?: string;
+  district?: string;
+  zip?: string;
+  country?: string;
+}
+
+export interface UpdateEmployeeBody {
+  name?: string;
+  email?: string;
+  password?: string;
+  phone?: string;
+  station?: string;
+  specialization?: string;
+  avatar?: string | null;
+  status?: "active" | "inactive";
+  nid?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  street?: string;
+  city?: string;
+  district?: string;
+  zip?: string;
+  country?: string;
 }
 
 export interface UpdateEmployeeBody {
