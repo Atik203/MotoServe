@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { LayoutDashboard, LogOut, User } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logoutUser } from "@/store/slices/authSlice";
@@ -19,20 +18,15 @@ export function userInitials(name: string) {
 }
 
 export function UserMenu() {
-  const router = useRouter();
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
   const avatar = useFileUrl(user?.avatar);
 
   if (!user) return null;
 
-  const handleLogout = async () => {
-    try {
-      await dispatch(logoutUser()).unwrap();
-    } catch {
-      // ignore
-    }
-    router.replace("/login");
+  const handleLogout = () => {
+    void dispatch(logoutUser());
+    window.location.assign("/login");
   };
 
   return (
