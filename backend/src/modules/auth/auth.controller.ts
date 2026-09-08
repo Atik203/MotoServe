@@ -52,7 +52,7 @@ export async function forgotPassword(req: Request, res: Response): Promise<void>
   const user = await findUserByEmail(email);
   if (user) {
     const resetToken = signToken({ userId: user.id, role: user.role, name: user.name, purpose: "password-reset" }, "15m");
-    const base = process.env.CLIENT_URL ?? "http://localhost:3500";
+    const base = process.env.CLIENT_URL ?? "http://localhost:3000";
     const link = `${base}/reset-password?token=${encodeURIComponent(resetToken)}`;
     if (process.env.NODE_ENV !== "production") {
       console.log(`[password-reset] Reset link for ${email}: ${link}`);
