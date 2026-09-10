@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchVehicles, selectVehicle } from "@/store/slices/vehiclesSlice";
-import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchTasks } from "@/store/slices/tasksSlice";
 import { fetchEstimates } from "@/store/slices/estimatesSlice";
 import { fetchAppointments } from "@/store/slices/appointmentsSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 
-const JOB_STEPS = ["received", "inspecting", "repairing", "testing", "ready"] as const;
+const TASK_STEPS = ["received", "inspecting", "repairing", "testing", "ready"] as const;
 
 const kpiIcons: Record<string, typeof Calendar> = {
   calendar: Calendar,
@@ -72,17 +72,17 @@ export default function OwnerDashboardPage() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
   const vehicles = useAppSelector((s) => s.vehicles.items);
-  const jobs = useAppSelector((s) => s.jobs.items);
+  const tasks = useAppSelector((s) => s.tasks.items);
   const estimates = useAppSelector((s) => s.estimates.items);
   const appointments = useAppSelector((s) => s.appointments.items);
   const invoices = useAppSelector((s) => s.invoices.items);
   const services = useAppSelector((s) => s.services.items);
-  const jobsStatus = useAppSelector((s) => s.jobs.status);
+  const tasksStatus = useAppSelector((s) => s.tasks.status);
   const vehiclesStatus = useAppSelector((s) => s.vehicles.status);
 
   useEffect(() => {
     dispatch(fetchVehicles());
-    dispatch(fetchJobs());
+    dispatch(fetchTasks());
     dispatch(fetchEstimates());
     dispatch(fetchAppointments());
     dispatch(fetchServices());
@@ -98,15 +98,15 @@ export default function OwnerDashboardPage() {
 
   const [now] = useState(() => Date.now());
 
-  const kpis = useMemo(() => buildKpis("owner", { jobs, vehicles }), [jobs, vehicles]);
+  const kpis = useMemo(() => buildKpis("owner", { tasks, vehicles }), [tasks, vehicles]);
 
-  const activeJobs = useMemo(
-    () => jobs.filter((j) => ["received", "inspecting", "repairing", "testing"].includes(j.status)),
-    [jobs],
+  const activeTasks = useMemo(
+    () => tasks.filter((t) => ["received", "inspecting", "repairing", "testing"].includes(t.status)),
+    [tasks],
   );
-  const activeJob = activeJobs[0] ?? null;
-  const activeVehicle = activeJob ? vehicleById(activeJob.vehicleId) : undefined;
-  const jobStepIndex = activeJob ? JOB_STEPS.indexOf(activeJob.status as (typeof JOB_STEPS)[number]) : -1;
+  const activeTask = activeTasks[0] ?? null;
+  const activeVehicle = activeTask ? vehicleById(activeTask.vehicleId) : undefined;
+  const taskStepIndex = activeTask ? TASK_STEPS.indexOf(activeTask.status as (typeof TASK_STEPS)[number]) : -1;
 
   const pendingEstimates = useMemo(() => estimates.filter((e) => e.status === "pending"), [estimates]);
 
@@ -139,27 +139,27 @@ export default function OwnerDashboardPage() {
       });
       if (++i >= 4) break;
     }
-    for (const j of jobs) {
-      if (j.status === "ready") {
-        const v = vehicleById(j.vehicleId);
+    for (const t of tasks) {
+      if (t.status === "ready") {
+        const v = vehicleById(t.vehicleId);
         items.push({
-          id: `ready-${j.id}`,
+          id: `ready-${t.id}`,
           icon: CheckCircle2,
           tint: "bg-[rgba(76,175,80,0.1)]",
           title: "Ready for pickup",
-          body: `${v ? `${v.year} ${v.make} ${v.model} ` : ""}${j.services.map((s) => s.name).join(", ")}`,
-          href: `/dashboard/services/${j.id}`,
-          at: new Date(j.progress[j.progress.length - 1]?.timestamp ?? now).getTime(),
+          body: `${v ? `${v.year} ${v.make} ${v.model} ` : ""}${t.services.map((s) => s.name).join(", ")}`,
+          href: `/dashboard/services/${t.id}`,
+          at: new Date(t.progress[t.progress.length - 1]?.timestamp ?? now).getTime(),
         });
-      } else if (j.status === "completed") {
+      } else if (t.status === "completed") {
         items.push({
-          id: `done-${j.id}`,
+          id: `done-${t.id}`,
           icon: CheckCircle2,
           tint: "bg-[rgba(76,175,80,0.1)]",
           title: "Service completed",
-          body: `${j.services.map((s) => s.name).join(", ")} finished for your vehicle`,
-          href: `/dashboard/services/${j.id}`,
-          at: new Date(j.progress[j.progress.length - 1]?.timestamp ?? now).getTime(),
+          body: `${t.services.map((s) => s.name).join(", ")} finished for your vehicle`,
+          href: `/dashboard/services/${t.id}`,
+          at: new Date(t.progress[t.progress.length - 1]?.timestamp ?? now).getTime(),
         });
       }
     }
@@ -190,14 +190,14 @@ export default function OwnerDashboardPage() {
       });
     }
     return items.sort((a, b) => b.at - a.at).slice(0, 5);
-  }, [pendingEstimates, jobs, upcomingAppointments, dueInvoices, now, vehicleById]);
+  }, [pendingEstimates, tasks, upcomingAppointments, dueInvoices, now, vehicleById]);
 
   const initialLoading =
-    (jobsStatus === "idle" ||
-      jobsStatus === "loading" ||
+    (tasksStatus === "idle" ||
+      tasksStatus === "loading" ||
       vehiclesStatus === "idle" ||
       vehiclesStatus === "loading") &&
-    jobs.length === 0 &&
+    tasks.length === 0 &&
     vehicles.length === 0;
   if (initialLoading) {
     return <DashboardLoading label="Loading dashboard" />;
@@ -213,8 +213,8 @@ export default function OwnerDashboardPage() {
             </p>
             <h1 className="text-4xl font-bold tracking-[-0.72px] text-foreground">Welcome back, {firstName}!</h1>
             <p className="pt-1 text-base text-[#414754]">
-              {activeJob
-                ? `${vehicles.length} vehicle${vehicles.length === 1 ? "" : "s"} registered — ${activeJobs.length} service${activeJobs.length === 1 ? "" : "s"} tracking right now.`
+              {activeTask
+                ? `${vehicles.length} vehicle${vehicles.length === 1 ? "" : "s"} registered — ${activeTasks.length} service${activeTasks.length === 1 ? "" : "s"} tracking right now.`
                 : "Your fleet is all clear. Book a service or register a new vehicle anytime."}
             </p>
           </div>
@@ -264,10 +264,10 @@ export default function OwnerDashboardPage() {
             <section className="flex flex-col gap-4 rounded-xl border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-foreground">Active Service</h2>
-                {activeJob && <StatusBadge status={activeJob.status as never} />}
+                {activeTask && <StatusBadge status={activeTask.status as never} />}
               </div>
 
-              {activeJob && activeVehicle ? (
+              {activeTask && activeVehicle ? (
                 <>
                   <div className="flex items-center rounded-lg border border-[#e2e8f0] bg-secondary p-[17px]">
                     <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-[#eef1f4]">
@@ -278,25 +278,25 @@ export default function OwnerDashboardPage() {
                         {activeVehicle.year} {activeVehicle.make} {activeVehicle.model}
                       </Link>
                       <p className="truncate text-sm text-[#414754]">
-                        Plate: {activeVehicle.regNo} • {activeJob.services.map((s) => s.name).join(", ")}
+                        Plate: {activeVehicle.regNo} • {activeTask.services.map((s) => s.name).join(", ")}
                       </p>
                     </div>
                     <div className="hidden pl-4 text-right sm:block">
                       <p className="text-[11px] font-medium text-[#414754]">Service Advisor</p>
                       <p className="flex items-center justify-end gap-1 text-xs font-semibold tracking-[0.24px] text-foreground">
                         <Gauge className="size-[10.7px]" />
-                        {activeJob.advisor?.name ?? "Assigned at intake"}
+                        {activeTask.advisor?.name ?? "Assigned at intake"}
                       </p>
-                      {activeJob.station && <p className="pt-0.5 text-[10px] text-muted-foreground">{activeJob.station}</p>}
+                      {activeTask.station && <p className="pt-0.5 text-[10px] text-muted-foreground">{activeTask.station}</p>}
                     </div>
                   </div>
 
                   <div className="relative py-4">
                     <div className="absolute top-8 right-8 left-8 h-0.5 bg-[#e2e8f0]" />
-                    {jobStepIndex >= 0 && <div className="absolute top-8 left-[5.65%] h-0.5 bg-primary" style={{ width: `${Math.max(jobStepIndex / (JOB_STEPS.length - 1), 0.0001) * 100}%` }} />}
+                    {taskStepIndex >= 0 && <div className="absolute top-8 left-[5.65%] h-0.5 bg-primary" style={{ width: `${Math.max(taskStepIndex / (TASK_STEPS.length - 1), 0.0001) * 100}%` }} />}
                     <div className="flex h-[54px] items-start justify-between">
-                      {JOB_STEPS.map((step, i) => {
-                        const state = i < jobStepIndex ? "done" : i === jobStepIndex ? "active" : "pending";
+                      {TASK_STEPS.map((step, i) => {
+                        const state = i < taskStepIndex ? "done" : i === taskStepIndex ? "active" : "pending";
                         return (
                           <div key={step} className="flex flex-col items-center">
                             <span
@@ -325,9 +325,9 @@ export default function OwnerDashboardPage() {
                   </div>
 
                   <div className="flex items-center justify-between rounded-lg border border-[#e2e8f0] bg-secondary px-[17px] py-[9px]">
-                    <span className="text-sm text-[#414754]">Follow live progress of this job</span>
+                    <span className="text-sm text-[#414754]">Follow live progress of this task</span>
                     <Link
-                      href={`/dashboard/services/${activeJob.id}`}
+                      href={`/dashboard/services/${activeTask.id}`}
                       className="flex items-center gap-1 text-xs font-semibold tracking-[0.24px] text-primary"
                     >
                       Track <ChevronRight className="size-3" />
@@ -368,8 +368,8 @@ export default function OwnerDashboardPage() {
               ) : (
                 <div className="grid grid-cols-2 gap-4 xl:grid-cols-3">
                   {vehicles.map((vehicle) => {
-                    const inService = jobs.some((j) => j.vehicleId === vehicle.id && ["received", "inspecting", "repairing", "testing"].includes(j.status));
-                    const count = jobs.filter((j) => j.vehicleId === vehicle.id).length;
+                    const inService = tasks.some((t) => t.vehicleId === vehicle.id && ["received", "inspecting", "repairing", "testing"].includes(t.status));
+                    const count = tasks.filter((t) => t.vehicleId === vehicle.id).length;
                     return (
                       <div
                         key={vehicle.id}

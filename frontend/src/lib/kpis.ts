@@ -3,16 +3,17 @@ import type {
   ChatThread,
   Estimate,
   Invoice,
-  JobCard,
   KpiCard,
   ReportsData,
+  TaskCard,
   Vehicle,
 } from "@/types";
 
 export type KpiRole = "admin" | "advisor" | "mechanic" | "owner";
 
 interface KpiContext {
-  jobs?: JobCard[];
+  jobs?: TaskCard[];
+  tasks?: TaskCard[];
   vehicles?: Vehicle[];
   appointments?: Appointment[];
   estimates?: Estimate[];
@@ -31,7 +32,8 @@ const fmtMoneyCompact = (n: number) =>
   `$${Math.round(n).toLocaleString("en-US")}`;
 
 export function buildKpis(role: KpiRole, ctx: KpiContext): KpiCard[] {
-  const jobs = ctx.jobs ?? [];
+  const tasks = ctx.tasks ?? ctx.jobs ?? [];
+  const jobs = tasks;
   const vehicles = ctx.vehicles ?? [];
   const appointments = ctx.appointments ?? [];
   const estimates = ctx.estimates ?? [];
@@ -39,14 +41,14 @@ export function buildKpis(role: KpiRole, ctx: KpiContext): KpiCard[] {
   const reports = ctx.reports;
   const userId = ctx.userId;
 
-  const activeJobs = jobs.filter((j) => ACTIVE_STATUSES.includes(j.status));
-  const readyJobs = jobs.filter((j) => j.status === "ready");
-  const completedJobs = jobs.filter((j) => j.status === "completed");
+  const activeJobs = tasks.filter((j) => ACTIVE_STATUSES.includes(j.status));
+  const readyJobs = tasks.filter((j) => j.status === "ready");
+  const completedJobs = tasks.filter((j) => j.status === "completed");
   const pendingEstimates = estimates.filter((e) => e.status === "pending");
   const unpaidInvoices = invoices.filter((i) => i.status !== "paid");
   const unpaidTotal = unpaidInvoices.reduce((sum, i) => sum + i.total, 0);
   const upcomingAppointments = appointments.filter((a) => a.status !== "cancelled");
-  const assignedJobs = userId ? jobs.filter((j) => j.mechanicId === userId) : jobs;
+  const assignedJobs = userId ? tasks.filter((j) => j.mechanicId === userId) : tasks;
 
   const nextAppointment = upcomingAppointments[0];
   const nextAppointmentDate = nextAppointment
@@ -119,7 +121,7 @@ export function buildKpis(role: KpiRole, ctx: KpiContext): KpiCard[] {
       return [
         {
           id: "kpi-001",
-          label: "Assigned Jobs",
+          label: "Assigned Tasks",
           value: String(assignedJobs.length),
           delta: `${activeJobs.length} active`,
           trend: "up",
@@ -163,7 +165,7 @@ export function buildKpis(role: KpiRole, ctx: KpiContext): KpiCard[] {
         },
         {
           id: "kpi-102",
-          label: "Active Jobs",
+          label: "Active Tasks",
           value: String(activeJobs.length).padStart(2, "0"),
           delta: `${jobs.filter((j) => !j.mechanicId).length} awaiting mechanic`,
           trend: "flat",
@@ -195,7 +197,7 @@ export function buildKpis(role: KpiRole, ctx: KpiContext): KpiCard[] {
         },
         {
           id: "kpi-106",
-          label: "Completed Jobs",
+          label: "Completed Tasks",
           value: String(completedJobs.length),
           delta: "This week",
           trend: "up",

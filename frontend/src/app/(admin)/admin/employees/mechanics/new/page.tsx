@@ -31,10 +31,10 @@ const SPECIALIZATIONS = [
 const SKILL_CHOICES = ["Oil Change", "Diagnostics", "Tire Alignment", "Suspension", "Exhaust Systems"];
 
 const PERMISSIONS = [
-  { key: "viewJobs", label: "View Assigned Jobs (Default)" },
-  { key: "updateProgress", label: "Update Job Progress" },
+  { key: "viewTasks", label: "View Assigned Tasks (Default)" },
+  { key: "updateProgress", label: "Update Task Progress" },
   { key: "requestParts", label: "Request/Add Inventory Parts" },
-  { key: "markComplete", label: "Mark Job as Complete" },
+  { key: "markComplete", label: "Mark Task as Complete" },
   { key: "uploadPhotos", label: "Upload Inspection Photos" },
   { key: "directChat", label: "Direct Chat with Service Advisor" },
 ];
@@ -80,7 +80,7 @@ export default function AddMechanicPage() {
   const [skills, setSkills] = useState<string[]>(["Oil Change", "Diagnostics"]);
   const [customSkill, setCustomSkill] = useState("");
   const [permissions, setPermissions] = useState<Record<string, boolean>>({
-    viewJobs: true,
+    viewTasks: true,
     updateProgress: true,
     requestParts: true,
     markComplete: true,
@@ -425,8 +425,8 @@ export default function AddMechanicPage() {
                         type="checkbox"
                         checked={permissions[p.key]}
                         onChange={() => setPermissions((prev) => ({ ...prev, [p.key]: !prev[p.key] }))}
-                        className={cn("size-4 accent-[#004492]", p.key === "viewJobs" && "cursor-not-allowed opacity-60")}
-                        disabled={p.key === "viewJobs"}
+                        className={cn("size-4 accent-[#004492]", p.key === "viewTasks" && "cursor-not-allowed opacity-60")}
+                        disabled={p.key === "viewTasks"}
                       />
                       {p.label}
                     </label>

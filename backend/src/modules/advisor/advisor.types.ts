@@ -1,4 +1,4 @@
-export interface CreateJobCardBody {
+export interface CreateTaskCardBody {
   vehicleId: string;
   customerId: string;
   issues: string;
@@ -12,6 +12,7 @@ export interface CreateJobCardBody {
   serviceIds?: string[];
   expectedDate?: string;
 }
+export type CreateJobCardBody = CreateTaskCardBody;
 
 export interface CreateCustomerBody {
   name: string;
@@ -33,8 +34,10 @@ export interface AssignMechanicBody {
 }
 
 export interface CreateEstimateBody {
-  jobId: string;
+  taskId?: string;
+  jobId?: string;
   summary?: string;
   internalNotes?: string;
   items: { description: string; category: "service" | "parts" | "labor"; amount: number }[];
 }
+

@@ -2,27 +2,27 @@ import { Router } from "express";
 import { requireAuth, requireRole } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import {
-  archiveJobController,
+  archiveTaskController,
   bookAppointmentController,
-  bulkArchiveJobsController,
+  bulkArchiveTasksController,
   createThreadController,
   createVehicleController,
   decideEstimateController,
   deleteRatingController,
   deleteVehicleController,
   payInvoiceController,
-  rateJobController,
-  restoreJobController,
+  rateTaskController,
+  restoreTaskController,
   updateVehicleController,
 } from "./owner.controller.js";
 import {
   bookAppointmentSchema,
-  bulkArchiveJobsSchema,
+  bulkArchiveTasksSchema,
   createThreadSchema,
   createVehicleSchema,
   decideEstimateSchema,
   payInvoiceSchema,
-  rateJobSchema,
+  rateTaskSchema,
   updateVehicleSchema,
 } from "./owner.validation.js";
 
@@ -38,11 +38,20 @@ router.patch("/estimates/:id/decide", requireAuth, requireRole("owner"), validat
 
 router.post("/invoices/:id/pay", requireAuth, requireRole("owner"), validate(payInvoiceSchema), payInvoiceController);
 
-router.post("/jobs/:id/rate", requireAuth, requireRole("owner"), validate(rateJobSchema), rateJobController);
+router.post("/tasks/:id/rate", requireAuth, requireRole("owner"), validate(rateTaskSchema), rateTaskController);
+router.post("/jobs/:id/rate", requireAuth, requireRole("owner"), validate(rateTaskSchema), rateTaskController);
+
+router.delete("/tasks/:id/rate", requireAuth, requireRole("owner"), deleteRatingController);
 router.delete("/jobs/:id/rate", requireAuth, requireRole("owner"), deleteRatingController);
 
-router.patch("/jobs/:id/archive", requireAuth, requireRole("owner"), archiveJobController);
-router.patch("/jobs/:id/restore", requireAuth, requireRole("owner"), restoreJobController);
-router.post("/jobs/archive", requireAuth, requireRole("owner"), validate(bulkArchiveJobsSchema), bulkArchiveJobsController);
+router.patch("/tasks/:id/archive", requireAuth, requireRole("owner"), archiveTaskController);
+router.patch("/jobs/:id/archive", requireAuth, requireRole("owner"), archiveTaskController);
+
+router.patch("/tasks/:id/restore", requireAuth, requireRole("owner"), restoreTaskController);
+router.patch("/jobs/:id/restore", requireAuth, requireRole("owner"), restoreTaskController);
+
+router.post("/tasks/archive", requireAuth, requireRole("owner"), validate(bulkArchiveTasksSchema), bulkArchiveTasksController);
+router.post("/jobs/archive", requireAuth, requireRole("owner"), validate(bulkArchiveTasksSchema), bulkArchiveTasksController);
 
 router.post("/chat/threads", requireAuth, requireRole("owner"), validate(createThreadSchema), createThreadController);
+

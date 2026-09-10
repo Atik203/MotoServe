@@ -6,7 +6,7 @@ import { CLIENT_URL, stripe } from "./stripe.client.js";
 export async function createCheckoutSession(userId: string, invoiceId: string) {
   const invoice = await prisma.invoice.findUnique({
     where: { id: invoiceId },
-    include: { job: { include: { vehicle: true } } },
+    include: { task: { include: { vehicle: true } } },
   });
   if (!invoice) throw new ApiError(404, "Invoice not found");
   if (invoice.customerId !== userId) throw new ApiError(403, "Insufficient permissions");
@@ -22,7 +22,7 @@ export async function createCheckoutSession(userId: string, invoiceId: string) {
           unit_amount: Math.round(invoice.total * 100),
           product_data: {
             name: `MotoServe Invoice ${invoice.id}`,
-            description: `${invoice.job.vehicle.year} ${invoice.job.vehicle.make} ${invoice.job.vehicle.model}`,
+            description: `${invoice.task.vehicle.year} ${invoice.task.vehicle.make} ${invoice.task.vehicle.model}`,
           },
         },
       },
@@ -45,7 +45,7 @@ export async function handleCheckoutCompleted(payload: Stripe.Checkout.Session) 
     prisma.payment.create({
       data: {
         invoiceId: invoice.id,
-        jobCardId: invoice.jobId,
+        taskCardId: invoice.taskId,
         amount: invoice.total,
         method: "CARD",
         status: "PAID",
@@ -58,3 +58,4 @@ export async function handleCheckoutCompleted(payload: Stripe.Checkout.Session) 
     }),
   ]);
 }
+

@@ -7,17 +7,19 @@ import { Camera, Loader2 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { uploadDocument } from "@/store/slices/authSlice";
 import { fetchFileUrl } from "@/store/slices/filesSlice";
-import { fetchJob, addJobPhoto } from "@/store/slices/jobsSlice";
+import { fetchTask, addTaskPhoto } from "@/store/slices/tasksSlice";
 
 interface RepairPhotosProps {
-  jobId: string;
+  jobId?: string;
+  taskId?: string;
   photos: string[];
 }
 
-export function RepairPhotos({ jobId, photos }: RepairPhotosProps) {
+export function RepairPhotos({ jobId, taskId, photos }: RepairPhotosProps) {
   const dispatch = useAppDispatch();
   const urls = useAppSelector((s) => s.files.urls);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const targetId = taskId ?? jobId ?? "";
 
   useEffect(() => {
     for (const key of photos) {
@@ -30,7 +32,7 @@ export function RepairPhotos({ jobId, photos }: RepairPhotosProps) {
   const handlePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file) return;
+    if (!file || !targetId) return;
     if (!file.type.startsWith("image/")) {
       toast.error("Only image files are allowed");
       return;
@@ -49,9 +51,9 @@ export function RepairPhotos({ jobId, photos }: RepairPhotosProps) {
         body: file,
       });
       if (!put.ok) throw new Error("Upload to storage failed");
-      await dispatch(addJobPhoto({ id: jobId, key: res.key })).unwrap();
+      await dispatch(addTaskPhoto({ id: targetId, key: res.key })).unwrap();
       dispatch(fetchFileUrl(res.key));
-      await dispatch(fetchJob(jobId));
+      await dispatch(fetchTask(targetId));
       toast.success("Photo uploaded");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");

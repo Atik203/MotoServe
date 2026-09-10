@@ -4,25 +4,27 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { MoreVertical, Save } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
-import { addJobNote } from "@/store/slices/jobsSlice";
+import { addTaskNote } from "@/store/slices/tasksSlice";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import type { JobNote } from "@/types";
+import type { TaskNote, JobNote } from "@/types";
 
 interface MechanicNotesProps {
-  jobId: string;
-  notes: JobNote[];
+  jobId?: string;
+  taskId?: string;
+  notes: (TaskNote | JobNote)[];
   author: string;
 }
 
-export function MechanicNotes({ jobId, notes, author }: MechanicNotesProps) {
+export function MechanicNotes({ jobId, taskId, notes, author }: MechanicNotesProps) {
   const dispatch = useAppDispatch();
   const [draft, setDraft] = useState("");
+  const targetId = taskId ?? jobId ?? "";
 
   const saveNote = async () => {
-    if (!draft.trim()) return;
+    if (!draft.trim() || !targetId) return;
     try {
-      await dispatch(addJobNote({ id: jobId, author, text: draft.trim() })).unwrap();
+      await dispatch(addTaskNote({ id: targetId, author, text: draft.trim() })).unwrap();
       setDraft("");
       toast.success("Note saved");
     } catch (err) {

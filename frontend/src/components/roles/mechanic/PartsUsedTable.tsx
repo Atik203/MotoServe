@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Package, Plus } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
-import { addPartUsed } from "@/store/slices/jobsSlice";
+import { addPartUsed } from "@/store/slices/tasksSlice";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,11 +27,12 @@ import {
 import type { PartUsed } from "@/types";
 
 interface PartsUsedTableProps {
-  jobId: string;
+  jobId?: string;
+  taskId?: string;
   parts: PartUsed[];
 }
 
-export function PartsUsedTable({ jobId, parts }: PartsUsedTableProps) {
+export function PartsUsedTable({ jobId, taskId, parts }: PartsUsedTableProps) {
   const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -39,11 +40,12 @@ export function PartsUsedTable({ jobId, parts }: PartsUsedTableProps) {
   const [unitPrice, setUnitPrice] = useState("");
   const [supplier, setSupplier] = useState("");
   const [saving, setSaving] = useState(false);
+  const targetId = taskId ?? jobId ?? "";
   const total = parts.reduce((sum, p) => sum + p.subtotal, 0);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !qty || Number(qty) <= 0 || !unitPrice || Number(unitPrice) < 0 || !supplier.trim()) {
+    if (!name.trim() || !qty || Number(qty) <= 0 || !unitPrice || Number(unitPrice) < 0 || !supplier.trim() || !targetId) {
       toast.error("Fill in part name, qty, unit price, and supplier");
       return;
     }
@@ -51,7 +53,7 @@ export function PartsUsedTable({ jobId, parts }: PartsUsedTableProps) {
     try {
       await dispatch(
         addPartUsed({
-          id: jobId,
+          id: targetId,
           part: {
             name: name.trim(),
             qty: Number(qty),

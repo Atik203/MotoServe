@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const createJobCardSchema = z.object({
+export const createTaskCardSchema = z.object({
   body: z.object({
     vehicleId: z.string(),
     customerId: z.string(),
@@ -16,6 +16,7 @@ export const createJobCardSchema = z.object({
     expectedDate: z.string().optional(),
   }),
 });
+export const createJobCardSchema = createTaskCardSchema;
 
 export const createCustomerSchema = z.object({
   body: z.object({
@@ -41,18 +42,24 @@ export const assignMechanicSchema = z.object({
 });
 
 export const createEstimateSchema = z.object({
-  body: z.object({
-    jobId: z.string(),
-    summary: z.string().optional(),
-    internalNotes: z.string().optional(),
-    items: z
-      .array(
-        z.object({
-          description: z.string().min(1),
-          category: z.enum(["service", "parts", "labor"]),
-          amount: z.number().nonnegative(),
-        }),
-      )
-      .min(1),
-  }),
+  body: z
+    .object({
+      taskId: z.string().optional(),
+      jobId: z.string().optional(),
+      summary: z.string().optional(),
+      internalNotes: z.string().optional(),
+      items: z
+        .array(
+          z.object({
+            description: z.string().min(1),
+            category: z.enum(["service", "parts", "labor"]),
+            amount: z.number().nonnegative(),
+          }),
+        )
+        .min(1),
+    })
+    .refine((d) => Boolean(d.taskId || d.jobId), {
+      message: "taskId or jobId is required",
+    }),
 });
+

@@ -8,7 +8,7 @@ import { CalendarDays, CreditCard, Landmark, ReceiptText, ShieldCheck, Wallet } 
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createCheckoutSession, fetchInvoices, payInvoice } from "@/store/slices/invoicesSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
-import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchTasks } from "@/store/slices/tasksSlice";
 import { downloadInvoicePdf } from "@/lib/pdf";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ export default function PaymentInvoicePage() {
   const invoices = useAppSelector((s) => s.invoices.items);
   const invoicesStatus = useAppSelector((s) => s.invoices.status);
   const vehicles = useAppSelector((s) => s.vehicles.items);
-  const jobs = useAppSelector((s) => s.jobs.items);
+  const tasks = useAppSelector((s) => s.tasks.items);
   const [method, setMethod] = useState("card");
   const [paying, setPaying] = useState(false);
   const [tab, setTab] = useState<Tab>("unpaid");
@@ -37,8 +37,8 @@ export default function PaymentInvoicePage() {
   useEffect(() => {
     dispatch(fetchInvoices());
     dispatch(fetchVehicles());
-    if (jobs.length === 0) dispatch(fetchJobs());
-  }, [dispatch, jobs.length]);
+    if (tasks.length === 0) dispatch(fetchTasks());
+  }, [dispatch, tasks.length]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -98,11 +98,11 @@ export default function PaymentInvoicePage() {
     sorted[0]!;
 
   const vehicle = vehicles.find((v) => v.id === invoice.vehicleId) ?? null;
-  const job = jobs.find((j) => j.id === invoice.jobId) ?? null;
+  const task = tasks.find((t) => t.id === invoice.jobId || (invoice as unknown as { taskId?: string }).taskId === t.id) ?? null;
   const pickupBadge =
-    job?.status === "ready"
+    task?.status === "ready"
       ? { label: "Ready for Pickup", className: "border-[rgba(0,74,49,0.2)] bg-[rgba(0,74,49,0.1)] text-[#004a31]" }
-      : job?.status === "completed"
+      : task?.status === "completed"
         ? { label: "Completed", className: "border-[rgba(76,175,80,0.2)] bg-[rgba(76,175,80,0.1)] text-[#4caf50]" }
         : { label: "In Service", className: "border-[rgba(255,193,7,0.2)] bg-[rgba(255,193,7,0.1)] text-[#8b5000]" };
 
@@ -199,7 +199,7 @@ export default function PaymentInvoicePage() {
                       </span>
                     </div>
                     <p className="truncate text-sm text-[#444651]">
-                      {v ? `${v.year} ${v.make} ${v.model}` : "Vehicle"} · Job #{inv.jobId}
+                      {v ? `${v.year} ${v.make} ${v.model}` : "Vehicle"} · Task #{(inv as unknown as { taskId?: string }).taskId ?? inv.jobId}
                     </p>
                     <div className="flex items-center justify-between pt-0.5">
                       <span className="text-xs text-[#727784]">
@@ -225,7 +225,7 @@ export default function PaymentInvoicePage() {
                       {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : "Vehicle"}
                     </p>
                     <p className="text-base text-[#444651]">
-                      {vehicle ? `Plate: ${vehicle.regNo}` : "—"} • Job Card #{invoice.jobId}
+                      {vehicle ? `Plate: ${vehicle.regNo}` : "—"} • Task Card #{(invoice as unknown as { taskId?: string }).taskId ?? invoice.jobId}
                     </p>
                   </div>
                   <span className={cn("rounded-xl border px-[13px] py-[5px] text-xs font-semibold tracking-[0.6px]", pickupBadge.className)}>

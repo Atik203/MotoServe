@@ -5,6 +5,7 @@ import {
   getAppointment,
   getAppointments,
   getArchivedJobs,
+  getArchivedTasks,
   getCustomers,
   getEmployees,
   getEstimates,
@@ -15,14 +16,18 @@ import {
   getParts,
   getRatings,
   getServices,
+  getTask,
+  getTasks,
   getTestimonials,
   getContent,
   getThreads,
   getVehicles,
+
   markThreadReadController,
   sendMessage,
   updateAppointmentController,
 } from "./shared.controller.js";
+
 import { sendMessageSchema, updateAppointmentSchema } from "./shared.validation.js";
 
 export const router = Router();
@@ -37,9 +42,15 @@ router.get("/appointments", requireAuth, getAppointments);
 router.get("/appointments/:id", requireAuth, getAppointment);
 router.patch("/appointments/:id", requireAuth, requireRole("owner", "advisor", "admin"), validate(updateAppointmentSchema), updateAppointmentController);
 
-router.get("/jobs", requireAuth, getJobs);
-router.get("/jobs/archived", requireAuth, requireRole("owner"), getArchivedJobs);
-router.get("/jobs/:id", requireAuth, getJob);
+router.get("/tasks", requireAuth, getTasks);
+router.get("/jobs", requireAuth, getTasks);
+
+router.get("/tasks/archived", requireAuth, requireRole("owner"), getArchivedTasks);
+router.get("/jobs/archived", requireAuth, requireRole("owner"), getArchivedTasks);
+
+router.get("/tasks/:id", requireAuth, getTask);
+router.get("/jobs/:id", requireAuth, getTask);
+
 
 router.get("/employees", requireAuth, getEmployees);
 router.get("/customers", requireAuth, requireRole("admin", "advisor"), getCustomers);

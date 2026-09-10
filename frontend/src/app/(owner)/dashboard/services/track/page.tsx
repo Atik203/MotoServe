@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, Check, Clock, Download, FileCheck, MessageSquare, Wrench } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchTasks } from "@/store/slices/tasksSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchEstimates } from "@/store/slices/estimatesSlice";
 import { fetchInvoices } from "@/store/slices/invoicesSlice";
@@ -15,24 +15,24 @@ import { cn } from "@/lib/utils";
 
 export default function ServiceTrackingPage() {
   const dispatch = useAppDispatch();
-  const jobs = useAppSelector((s) => s.jobs.items);
-  const jobsStatus = useAppSelector((s) => s.jobs.status);
+  const tasks = useAppSelector((s) => s.tasks.items);
+  const tasksStatus = useAppSelector((s) => s.tasks.status);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const estimates = useAppSelector((s) => s.estimates.items);
   const invoices = useAppSelector((s) => s.invoices.items);
 
   useEffect(() => {
-    if (jobs.length === 0) dispatch(fetchJobs());
+    if (tasks.length === 0) dispatch(fetchTasks());
     if (vehicles.length === 0) dispatch(fetchVehicles());
     if (estimates.length === 0) dispatch(fetchEstimates());
     if (invoices.length === 0) dispatch(fetchInvoices());
-  }, [dispatch, jobs.length, vehicles.length, estimates.length, invoices.length]);
+  }, [dispatch, tasks.length, vehicles.length, estimates.length, invoices.length]);
 
-  const activeJobs = jobs.filter((j) => !["completed", "ready"].includes(j.status));
-  const job = activeJobs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] ?? jobs[0];
-  const vehicle = vehicles.find((v) => v.id === job?.vehicleId);
-  const estimatedCompletion = job?.expectedDate
-    ? new Date(job.expectedDate.replace(" ", "T")).toLocaleString("en-US", {
+  const activeTasks = tasks.filter((t) => !["completed", "ready"].includes(t.status));
+  const task = activeTasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] ?? tasks[0];
+  const vehicle = vehicles.find((v) => v.id === task?.vehicleId);
+  const estimatedCompletion = task?.expectedDate
+    ? new Date(task.expectedDate.replace(" ", "T")).toLocaleString("en-US", {
         month: "short",
         day: "numeric",
         hour: "numeric",
@@ -40,15 +40,15 @@ export default function ServiceTrackingPage() {
       })
     : null;
 
-  if (!job || !vehicle) {
-    if ((jobsStatus === "idle" || jobsStatus === "loading") && jobs.length === 0) {
+  if (!task || !vehicle) {
+    if ((tasksStatus === "idle" || tasksStatus === "loading") && tasks.length === 0) {
       return <DetailLoading label="Loading service tracking" />;
     }
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">No active service found.</div>;
   }
 
-  const doneCount = job.progress.filter((p) => p.done).length;
-  const pct = Math.round((doneCount / job.progress.length) * 100);
+  const doneCount = task.progress.filter((p) => p.done).length;
+  const pct = Math.round((doneCount / task.progress.length) * 100);
 
   return (
     <div className="bg-background min-h-screen p-8">
@@ -68,13 +68,13 @@ export default function ServiceTrackingPage() {
               </span>
             </div>
             <p className="text-sm text-[#424753]">
-              Job Card #{job.id}
+              Task Card #{task.id}
               {estimatedCompletion ? ` • Est. Completion: ${estimatedCompletion}` : ""}
             </p>
           </div>
           <span className="flex items-center gap-2 rounded-xl border border-[rgba(0,82,204,0.2)] bg-[rgba(0,82,204,0.1)] px-[13px] py-[7px] text-xs font-semibold tracking-[0.24px] text-primary">
             <span className="size-2 rounded-full bg-primary" />
-            {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+            {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
           </span>
         </div>
 
@@ -84,11 +84,11 @@ export default function ServiceTrackingPage() {
               <h2 className="text-xl font-semibold text-foreground">Service Timeline</h2>
               <div className="relative px-4 pt-4 pb-8">
                 <div className="absolute top-8 right-8 left-8 h-0.5 bg-[#f3f4f5]" />
-                <div className="absolute top-8 left-8 h-0.5 bg-[#4caf50]" style={{ width: `${Math.max(20, (doneCount / job.progress.length) * 100)}%` }} />
+                <div className="absolute top-8 left-8 h-0.5 bg-[#4caf50]" style={{ width: `${Math.max(20, (doneCount / task.progress.length) * 100)}%` }} />
                 <div className="flex items-start justify-between">
-                  {job.progress.map((step, i) => {
+                  {task.progress.map((step, i) => {
                     const isDone = step.done;
-                    const isActive = !isDone && (i === 0 || job.progress[i - 1].done);
+                    const isActive = !isDone && (i === 0 || task.progress[i - 1].done);
                     return (
                       <div key={step.step} className="flex w-[89px] flex-col items-center">
                         <span
@@ -138,7 +138,7 @@ export default function ServiceTrackingPage() {
                 <p className="pt-4 text-sm">
                   Steps Remaining:{" "}
                   <span className="font-medium text-primary">
-                    {job.progress.filter((p) => !p.done).length} of {job.progress.length}
+                    {task.progress.filter((p) => !p.done).length} of {task.progress.length}
                   </span>
                 </p>
               </section>
@@ -147,8 +147,8 @@ export default function ServiceTrackingPage() {
                 <h3 className="pb-4 text-xs font-semibold tracking-[0.24px] text-[#424753]">Assigned Team</h3>
                 <div className="flex flex-col gap-6 py-3">
                   {[
-                    { name: job.advisor?.name ?? "Service Advisor", role: "Service Advisor" },
-                    { name: job.mechanic?.name ?? "Not assigned", role: "Lead Mechanic" },
+                    { name: task.advisor?.name ?? "Service Advisor", role: "Service Advisor" },
+                    { name: task.mechanic?.name ?? "Not assigned", role: "Lead Mechanic" },
                   ].map((member) => (
                     <div key={member.role} className="flex items-center gap-4 rounded border border-[#e1e3e4] bg-background p-[13px]">
                       <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-sm font-semibold text-primary shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
@@ -173,10 +173,10 @@ export default function ServiceTrackingPage() {
                 </Link>
               </div>
               <div className="flex flex-col border-l-2 border-[#edeeef]">
-                {job.notes.length === 0 ? (
+                {task.notes.length === 0 ? (
                   <p className="pl-6 pb-2 text-sm text-muted-foreground">No updates recorded yet.</p>
                 ) : (
-                  job.notes.slice(0, 5).map((note) => (
+                  task.notes.slice(0, 5).map((note) => (
                     <div key={note.id} className="relative flex flex-col gap-1 pb-6 pl-6">
                       <span className="absolute top-1 left-[-9px] size-4 rounded-xl border-2 border-white" style={{ backgroundColor: "#0052cc" }} />
                       <p className="text-sm text-foreground">{note.text}</p>
@@ -199,7 +199,7 @@ export default function ServiceTrackingPage() {
                   Chat with Advisor
                 </Link>
                 {(() => {
-                  const estimate = estimates.find((e) => e.jobId === job.id);
+                  const estimate = estimates.find((e) => (e as unknown as { taskId?: string }).taskId === task.id || e.jobId === task.id);
                   return estimate ? (
                     <Link href={`/dashboard/estimates/${estimate.id}`} className="flex items-center justify-center gap-2 rounded border border-[#c2c6d5] bg-[#f8f9fa] px-[17px] py-[13px] text-xs font-semibold tracking-[0.24px] text-foreground">
                       <FileCheck className="size-[13.3px]" />
@@ -208,7 +208,7 @@ export default function ServiceTrackingPage() {
                   ) : null;
                 })()}
                 {(() => {
-                  const invoice = invoices.find((i) => i.jobId === job.id);
+                  const invoice = invoices.find((i) => (i as unknown as { taskId?: string }).taskId === task.id || i.jobId === task.id);
                   return invoice ? (
                     <button
                       type="button"
@@ -237,7 +237,7 @@ export default function ServiceTrackingPage() {
               <div className="flex gap-3 rounded border border-border bg-[#f8f9fa] px-[17px] pt-[25px] pb-[17px]">
                 <MessageSquare className="size-5 shrink-0 text-primary" />
                 <div>
-                  <p className="text-xs font-semibold tracking-[0.24px] text-foreground">Questions about this job?</p>
+                  <p className="text-xs font-semibold tracking-[0.24px] text-foreground">Questions about this task?</p>
                   <p className="text-[11px] font-medium text-muted-foreground">
                     Message your advisor anytime for updates on your vehicle&apos;s progress.
                   </p>

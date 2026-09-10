@@ -2,43 +2,52 @@ import { Router } from "express";
 import { requireAuth, requireRole } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import {
-  addJobNoteController,
-  addJobPhotoController,
+  addTaskNoteController,
+  addTaskPhotoController,
   addPartUsedController,
-  updateJobStatusController,
+  updateTaskStatusController,
 } from "./mechanic.controller.js";
-import { addJobNoteSchema, addJobPhotoSchema, addPartUsedSchema, updateJobStatusSchema } from "./mechanic.validation.js";
+import { addTaskNoteSchema, addTaskPhotoSchema, addPartUsedSchema, updateTaskStatusSchema } from "./mechanic.validation.js";
 
 export const router = Router();
 
-router.patch(
-  "/jobs/:id/status",
+const statusMiddleware = [
   requireAuth,
   requireRole("mechanic", "advisor", "admin"),
-  validate(updateJobStatusSchema),
-  updateJobStatusController,
-);
+  validate(updateTaskStatusSchema),
+  updateTaskStatusController,
+] as const;
 
-router.post(
-  "/jobs/:id/notes",
+router.patch("/tasks/:id/status", ...statusMiddleware);
+router.patch("/jobs/:id/status", ...statusMiddleware);
+
+const notesMiddleware = [
   requireAuth,
   requireRole("mechanic", "advisor", "admin"),
-  validate(addJobNoteSchema),
-  addJobNoteController,
-);
+  validate(addTaskNoteSchema),
+  addTaskNoteController,
+] as const;
 
-router.post(
-  "/jobs/:id/parts",
+router.post("/tasks/:id/notes", ...notesMiddleware);
+router.post("/jobs/:id/notes", ...notesMiddleware);
+
+const partsMiddleware = [
   requireAuth,
   requireRole("mechanic", "advisor", "admin"),
   validate(addPartUsedSchema),
   addPartUsedController,
-);
+] as const;
 
-router.post(
-  "/jobs/:id/photos",
+router.post("/tasks/:id/parts", ...partsMiddleware);
+router.post("/jobs/:id/parts", ...partsMiddleware);
+
+const photosMiddleware = [
   requireAuth,
   requireRole("mechanic", "advisor", "admin"),
-  validate(addJobPhotoSchema),
-  addJobPhotoController,
-);
+  validate(addTaskPhotoSchema),
+  addTaskPhotoController,
+] as const;
+
+router.post("/tasks/:id/photos", ...photosMiddleware);
+router.post("/jobs/:id/photos", ...photosMiddleware);
+

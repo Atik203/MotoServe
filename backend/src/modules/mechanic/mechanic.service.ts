@@ -2,23 +2,23 @@ import { prisma } from "../../lib/prisma.js";
 import { createWithSequentialId } from "../../lib/ids.js";
 import { ApiError } from "../../middleware/error.js";
 import type { Invoice } from "../../generated/prisma/client.js";
-import type { AddJobNoteBody, AddPartUsedBody, UpdateJobStatusBody } from "./mechanic.types.js";
+import type { AddTaskNoteBody, AddPartUsedBody, UpdateTaskStatusBody } from "./mechanic.types.js";
 
 const STATUS_ORDER = ["RECEIVED", "INSPECTING", "REPAIRING", "TESTING", "READY", "COMPLETED"];
 
-export async function updateJobStatus(id: string, status: UpdateJobStatusBody["status"]) {
-  const job = await prisma.jobCard.findUnique({ where: { id } });
-  if (!job) throw new ApiError(404, "Job not found");
+export async function updateTaskStatus(id: string, status: UpdateTaskStatusBody["status"]) {
+  const task = await prisma.taskCard.findUnique({ where: { id } });
+  if (!task) throw new ApiError(404, "Task not found");
   const targetIdx = STATUS_ORDER.indexOf(status.toUpperCase());
-  if (targetIdx < 0) throw new ApiError(400, "Invalid job status");
-  const currentIdx = STATUS_ORDER.indexOf(job.status);
-  if (job.status === "COMPLETED") throw new ApiError(400, "Job is already completed");
-  if (targetIdx < currentIdx) throw new ApiError(400, "Cannot move a job backwards through its lifecycle");
-  const progress = await prisma.jobProgress.findMany({ where: { jobCardId: job.id } });
+  if (targetIdx < 0) throw new ApiError(400, "Invalid task status");
+  const currentIdx = STATUS_ORDER.indexOf(task.status);
+  if (task.status === "COMPLETED") throw new ApiError(400, "Task is already completed");
+  if (targetIdx < currentIdx) throw new ApiError(400, "Cannot move a task backwards through its lifecycle");
+  const progress = await prisma.taskProgress.findMany({ where: { taskCardId: task.id } });
   const ops = progress.map((step) => {
     const idx = STATUS_ORDER.indexOf(step.step);
     const done = idx <= targetIdx;
-    return prisma.jobProgress.update({
+    return prisma.taskProgress.update({
       where: { id: step.id },
       data: {
         done,
@@ -30,32 +30,33 @@ export async function updateJobStatus(id: string, status: UpdateJobStatusBody["s
     });
   });
   await prisma.$transaction([
-    prisma.jobCard.update({ where: { id: job.id }, data: { status: status.toUpperCase() as never } }),
+    prisma.taskCard.update({ where: { id: task.id }, data: { status: status.toUpperCase() as never } }),
     ...ops,
   ]);
   if (status.toUpperCase() === "COMPLETED") {
-    await ensureInvoiceForJob(job.id);
+    await ensureInvoiceForTask(task.id);
   }
-  return prisma.jobCard.findUniqueOrThrow({ where: { id: job.id } });
+  return prisma.taskCard.findUniqueOrThrow({ where: { id: task.id } });
 }
+export const updateJobStatus = updateTaskStatus;
 
-export async function ensureInvoiceForJob(jobId: string) {
-  const existing = await prisma.invoice.findFirst({ where: { jobId } });
+export async function ensureInvoiceForTask(taskId: string) {
+  const existing = await prisma.invoice.findFirst({ where: { taskId } });
   if (existing) return existing;
 
-  const job = await prisma.jobCard.findUniqueOrThrow({
-    where: { id: jobId },
+  const task = await prisma.taskCard.findUniqueOrThrow({
+    where: { id: taskId },
     include: { partsUsed: true },
   });
-  const services = (job.services ?? []) as { id?: string; name: string; price: number }[];
+  const services = (task.services ?? []) as { id?: string; name: string; price: number }[];
   const estimate = await prisma.estimate.findFirst({
-    where: { jobCardId: jobId },
+    where: { taskCardId: taskId },
     include: { items: true },
   });
 
   const laborTotal = estimate?.items.filter((i) => i.category === "LABOR").reduce((sum, i) => sum + i.amount, 0) ?? 0;
   const servicesTotal = services.reduce((sum, sv) => sum + sv.price, 0);
-  const partsTotal = job.partsUsed.reduce((sum, p) => sum + p.subtotal, 0);
+  const partsTotal = task.partsUsed.reduce((sum, p) => sum + p.subtotal, 0);
   const subtotal = servicesTotal + partsTotal + laborTotal;
   const tax = subtotal * 0.085;
   const total = subtotal + tax;
@@ -79,7 +80,7 @@ export async function ensureInvoiceForJob(jobId: string) {
       amount: sv.price,
     })),
     ...laborItems,
-    ...job.partsUsed.map((p) => ({
+    ...task.partsUsed.map((p) => ({
       id: p.id,
       description: p.name,
       category: "parts",
@@ -90,9 +91,9 @@ export async function ensureInvoiceForJob(jobId: string) {
   return createWithSequentialId<Invoice>(prisma.invoice, `INV-${year}-`, 0, (id) => ({
     data: {
       id,
-      jobId: job.id,
-      customerId: job.customerId,
-      vehicleId: job.vehicleId,
+      taskId: task.id,
+      customerId: task.customerId,
+      vehicleId: task.vehicleId,
       items,
       laborTotal,
       partsTotal,
@@ -103,29 +104,33 @@ export async function ensureInvoiceForJob(jobId: string) {
     },
   }));
 }
+export const ensureInvoiceForJob = ensureInvoiceForTask;
 
-export function addJobNote(id: string, body: AddJobNoteBody) {
-  return prisma.jobNote.create({
+export function addTaskNote(id: string, body: AddTaskNoteBody) {
+  return prisma.taskNote.create({
     data: {
-      jobCardId: id,
+      taskCardId: id,
       author: body.author,
       text: body.text,
       time: body.time ?? new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
     },
   });
 }
+export const addJobNote = addTaskNote;
 
 export function addPartUsed(id: string, body: AddPartUsedBody) {
   return prisma.partsUsed.create({
-    data: { jobCardId: id, name: body.name, qty: body.qty, unitPrice: body.unitPrice, supplier: body.supplier, subtotal: body.qty * body.unitPrice },
+    data: { taskCardId: id, name: body.name, qty: body.qty, unitPrice: body.unitPrice, supplier: body.supplier, subtotal: body.qty * body.unitPrice },
   });
 }
 
-export async function addJobPhoto(id: string, key: string) {
-  const job = await prisma.jobCard.findUniqueOrThrow({ where: { id } });
-  const photos = Array.isArray(job.photos) ? (job.photos as string[]) : [];
-  return prisma.jobCard.update({
+export async function addTaskPhoto(id: string, key: string) {
+  const task = await prisma.taskCard.findUniqueOrThrow({ where: { id } });
+  const photos = Array.isArray(task.photos) ? (task.photos as string[]) : [];
+  return prisma.taskCard.update({
     where: { id },
     data: { photos: [...photos, key] },
   });
 }
+export const addJobPhoto = addTaskPhoto;
+

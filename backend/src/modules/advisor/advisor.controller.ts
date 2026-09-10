@@ -1,15 +1,16 @@
 import type { Request, Response } from "express";
 import { ApiError } from "../../middleware/error.js";
 import { logAudit } from "../../lib/audit.js";
-import { assignMechanic, createCustomer, createEstimate, createJobCard } from "./advisor.service.js";
-import type { AssignMechanicBody, CreateCustomerBody, CreateEstimateBody, CreateJobCardBody } from "./advisor.types.js";
+import { assignMechanic, createCustomer, createEstimate, createTaskCard } from "./advisor.service.js";
+import type { AssignMechanicBody, CreateCustomerBody, CreateEstimateBody, CreateTaskCardBody } from "./advisor.types.js";
 
-export async function createJobCardController(req: Request, res: Response): Promise<void> {
+export async function createTaskCardController(req: Request, res: Response): Promise<void> {
   if (!req.user) throw new ApiError(401, "Authentication required");
-  const job = await createJobCard(req.user.userId, req.body.body as CreateJobCardBody);
-  await logAudit(req.user.name, `Created job card ${job.id}`);
-  res.status(201).json({ id: job.id });
+  const task = await createTaskCard(req.user.userId, req.body.body as CreateTaskCardBody);
+  await logAudit(req.user.name, `Created task card ${task.id}`);
+  res.status(201).json({ id: task.id });
 }
+export const createJobCardController = createTaskCardController;
 
 export async function createCustomerController(req: Request, res: Response): Promise<void> {
   if (!req.user) throw new ApiError(401, "Authentication required");
@@ -27,9 +28,9 @@ export async function createCustomerController(req: Request, res: Response): Pro
 }
 
 export async function assignMechanicController(req: Request, res: Response): Promise<void> {
-  const job = await assignMechanic(req.params.id as string, req.body.body as AssignMechanicBody);
-  await logAudit(req.user?.name ?? "advisor", `Assigned mechanic to ${job.id}`);
-  res.json(job);
+  const task = await assignMechanic(req.params.id as string, req.body.body as AssignMechanicBody);
+  await logAudit(req.user?.name ?? "advisor", `Assigned mechanic to ${task.id}`);
+  res.json(task);
 }
 
 export async function createEstimateController(req: Request, res: Response): Promise<void> {
@@ -38,3 +39,4 @@ export async function createEstimateController(req: Request, res: Response): Pro
   await logAudit(req.user.name, `Sent estimate ${estimate.id}`);
   res.status(201).json(estimate);
 }
+

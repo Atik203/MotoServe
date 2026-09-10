@@ -8,7 +8,7 @@ import { AlertTriangle, Car, Check, Clock, HelpCircle, MessageSquare, X } from "
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchEstimates, decideEstimate } from "@/store/slices/estimatesSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
-import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchTasks } from "@/store/slices/tasksSlice";
 import { Button } from "@/components/ui/button";
 import { DetailLoading } from "@/components/ui/loading";
 
@@ -18,13 +18,13 @@ export default function EstimateApprovalPage() {
   const estimates = useAppSelector((s) => s.estimates.items);
   const estimatesStatus = useAppSelector((s) => s.estimates.status);
   const employees = useAppSelector((s) => s.employees.items);
-  const jobs = useAppSelector((s) => s.jobs.items);
+  const tasks = useAppSelector((s) => s.tasks.items);
 
   useEffect(() => {
     if (estimatesStatus === "idle") dispatch(fetchEstimates());
     if (employees.length === 0) dispatch(fetchEmployees());
-    if (jobs.length === 0) dispatch(fetchJobs());
-  }, [dispatch, estimatesStatus, employees.length, jobs.length]);
+    if (tasks.length === 0) dispatch(fetchTasks());
+  }, [dispatch, estimatesStatus, employees.length, tasks.length]);
 
   const estimate = estimates.find((e) => e.id === params.id) ?? null;
 
@@ -35,8 +35,10 @@ export default function EstimateApprovalPage() {
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">Estimate not found.</div>;
   }
 
-  const job = jobs.find((j) => j.id === estimate.jobId);
-  const resolvedVehicle = estimate.jobCard?.vehicle ?? job?.vehicle ?? null;
+  const taskId = (estimate as unknown as { taskId?: string }).taskId ?? estimate.jobId;
+  const task = tasks.find((t) => t.id === taskId);
+  const taskCard = (estimate as unknown as { taskCard?: typeof estimate.jobCard }).taskCard ?? estimate.jobCard;
+  const resolvedVehicle = taskCard?.vehicle ?? task?.vehicle ?? null;
   const advisor = employees.find((emp) => emp.id === estimate.advisorId) ?? null;
   const advisorInitials =
     (advisor?.name ?? "Advisor")
@@ -46,8 +48,8 @@ export default function EstimateApprovalPage() {
       .slice(0, 2)
       .toUpperCase();
 
-  const estimatedCompletion = job?.expectedDate
-    ? new Date(job.expectedDate.replace(" ", "T")).toLocaleString("en-US", {
+  const estimatedCompletion = task?.expectedDate
+    ? new Date(task.expectedDate.replace(" ", "T")).toLocaleString("en-US", {
         weekday: "short",
         month: "short",
         day: "numeric",
@@ -76,7 +78,7 @@ export default function EstimateApprovalPage() {
             <h1 className="text-4xl font-bold tracking-[-0.72px] text-foreground">Estimate Approval</h1>
             <div className="flex items-center gap-3">
               <p className="text-base text-[#424753]">
-                Job Card <span className="font-mono">{estimate.id}</span>
+                Task Card <span className="font-mono">{estimate.id}</span>
               </p>
               <span className="rounded-xl border border-[rgba(255,193,7,0.2)] bg-[rgba(255,193,7,0.1)] px-[11px] py-0.75 text-xs font-semibold tracking-[0.8px] text-warning uppercase">
                 {estimate.status}
@@ -94,7 +96,7 @@ export default function EstimateApprovalPage() {
                 </span>
                 <div>
                   <p className="text-xl font-bold text-foreground">
-                    {resolvedVehicle ? `${resolvedVehicle.year} ${resolvedVehicle.make} ${resolvedVehicle.model}` : `Job ${job?.id ?? "—"}`}
+                    {resolvedVehicle ? `${resolvedVehicle.year} ${resolvedVehicle.make} ${resolvedVehicle.model}` : `Task ${task?.id ?? "—"}`}
                   </p>
                   <p className="flex items-center gap-1 text-sm text-[#424753]">
                     License Plate:{" "}

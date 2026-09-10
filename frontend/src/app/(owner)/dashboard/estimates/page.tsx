@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { FileCheck, FileX, Hourglass, ReceiptText } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchEstimates } from "@/store/slices/estimatesSlice";
-import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchTasks } from "@/store/slices/tasksSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { CardsGridLoading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
@@ -20,14 +20,14 @@ export default function MyEstimatesPage() {
   const dispatch = useAppDispatch();
   const estimates = useAppSelector((s) => s.estimates.items);
   const estimatesStatus = useAppSelector((s) => s.estimates.status);
-  const jobs = useAppSelector((s) => s.jobs.items);
+  const tasks = useAppSelector((s) => s.tasks.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
 
   useEffect(() => {
     if (estimates.length === 0) dispatch(fetchEstimates());
-    if (jobs.length === 0) dispatch(fetchJobs());
+    if (tasks.length === 0) dispatch(fetchTasks());
     if (vehicles.length === 0) dispatch(fetchVehicles());
-  }, [dispatch, estimates.length, jobs.length, vehicles.length]);
+  }, [dispatch, estimates.length, tasks.length, vehicles.length]);
 
   if ((estimatesStatus === "idle" || estimatesStatus === "loading") && estimates.length === 0) {
     return <CardsGridLoading label="Loading estimates" count={4} />;
@@ -52,8 +52,10 @@ export default function MyEstimatesPage() {
         ) : (
           <div className="grid grid-cols-2 gap-6">
             {estimates.map((estimate) => {
-              const job = jobs.find((j) => j.id === estimate.jobId);
-              const vehicle = estimate.jobCard?.vehicle ?? (job ? vehicles.find((v) => v.id === job.vehicleId) : undefined);
+              const taskCard = (estimate as unknown as { taskCard?: typeof estimate.jobCard }).taskCard ?? estimate.jobCard;
+              const taskId = (estimate as unknown as { taskId?: string }).taskId ?? estimate.jobId;
+              const task = tasks.find((t) => t.id === taskId);
+              const vehicle = taskCard?.vehicle ?? (task ? vehicles.find((v) => v.id === task.vehicleId) : undefined);
               const Style = statusStyle[estimate.status] ?? statusStyle.pending;
               return (
                 <div
@@ -63,10 +65,10 @@ export default function MyEstimatesPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex flex-col gap-1">
                       <p className="text-base font-semibold text-foreground">
-                        {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : `Job ${job?.id ?? "—"}`}
+                        {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : `Task ${task?.id ?? "—"}`}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {estimate.id}{job ? ` • Job ${job.id}` : ""}
+                        {estimate.id}{task ? ` • Task ${task.id}` : ""}
                       </p>
                     </div>
                     <span className={cn("flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold capitalize", Style.className)}>

@@ -2,7 +2,7 @@
 
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { JobProgressStep } from "@/types";
+import type { TaskProgressStep, JobProgressStep } from "@/types";
 
 const STEP_LABELS: Record<string, string> = {
   received: "Received",
@@ -14,7 +14,7 @@ const STEP_LABELS: Record<string, string> = {
 };
 
 interface ProgressStepperProps {
-  steps: JobProgressStep[];
+  steps: TaskProgressStep[] | JobProgressStep[];
   size?: "sm" | "lg";
 }
 

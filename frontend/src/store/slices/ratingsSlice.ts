@@ -18,17 +18,34 @@ export const fetchRatings = createAsyncThunk("ratings/fetchAll", async () => {
   return await api.get<Rating[]>("/ratings");
 });
 
-export const rateJob = createAsyncThunk(
+export const rateTask = createAsyncThunk(
   "ratings/create",
-  async ({ jobId, score, review, serviceName }: { jobId: string; score: number; review: string; serviceName: string }) => {
-    return await api.post<Rating>(`/jobs/${jobId}/rate`, { score, review, serviceName });
+  async ({
+    taskId,
+    jobId,
+    score,
+    review,
+    serviceName,
+  }: {
+    taskId?: string;
+    jobId?: string;
+    score: number;
+    review: string;
+    serviceName: string;
+  }) => {
+    const id = taskId ?? jobId;
+    return await api.post<Rating>(`/tasks/${id}/rate`, { score, review, serviceName });
   },
 );
 
-export const deleteRating = createAsyncThunk("ratings/delete", async (jobId: string) => {
-  await api.delete(`/jobs/${jobId}/rate`);
-  return { jobId };
+export const rateJob = rateTask;
+
+export const deleteTaskRating = createAsyncThunk("ratings/delete", async (taskId: string) => {
+  await api.delete(`/tasks/${taskId}/rate`);
+  return { taskId, jobId: taskId };
 });
+
+export const deleteRating = deleteTaskRating;
 
 const ratingsSlice = createSlice({
   name: "ratings",
@@ -47,15 +64,18 @@ const ratingsSlice = createSlice({
         state.status = "failed";
         state.error = action.error.message ?? "Failed to load ratings";
       })
-      .addCase(rateJob.fulfilled, (state, action) => {
-        const idx = state.items.findIndex((r) => r.jobId === action.payload.jobId);
+      .addCase(rateTask.fulfilled, (state, action) => {
+        const id = (action.payload as unknown as { taskId?: string }).taskId ?? action.payload.jobId;
+        const idx = state.items.findIndex((r) => (r as unknown as { taskId?: string }).taskId === id || r.jobId === id);
         if (idx !== -1) state.items[idx] = action.payload;
         else state.items.unshift(action.payload);
       })
-      .addCase(deleteRating.fulfilled, (state, action) => {
-        state.items = state.items.filter((r) => r.jobId !== action.payload.jobId);
+      .addCase(deleteTaskRating.fulfilled, (state, action) => {
+        const id = action.payload.taskId;
+        state.items = state.items.filter((r) => (r as unknown as { taskId?: string }).taskId !== id && r.jobId !== id);
       });
   },
 });
 
 export default ratingsSlice.reducer;
+

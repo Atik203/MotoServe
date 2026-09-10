@@ -2,12 +2,12 @@ import type { Request, Response } from "express";
 import {
   findAppointmentById,
   listAppointments,
-  listArchivedJobs,
+  listArchivedTasks,
   listCustomers,
   listEmployees,
   listEstimates,
   listInvoices,
-  listJobs,
+  listTasks,
   listParts,
   listRatings,
   listServices,
@@ -15,7 +15,7 @@ import {
   getSiteContent,
   listThreads,
   listVehicles,
-  findJobById,
+  findTaskById,
   mapCustomerStatus,
   markThreadRead,
   updateAppointment,
@@ -44,7 +44,7 @@ export async function getVehicles(req: Request, res: Response): Promise<void> {
   res.json(vehicles.map((v) => ({ ...v, fuelType: v.fuelType.toLowerCase() })));
 }
 
-function mapJob(job: {
+function mapTask(task: {
   status: string;
   priority: string;
   progress: { step: string }[];
@@ -53,37 +53,41 @@ function mapJob(job: {
   [key: string]: unknown;
 }) {
   return {
-    ...job,
-    status: job.status.toLowerCase(),
-    priority: job.priority.toLowerCase(),
-    services: (job.services ?? []) as never,
-    photos: (job.photos ?? []) as never,
-    progress: job.progress.map((p) => ({ ...p, step: p.step.toLowerCase() })),
+    ...task,
+    status: task.status.toLowerCase(),
+    priority: task.priority.toLowerCase(),
+    services: (task.services ?? []) as never,
+    photos: (task.photos ?? []) as never,
+    progress: task.progress.map((p) => ({ ...p, step: p.step.toLowerCase() })),
   };
 }
+const mapJob = mapTask;
 
-export async function getJobs(req: Request, res: Response): Promise<void> {
-  const jobs = await listJobs(req.user?.role, req.user?.userId);
-  res.json(jobs.map(mapJob));
+export async function getTasks(req: Request, res: Response): Promise<void> {
+  const tasks = await listTasks(req.user?.role, req.user?.userId);
+  res.json(tasks.map(mapTask));
 }
+export const getJobs = getTasks;
 
-export async function getArchivedJobs(req: Request, res: Response): Promise<void> {
+export async function getArchivedTasks(req: Request, res: Response): Promise<void> {
   if (!req.user) throw new ApiError(401, "Authentication required");
-  const jobs = await listArchivedJobs(req.user.userId);
-  res.json(jobs.map(mapJob));
+  const tasks = await listArchivedTasks(req.user.userId);
+  res.json(tasks.map(mapTask));
 }
+export const getArchivedJobs = getArchivedTasks;
 
-export async function getJob(req: Request, res: Response): Promise<void> {
-  const job = await findJobById(req.params.id as string);
-  if (!job) {
-    res.status(404).json({ error: "Job not found" });
+export async function getTask(req: Request, res: Response): Promise<void> {
+  const task = await findTaskById(req.params.id as string);
+  if (!task) {
+    res.status(404).json({ error: "Task not found" });
     return;
   }
-  if (req.user?.role === "OWNER" && job.customerId !== req.user.userId) {
+  if (req.user?.role === "OWNER" && task.customerId !== req.user.userId) {
     throw new ApiError(403, "Insufficient permissions");
   }
-  res.json(mapJob(job));
+  res.json(mapTask(task));
 }
+export const getJob = getTask;
 
 export async function getAppointments(req: Request, res: Response): Promise<void> {
   const ownerId = req.user?.role === "OWNER" ? req.user.userId : undefined;
@@ -128,7 +132,11 @@ export async function getEstimates(req: Request, res: Response): Promise<void> {
   res.json(
     estimates.map((e) => ({
       ...e,
-      jobId: e.jobCardId,
+      taskId: e.taskCardId,
+      jobId: e.taskCardId,
+      taskCardId: e.taskCardId,
+      taskCard: e.taskCard,
+      jobCard: e.taskCard,
       status: e.status.toLowerCase(),
       items: e.items.map((i) => ({ ...i, category: i.category.toLowerCase() })),
     })),
@@ -141,6 +149,8 @@ export async function getInvoices(req: Request, res: Response): Promise<void> {
   res.json(
     invoices.map((i) => ({
       ...i,
+      taskId: i.taskId,
+      jobId: i.taskId,
       status: i.status.toLowerCase(),
       payment: i.paymentMethod
         ? {
@@ -152,6 +162,7 @@ export async function getInvoices(req: Request, res: Response): Promise<void> {
     })),
   );
 }
+
 
 export async function getContent(req: Request, res: Response): Promise<void> {
   const content = await getSiteContent(req.params.key as string);

@@ -2,7 +2,8 @@
   "invoices": [
     {
       "id": "INV-2026-0142",
-      "jobId": "JC-1043",
+      "jobId": "TC-1043",
+      "taskId": "TC-1043",
       "customerId": "cus-001",
       "vehicleId": "veh-002",
       "issuedAt": "2026-08-12T15:30:00Z",
@@ -19,7 +20,8 @@
     },
     {
       "id": "INV-2026-0138",
-      "jobId": "JC-1044",
+      "jobId": "TC-1044",
+      "taskId": "TC-1044",
       "customerId": "cus-001",
       "vehicleId": "veh-001",
       "issuedAt": "2026-07-28T11:00:00Z",
@@ -37,7 +39,8 @@
     },
     {
       "id": "INV-2026-0150",
-      "jobId": "JC-1045",
+      "jobId": "TC-1045",
+      "taskId": "TC-1045",
       "customerId": "cus-001",
       "vehicleId": "veh-001",
       "issuedAt": "2026-08-13T16:00:00Z",

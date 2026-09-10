@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchVehicles, selectVehicle } from "@/store/slices/vehiclesSlice";
-import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchTasks } from "@/store/slices/tasksSlice";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -33,17 +33,17 @@ export default function VehicleDetailsPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const vehicles = useAppSelector((s) => s.vehicles.items);
-  const jobs = useAppSelector((s) => s.jobs.items);
+  const tasks = useAppSelector((s) => s.tasks.items);
 
   useEffect(() => {
     if (vehicles.length === 0) dispatch(fetchVehicles());
-    if (jobs.length === 0) dispatch(fetchJobs());
-  }, [dispatch, vehicles.length, jobs.length]);
+    if (tasks.length === 0) dispatch(fetchTasks());
+  }, [dispatch, vehicles.length, tasks.length]);
 
   const vehicle = vehicles.find((v) => v.id === params.id) ?? null;
-  const vehicleJobs = useMemo(() => jobs.filter((j) => j.vehicleId === params.id), [jobs, params.id]);
-  const activeJob = vehicleJobs.find((j) => !["completed", "ready"].includes(j.status)) ?? null;
-  const completedCount = vehicleJobs.filter((j) => ["completed", "ready"].includes(j.status)).length;
+  const vehicleTasks = useMemo(() => tasks.filter((t) => t.vehicleId === params.id), [tasks, params.id]);
+  const activeTask = vehicleTasks.find((t) => !["completed", "ready"].includes(t.status)) ?? null;
+  const completedCount = vehicleTasks.filter((t) => ["completed", "ready"].includes(t.status)).length;
 
   if (!vehicle) {
     if (vehicles.length === 0) {
@@ -97,8 +97,8 @@ export default function VehicleDetailsPage() {
                 {vehicle.regNo}
               </span>
               <span className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-foreground shadow-sm backdrop-blur-[2px]">
-                <span className={`size-1.5 rounded-full ${activeJob ? "bg-[#ffc107] animate-pulse" : "bg-emerald-500"}`} />
-                {activeJob ? "In Service" : "Available"}
+                <span className={`size-1.5 rounded-full ${activeTask ? "bg-[#ffc107] animate-pulse" : "bg-emerald-500"}`} />
+                {activeTask ? "In Service" : "Available"}
               </span>
             </div>
 
@@ -167,7 +167,7 @@ export default function VehicleDetailsPage() {
               <CircleDashed className="size-4 text-primary" />
               <div>
                 <p className="text-[11px] font-semibold tracking-[0.24px] text-muted-foreground uppercase">Status</p>
-                <p className="text-sm font-semibold text-foreground">{activeJob ? "Workshop" : "At home"}</p>
+                <p className="text-sm font-semibold text-foreground">{activeTask ? "Workshop" : "At home"}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 px-6 py-3.5">
@@ -249,7 +249,7 @@ export default function VehicleDetailsPage() {
               )}
             </div>
 
-            {activeJob && (
+            {activeTask && (
               <div className="rounded-[12px] border border-[#b3c9ff] bg-[#eff6ff] p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -257,18 +257,18 @@ export default function VehicleDetailsPage() {
                       <Wrench className="size-4.5 text-white" />
                     </span>
                     <div>
-                      <p className="text-sm font-bold text-foreground">Active Job</p>
-                      <p className="font-mono text-xs font-semibold text-primary">{activeJob.id}</p>
+                      <p className="text-sm font-bold text-foreground">Active Task</p>
+                      <p className="font-mono text-xs font-semibold text-primary">{activeTask.id}</p>
                     </div>
                   </div>
-                  <StatusBadge status={activeJob.status} />
+                  <StatusBadge status={activeTask.status} />
                 </div>
                 <p className="pt-3 text-xs leading-relaxed text-[#424753]">
-                  {activeJob.services.map((s) => s.name).join(", ") || "General service in progress"}
+                  {activeTask.services.map((s) => s.name).join(", ") || "General service in progress"}
                 </p>
                 <Button
                   variant="ghost"
-                  onClick={() => router.push(`/dashboard/services/${activeJob.id}`)}
+                  onClick={() => router.push(`/dashboard/services/${activeTask.id}`)}
                   className="mt-3 gap-1 rounded-lg px-3 text-xs font-semibold text-primary hover:bg-primary-soft"
                 >
                   Track progress
@@ -286,10 +286,10 @@ export default function VehicleDetailsPage() {
               Service History
             </h2>
             <span className="rounded-full bg-[#f3f4f6] px-3 py-1 text-xs font-semibold text-[#424753]">
-              {vehicleJobs.length} record{vehicleJobs.length === 1 ? "" : "s"}
+              {vehicleTasks.length} record{vehicleTasks.length === 1 ? "" : "s"}
             </span>
           </div>
-          {vehicleJobs.length === 0 ? (
+          {vehicleTasks.length === 0 ? (
             <div className="mx-7 mb-7 flex flex-col items-center gap-3 rounded-lg border border-dashed border-border bg-[#fafbfc] py-12">
               <CircleDashed className="size-7 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">No service records yet for this vehicle.</p>
@@ -300,18 +300,18 @@ export default function VehicleDetailsPage() {
             </div>
           ) : (
             <div className="divide-y divide-border px-7 pb-2">
-              {vehicleJobs.map((job) => (
-                <div key={job.id} className="flex items-center gap-4 py-4">
+              {vehicleTasks.map((task) => (
+                <div key={task.id} className="flex items-center gap-4 py-4">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft">
                     <Wrench className="size-4.5 text-primary" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-2 font-mono text-xs font-semibold text-foreground">
-                      {job.id}
+                      {task.id}
                       <span className="flex items-center gap-1 font-sans text-[11px] font-medium text-muted-foreground">
                         <Clock3 className="size-3" />
-                        {job.progress.length > 0 && job.progress[0]?.timestamp
-                          ? new Date(job.progress[0].timestamp).toLocaleDateString("en-US", {
+                        {task.progress.length > 0 && task.progress[0]?.timestamp
+                          ? new Date(task.progress[0].timestamp).toLocaleDateString("en-US", {
                               month: "short",
                               day: "numeric",
                               year: "numeric",
@@ -320,12 +320,12 @@ export default function VehicleDetailsPage() {
                       </span>
                     </p>
                     <p className="truncate pt-1 text-sm text-[#424753]">
-                      {job.services.map((s) => s.name).join(" • ") || job.issues}
+                      {task.services.map((s) => s.name).join(" • ") || task.issues}
                     </p>
                   </div>
-                  <StatusBadge status={job.status} />
+                  <StatusBadge status={task.status} />
                   <Link
-                    href={`/dashboard/services/${job.id}`}
+                    href={`/dashboard/services/${task.id}`}
                     className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                   >
                     Details
