@@ -8,6 +8,7 @@ import { ArrowLeft, ClipboardList, MessageSquare, Package, Star, Stethoscope } f
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchTasks } from "@/store/slices/tasksSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
+import { fetchServices } from "@/store/slices/servicesSlice";
 import { fetchEstimates } from "@/store/slices/estimatesSlice";
 import { fetchRatings, rateTask } from "@/store/slices/ratingsSlice";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
@@ -66,6 +67,7 @@ export default function ServiceDetailsPage() {
   const dispatch = useAppDispatch();
   const tasks = useAppSelector((s) => s.tasks.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
+  const services = useAppSelector((s) => s.services.items);
   const estimates = useAppSelector((s) => s.estimates.items);
   const ratings = useAppSelector((s) => s.ratings.items);
   const [score, setScore] = useState(5);
@@ -75,9 +77,10 @@ export default function ServiceDetailsPage() {
   useEffect(() => {
     if (tasks.length === 0) dispatch(fetchTasks());
     if (vehicles.length === 0) dispatch(fetchVehicles());
+    if (services.length === 0) dispatch(fetchServices());
     if (estimates.length === 0) dispatch(fetchEstimates());
     dispatch(fetchRatings());
-  }, [dispatch, tasks.length, vehicles.length, estimates.length]);
+  }, [dispatch, tasks.length, vehicles.length, services.length, estimates.length]);
 
   const task = tasks.find((t) => t.id === params.id);
   if (!task) {
@@ -205,29 +208,38 @@ export default function ServiceDetailsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {task.services.length === 0 && task.partsUsed.length === 0 && (
+                    {(task.services ?? []).length === 0 && (task.partsUsed ?? []).length === 0 && (
                       <TableRow className="border-border">
                         <TableCell className="px-4 py-3 text-sm text-muted-foreground" colSpan={4}>
                           No services or parts recorded yet.
                         </TableCell>
                       </TableRow>
                     )}
-                    {(task.services ?? []).map((item) => (
-                      <TableRow key={item.id} className="border-border">
-                        <TableCell className="px-4 py-3 text-sm font-medium text-foreground">{item.name}</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">1</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">${item.price.toFixed(2)}</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-sm font-medium text-foreground">${item.price.toFixed(2)}</TableCell>
-                      </TableRow>
-                    ))}
-                    {task.partsUsed.map((p) => (
-                      <TableRow key={p.id} className="border-border">
-                        <TableCell className="px-4 py-3 text-sm font-medium text-foreground">{p.name}</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">{p.qty}</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">${p.unitPrice.toFixed(2)}</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-sm font-medium text-foreground">${p.subtotal.toFixed(2)}</TableCell>
-                      </TableRow>
-                    ))}
+                    {(task.services ?? []).map((item, idx) => {
+                      const matched = services.find((s) => s.name === item.name || s.id === item.id);
+                      const price = typeof item.price === "number" ? item.price : (matched?.basePrice ?? 0);
+                      return (
+                        <TableRow key={item.id ?? `${item.name}-${idx}`} className="border-border">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-foreground">{item.name}</TableCell>
+                          <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">1</TableCell>
+                          <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">${price.toFixed(2)}</TableCell>
+                          <TableCell className="px-4 py-3 text-right text-sm font-medium text-foreground">${price.toFixed(2)}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {(task.partsUsed ?? []).map((p) => {
+                      const qty = p.qty ?? 1;
+                      const unitPrice = typeof p.unitPrice === "number" ? p.unitPrice : 0;
+                      const subtotal = typeof p.subtotal === "number" ? p.subtotal : unitPrice * qty;
+                      return (
+                        <TableRow key={p.id} className="border-border">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-foreground">{p.name}</TableCell>
+                          <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">{qty}</TableCell>
+                          <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">${unitPrice.toFixed(2)}</TableCell>
+                          <TableCell className="px-4 py-3 text-right text-sm font-medium text-foreground">${subtotal.toFixed(2)}</TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </section>

@@ -44,14 +44,15 @@ const newLineId = () => `est-new-${++lineSeq}`;
 
 function lineFromEstimate(item: EstimateItem): LineItem {
   const cat = CATEGORY_META[item.category];
+  const amt = typeof item.amount === "number" ? item.amount : 0;
   return {
     id: item.id ?? newLineId(),
     name: item.description,
     sub: cat.sub,
     category: item.category,
     qty: "1",
-    unit: cat.unit === "price" ? item.amount.toFixed(2) : "0",
-    labor: cat.unit === "labor" ? item.amount.toFixed(2) : "0",
+    unit: cat.unit === "price" ? amt.toFixed(2) : "0",
+    labor: cat.unit === "labor" ? amt.toFixed(2) : "0",
   };
 }
 
@@ -70,8 +71,8 @@ function LineItemEditor({ task, estimates }: EditorProps) {
   const initialItems = (() => {
     const estimate = estimates.find((e) => e.taskId === task.id || e.taskCardId === task.id);
     if (estimate) return estimate.items.map(lineFromEstimate);
-    return task.services.map((s) =>
-      lineFromEstimate({ id: newLineId(), description: s.name, category: "service" as const, amount: s.price }),
+    return (task.services ?? []).map((s) =>
+      lineFromEstimate({ id: newLineId(), description: s.name, category: "service" as const, amount: typeof s.price === "number" ? s.price : 0 }),
     );
   })();
 

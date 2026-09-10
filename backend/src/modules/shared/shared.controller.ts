@@ -50,14 +50,23 @@ function mapTask(task: {
   progress: { step: string }[];
   services?: unknown;
   photos?: unknown;
+  partsUsed?: unknown;
   [key: string]: unknown;
 }) {
+  const rawServices = Array.isArray(task.services) ? (task.services as Record<string, unknown>[]) : [];
+  const services = rawServices.map((s, idx) => ({
+    id: typeof s?.id === "string" ? s.id : `svc-${idx + 1}`,
+    name: typeof s?.name === "string" ? (s.name as string) : "Service",
+    price: typeof s?.price === "number" ? s.price : 0,
+  }));
+
   return {
     ...task,
     status: task.status.toLowerCase(),
     priority: task.priority.toLowerCase(),
-    services: (task.services ?? []) as never,
+    services,
     photos: (task.photos ?? []) as never,
+    partsUsed: (task.partsUsed ?? []) as never,
     progress: task.progress.map((p) => ({ ...p, step: p.step.toLowerCase() })),
   };
 }
