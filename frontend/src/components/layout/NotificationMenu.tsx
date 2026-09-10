@@ -245,6 +245,9 @@ export function NotificationMenu() {
   const appointments = useAppSelector((s) => s.appointments.items);
 
   const [isOpen, setIsOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const leaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const [readIds, setReadIds] = useState<Set<string>>(() => {
     if (typeof window === "undefined") return new Set();
     try {
@@ -256,6 +259,31 @@ export function NotificationMenu() {
   });
 
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseEnter = () => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+      leaveTimerRef.current = null;
+    }
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+    }
+    leaveTimerRef.current = setTimeout(() => {
+      setIsHovered(false);
+    }, 200);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (leaveTimerRef.current) {
+        clearTimeout(leaveTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (threads.length === 0) void dispatch(fetchThreads());
@@ -269,15 +297,17 @@ export function NotificationMenu() {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setIsHovered(false);
       }
     }
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setIsOpen(false);
+        setIsHovered(false);
       }
     }
 
-    if (isOpen) {
+    if (isOpen || isHovered) {
       document.addEventListener("mousedown", handleClickOutside);
       document.addEventListener("keydown", handleKeyDown);
     }
@@ -285,7 +315,7 @@ export function NotificationMenu() {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, isHovered]);
 
   const persistReadIds = (newSet: Set<string>) => {
     setReadIds(newSet);
@@ -312,24 +342,32 @@ export function NotificationMenu() {
     readIds,
   });
 
-  const markAllAsRead = () => {
+  const markAllAsRead = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     const updated = new Set(readIds);
     items.forEach((item) => updated.add(item.id));
     persistReadIds(updated);
   };
 
   const unreadCount = items.filter((i) => i.unread).length;
+  const isExpanded = isOpen || isHovered;
 
   return (
-    <div ref={menuRef} className="group/notif relative flex items-center">
+    <div
+      ref={menuRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className="group relative flex items-center"
+    >
       <button
         type="button"
         aria-label="Notifications"
-        aria-expanded={isOpen}
+        aria-expanded={isExpanded}
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          "relative flex size-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-          isOpen && "bg-secondary text-foreground",
+          "relative flex size-10 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+          isExpanded && "bg-secondary text-foreground",
         )}
       >
         <Bell className="size-[18px]" />
@@ -340,13 +378,11 @@ export function NotificationMenu() {
         )}
       </button>
 
-      {/* Popover container: active when isOpen is true OR hovered via group/notif */}
+      {/* Popover container: fluid transition, hover bridge, stays open smoothly */}
       <div
         className={cn(
-          "absolute top-[calc(100%+8px)] right-0 z-50 w-80 sm:w-96 rounded-xl border border-border bg-white shadow-xl transition-all duration-150 origin-top-right",
-          isOpen
-            ? "visible scale-100 opacity-100"
-            : "invisible scale-95 opacity-0 pointer-events-none group-hover/notif:visible group-hover/notif:scale-100 group-hover/notif:opacity-100 group-hover/notif:pointer-events-auto",
+          "invisible absolute top-[calc(100%+8px)] right-0 z-50 w-80 sm:w-96 translate-y-1 rounded-2xl border border-border bg-white shadow-xl opacity-0 transition-all duration-150 ease-out before:absolute before:-top-3 before:left-0 before:right-0 before:h-3 before:content-[''] group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100",
+          isExpanded && "visible translate-y-0 opacity-100",
         )}
       >
         {/* Header */}
@@ -398,6 +434,7 @@ export function NotificationMenu() {
                     void dispatch(markThreadRead(item.threadId));
                   }
                   setIsOpen(false);
+                  setIsHovered(false);
                 }}
                 className={cn(
                   "flex items-start gap-3 p-3.5 transition-colors hover:bg-secondary/60",
@@ -442,7 +479,10 @@ export function NotificationMenu() {
             </span>
             <Link
               href={user?.role === "owner" ? "/dashboard/services/track" : "/dashboard"}
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                setIsOpen(false);
+                setIsHovered(false);
+              }}
               className="text-xs font-semibold text-primary hover:underline"
             >
               View Activity
