@@ -8,7 +8,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  ExternalLink,
   Eye,
+  FileText,
   Headset,
   Pencil,
   Plus,
@@ -20,6 +22,7 @@ import {
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { deleteEmployee, fetchEmployees, updateEmployee } from "@/store/slices/employeesSlice";
+import { fetchFileUrl } from "@/store/slices/filesSlice";
 import type { Employee } from "@/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -455,6 +458,9 @@ function EmployeeDialog({
   onClose: () => void;
   onSave: (data: { name: string; phone: string; station?: string; specialization?: string; status: "active" | "inactive" }) => void;
 }) {
+  const dispatch = useAppDispatch();
+  const urls = useAppSelector((s) => s.files.urls);
+
   const [name, setName] = useState(dialog?.employee.name ?? "");
   const [phone, setPhone] = useState(dialog?.employee.phone ?? "");
   const [station, setStation] = useState(dialog?.employee.station ?? "");
@@ -464,6 +470,23 @@ function EmployeeDialog({
   const mode = dialog?.mode ?? "view";
   const employee = dialog?.employee;
 
+  useEffect(() => {
+    if (employee?.documents) {
+      for (const doc of employee.documents) {
+        if (doc.key?.startsWith("MotoServe/") && !urls[doc.key]) {
+          void dispatch(fetchFileUrl(doc.key)).catch(() => {});
+        }
+      }
+    }
+  }, [dispatch, employee?.documents, urls]);
+
+  const rawDocs = employee?.documents ?? [];
+  const resolvedDocs = rawDocs.map((d) => ({
+    name: d.name,
+    kind: d.kind,
+    url: urls[d.key] || d.url || (d.key?.startsWith("http") || d.key?.startsWith("data:") ? d.key : ""),
+  })).filter((d) => Boolean(d.url));
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -472,7 +495,7 @@ function EmployeeDialog({
 
   return (
     <Dialog open={dialog !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md rounded-xl">
+      <DialogContent className="max-w-xl rounded-xl">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-foreground">
             {mode === "view" ? employee?.name : `Edit ${employee?.name}`}
@@ -496,6 +519,10 @@ function EmployeeDialog({
               <Input value={employee?.email ?? ""} readOnly className="h-10 rounded-lg border-border bg-[#f3f4f5] text-muted-foreground" />
             </div>
             <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-semibold text-foreground">National ID (NID)</Label>
+              <Input value={employee?.nid || "—"} readOnly className="h-10 rounded-lg border-border bg-[#f3f4f5] text-muted-foreground" />
+            </div>
+            <div className="flex flex-col gap-1.5">
               <Label className="text-xs font-semibold text-foreground">Status</Label>
               <select
                 value={status}
@@ -511,12 +538,74 @@ function EmployeeDialog({
               <Label className="text-xs font-semibold text-foreground">Station</Label>
               <Input value={station} onChange={(e) => setStation(e.target.value)} readOnly={mode === "view"} className="h-10 rounded-lg border-border bg-white" />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-semibold text-foreground">Specialization</Label>
-              <Input value={specialization} onChange={(e) => setSpecialization(e.target.value)} readOnly={mode === "view"} className="h-10 rounded-lg border-border bg-white" />
-            </div>
+            {employee?.role === "mechanic" && (
+              <div className="col-span-2 flex flex-col gap-1.5">
+                <Label className="text-xs font-semibold text-foreground">Specialization</Label>
+                <Input value={specialization} onChange={(e) => setSpecialization(e.target.value)} readOnly={mode === "view"} className="h-10 rounded-lg border-border bg-white" />
+              </div>
+            )}
           </div>
-          <DialogFooter>
+
+          {/* Attached Documents Gallery in View Mode */}
+          {mode === "view" && (
+            <div className="flex flex-col gap-2.5 border-t border-border pt-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <FileText className="size-4 text-primary" />
+                  Verification & Attached Documents
+                </span>
+                <span className="text-[11px] text-muted-foreground">
+                  {resolvedDocs.length} document{resolvedDocs.length === 1 ? "" : "s"}
+                </span>
+              </div>
+
+              {resolvedDocs.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2.5 max-h-52 overflow-y-auto pr-1">
+                  {resolvedDocs.map((doc, idx) => {
+                    const isImg =
+                      doc.url.startsWith("data:image/") ||
+                      /\.(jpg|jpeg|png|webp)($|\?)/i.test(doc.url) ||
+                      /\.(jpg|jpeg|png|webp)$/i.test(doc.name);
+                    return (
+                      <div
+                        key={`${doc.name}-${idx}`}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-border bg-[#f8f9fa] p-2.5"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <div className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded border border-border bg-white">
+                            {isImg ? (
+                              <img src={doc.url} alt={doc.name} className="size-full object-cover" />
+                            ) : (
+                              <FileText className="size-4 text-primary" />
+                            )}
+                          </div>
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <p className="text-[11px] font-medium text-foreground truncate">{doc.name}</p>
+                            <span className="text-[10px] text-muted-foreground">{doc.kind || "Document"}</span>
+                          </div>
+                        </div>
+                        <a
+                          href={doc.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded p-1 text-muted-foreground hover:bg-white hover:text-primary transition-colors shrink-0"
+                          title="Open document"
+                        >
+                          <ExternalLink className="size-3.5" />
+                        </a>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-border bg-[#f8f9fa] py-4 text-center text-xs text-muted-foreground">
+                  No verification documents attached to this profile.
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="pt-2">
             <Button type="button" variant="outline" onClick={onClose} className="rounded-lg">
               {mode === "view" ? "Close" : "Cancel"}
             </Button>

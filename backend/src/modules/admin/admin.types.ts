@@ -11,6 +11,13 @@ export interface VerifyCustomerBody {
   decision: "approved" | "rejected";
 }
 
+export interface EmployeeDocument {
+  name: string;
+  key: string;
+  kind?: string;
+  url?: string;
+}
+
 export interface CreateEmployeeBody {
   name: string;
   email: string;
@@ -28,6 +35,8 @@ export interface CreateEmployeeBody {
   district?: string;
   zip?: string;
   country?: string;
+  documents?: EmployeeDocument[];
+  documentUrl?: string;
 }
 
 export interface UpdateEmployeeBody {
@@ -47,17 +56,8 @@ export interface UpdateEmployeeBody {
   district?: string;
   zip?: string;
   country?: string;
-}
-
-export interface UpdateEmployeeBody {
-  name?: string;
-  email?: string;
-  password?: string;
-  phone?: string;
-  station?: string;
-  specialization?: string;
-  avatar?: string | null;
-  status?: "active" | "inactive";
+  documents?: EmployeeDocument[];
+  documentUrl?: string;
 }
 
 export interface ReportDto {

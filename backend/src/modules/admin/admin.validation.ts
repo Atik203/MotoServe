@@ -39,6 +39,17 @@ export const createEmployeeSchema = z.object({
     district: z.string().optional(),
     zip: z.string().optional(),
     country: z.string().optional(),
+    documents: z
+      .array(
+        z.object({
+          name: z.string(),
+          key: z.string(),
+          kind: z.string().optional(),
+          url: z.string().optional(),
+        }),
+      )
+      .optional(),
+    documentUrl: z.string().optional(),
   }),
 });
 
@@ -60,5 +71,16 @@ export const updateEmployeeSchema = z.object({
     district: z.string().optional(),
     zip: z.string().optional(),
     country: z.string().optional(),
+    documents: z
+      .array(
+        z.object({
+          name: z.string(),
+          key: z.string(),
+          kind: z.string().optional(),
+          url: z.string().optional(),
+        }),
+      )
+      .optional(),
+    documentUrl: z.string().optional(),
   }),
 });

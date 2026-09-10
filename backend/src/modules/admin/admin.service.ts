@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma.js";
 import { ApiError } from "../../middleware/error.js";
 import { findUserByEmail } from "../shared/shared.service.js";
+import type { Prisma } from "../../generated/prisma/client.js";
 import type { CreateEmployeeBody, CreateServiceBody, ReportDto, UpdateEmployeeBody } from "./admin.types.js";
 
 export function createService(data: CreateServiceBody) {
@@ -38,16 +39,20 @@ const employeeSelect = {
   station: true,
   specialization: true,
   status: true,
+  nid: true,
+  documents: true,
+  documentUrl: true,
   joinedAt: true,
 } as const;
 
 export async function createEmployee(data: CreateEmployeeBody) {
   const existing = await findUserByEmail(data.email);
   if (existing) throw new ApiError(409, "Email already registered");
-  const { password, role, dateOfBirth, ...profile } = data;
+  const { password, role, dateOfBirth, documents, ...profile } = data;
   return prisma.user.create({
     data: {
       ...profile,
+      ...(documents ? { documents: documents as unknown as Prisma.InputJsonValue } : {}),
       ...(dateOfBirth ? { dateOfBirth: new Date(dateOfBirth) } : {}),
       passwordHash: await bcrypt.hash(password, 10),
       role: role.toUpperCase() as never,
@@ -58,11 +63,12 @@ export async function createEmployee(data: CreateEmployeeBody) {
 }
 
 export function updateEmployee(id: string, data: UpdateEmployeeBody) {
-  const { password, status, dateOfBirth, ...rest } = data;
+  const { password, status, dateOfBirth, documents, ...rest } = data;
   return prisma.user.update({
     where: { id },
     data: {
       ...rest,
+      ...(documents ? { documents: documents as unknown as Prisma.InputJsonValue } : {}),
       ...(dateOfBirth ? { dateOfBirth: new Date(dateOfBirth) } : {}),
       ...(password ? { passwordHash: bcrypt.hashSync(password, 10) } : {}),
       ...(status ? { status: status.toUpperCase() as never } : {}),

@@ -75,6 +75,9 @@ export interface Employee {
   specialization?: string;
   status: "active" | "inactive";
   joinedAt: string;
+  nid?: string;
+  documents?: { name: string; key: string; kind?: string; url?: string }[] | null;
+  documentUrl?: string | null;
   activeTasks?: number;
   completedTasks?: number;
 }
