@@ -21,8 +21,8 @@
       "specialization": "Brakes & Suspension",
       "status": "active",
       "joinedAt": "2024-08-22T00:00:00Z",
-      "activeJobs": 3,
-      "completedJobs": 127
+      "activeTasks": 3,
+      "completedTasks": 127
     },
     {
       "id": "emp-003",
@@ -35,8 +35,8 @@
       "specialization": "Engine & Diagnostics",
       "status": "active",
       "joinedAt": "2023-11-05T00:00:00Z",
-      "activeJobs": 2,
-      "completedJobs": 214
+      "activeTasks": 2,
+      "completedTasks": 214
     },
     {
       "id": "emp-004",
@@ -49,8 +49,8 @@
       "specialization": "Electrical & AC",
       "status": "active",
       "joinedAt": "2025-01-14T00:00:00Z",
-      "activeJobs": 1,
-      "completedJobs": 64
+      "activeTasks": 1,
+      "completedTasks": 64
     }
   ]
 }

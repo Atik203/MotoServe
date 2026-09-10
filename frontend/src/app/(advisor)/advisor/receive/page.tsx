@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { createJobCard } from "@/store/slices/jobsSlice";
+import { createTaskCard } from "@/store/slices/tasksSlice";
 import { fetchVehicles, addVehicle } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers, createCustomer } from "@/store/slices/customersSlice";
 import { fetchAppointments } from "@/store/slices/appointmentsSlice";
@@ -188,7 +188,7 @@ export default function ReceiveVehiclePage() {
     setSubmitting(true);
     try {
       const res = await dispatch(
-        createJobCard({
+        createTaskCard({
           vehicleId: resolvedVehicle.id,
           customerId: resolvedCustomerId,
           issues: issues.trim(),
@@ -203,10 +203,10 @@ export default function ReceiveVehiclePage() {
           expectedDate: expectedDate || undefined,
         }),
       ).unwrap();
-      toast.success(`Job card ${res.id} created`);
-      router.push("/advisor/job-cards/assign");
+      toast.success(`Task card ${res.id} created`);
+      router.push("/advisor/task-cards/assign");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create job card");
+      toast.error(err instanceof Error ? err.message : "Failed to create task card");
     } finally {
       setSubmitting(false);
     }
@@ -242,7 +242,7 @@ export default function ReceiveVehiclePage() {
           </div>
           <button type="button" onClick={() => void createCard()} disabled={submitting} className={primaryBtn}>
             <Plus className="size-[13.5px]" />
-            {submitting ? "Creating..." : "Create Job Card"}
+            {submitting ? "Creating..." : "Create Task Card"}
           </button>
         </div>
 
@@ -541,7 +541,7 @@ export default function ReceiveVehiclePage() {
             </section>
 
             <section className={card}>
-              <h3 className={sectionTitle}>Job Card Details</h3>
+              <h3 className={sectionTitle}>Task Card Details</h3>
               <div className="flex flex-col gap-1.5">
                 <label className={fieldLabel}>Reported Problems / Customer Concerns</label>
                 <textarea
@@ -592,12 +592,12 @@ export default function ReceiveVehiclePage() {
             </section>
 
             <div className="flex items-center justify-end gap-2 border-t border-[#e5e7eb] pt-4">
-              <button type="button" className={outlineBtn} onClick={() => router.push("/advisor/job-cards/assign")}>
+              <button type="button" className={outlineBtn} onClick={() => router.push("/advisor/task-cards/assign")}>
                 Cancel
               </button>
               <button type="button" onClick={() => void createCard()} disabled={submitting} className={primaryBtn}>
                 <Plus className="size-[13.5px]" />
-                {submitting ? "Creating..." : "Create Job Card"}
+                {submitting ? "Creating..." : "Create Task Card"}
               </button>
             </div>
           </section>

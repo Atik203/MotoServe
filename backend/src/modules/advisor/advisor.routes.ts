@@ -5,16 +5,31 @@ import {
   assignMechanicController,
   createCustomerController,
   createEstimateController,
-  createJobCardController,
+  createTaskCardController,
 } from "./advisor.controller.js";
-import { assignMechanicSchema, createCustomerSchema, createEstimateSchema, createJobCardSchema } from "./advisor.validation.js";
+import { assignMechanicSchema, createCustomerSchema, createEstimateSchema, createTaskCardSchema } from "./advisor.validation.js";
 
 export const router = Router();
 
-router.post("/jobs", requireAuth, requireRole("advisor", "admin"), validate(createJobCardSchema), createJobCardController);
+const taskMiddleware = [
+  requireAuth,
+  requireRole("advisor", "admin"),
+  validate(createTaskCardSchema),
+  createTaskCardController,
+] as const;
+
+router.post("/tasks", ...taskMiddleware);
 
 router.post("/customers", requireAuth, requireRole("advisor", "admin"), validate(createCustomerSchema), createCustomerController);
 
-router.post("/jobs/:id/assign", requireAuth, requireRole("advisor", "admin"), validate(assignMechanicSchema), assignMechanicController);
+const assignMiddleware = [
+  requireAuth,
+  requireRole("advisor", "admin"),
+  validate(assignMechanicSchema),
+  assignMechanicController,
+] as const;
+
+router.post("/tasks/:id/assign", ...assignMiddleware);
 
 router.post("/estimates", requireAuth, requireRole("advisor", "admin"), validate(createEstimateSchema), createEstimateController);
+

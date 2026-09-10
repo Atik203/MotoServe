@@ -1,8 +1,8 @@
 import { CheckCircle2, ClipboardList, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { JobPriority, JobStatus } from "@/types";
+import type { TaskPriority, TaskStatus } from "@/types";
 
-const statusConfig: Record<JobStatus, { label: string; className: string }> = {
+const statusConfig: Record<TaskStatus, { label: string; className: string }> = {
   received: { label: "Received", className: "bg-muted text-muted-foreground" },
   inspecting: { label: "Inspecting", className: "bg-accent text-accent-foreground" },
   repairing: { label: "Repairing", className: "bg-[rgba(0,82,204,0.1)] text-primary" },
@@ -18,8 +18,8 @@ const priorityIcon = {
 };
 
 interface StatusBadgeProps {
-  status: JobStatus;
-  priority?: JobPriority;
+  status: TaskStatus;
+  priority?: TaskPriority;
 }
 
 export function StatusBadge({ status, priority }: StatusBadgeProps) {
@@ -32,7 +32,7 @@ export function StatusBadge({ status, priority }: StatusBadgeProps) {
   );
 }
 
-export function PriorityPill({ priority }: { priority: JobPriority }) {
+export function PriorityPill({ priority }: { priority: TaskPriority }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-[rgba(255,193,7,0.1)] px-[13px] py-[5px] text-xs font-semibold tracking-[0.8px] text-warning uppercase ring-1 ring-[rgba(255,193,7,0.2)]">
       {priority === "high" ? "High Priority" : priority === "medium" ? "Medium Priority" : "Low Priority"}

@@ -52,14 +52,14 @@
     {
       "id": "faq-011",
       "category": "Payments",
-      "question": "Can I pay for multiple jobs separately?",
-      "answer": "Yes. Each completed job generates its own invoice, so fleet owners can settle vehicles one at a time as work finishes."
+      "question": "Can I pay for multiple tasks separately?",
+      "answer": "Yes. Each completed task generates its own invoice, so fleet owners can settle vehicles one at a time as work finishes."
     },
     {
       "id": "faq-012",
       "category": "Repair Process",
       "question": "What are the stages of my repair?",
-      "answer": "Every job moves through Received, Inspecting, Repairing, Testing, and Ready. Follow each step live from the Service Tracking page."
+      "answer": "Every task moves through Received, Inspecting, Repairing, Testing, and Ready. Follow each step live from the Service Tracking page."
     },
     {
       "id": "faq-013",
@@ -71,7 +71,7 @@
       "id": "faq-014",
       "category": "Repair Process",
       "question": "Do you use genuine quality parts?",
-      "answer": "Yes. We fit quality parts from trusted suppliers only, and every part used is listed on your job card and invoice with its quantity and price."
+      "answer": "Yes. We fit quality parts from trusted suppliers only, and every part used is listed on your task card and invoice with its quantity and price."
     },
     {
       "id": "faq-015",
@@ -107,7 +107,7 @@
       "id": "faq-019",
       "category": "Cost Estimates",
       "question": "What happens if I reject an estimate?",
-      "answer": "Only the work you approved proceeds. Rejected items are removed from the job and the repair continues with the original agreed scope."
+      "answer": "Only the work you approved proceeds. Rejected items are removed from the task and the repair continues with the original agreed scope."
     },
     {
       "id": "faq-006",
@@ -125,13 +125,13 @@
       "id": "faq-021",
       "category": "Service Tracking",
       "question": "What should I do if my repair is taking longer than estimated?",
-      "answer": "Message your advisor from the job or chat page for an updated completion time. Delays such as parts sourcing are always communicated before you are charged anything extra."
+      "answer": "Message your advisor from the task or chat page for an updated completion time. Delays such as parts sourcing are always communicated before you are charged anything extra."
     },
     {
       "id": "faq-022",
       "category": "Service Tracking",
       "question": "Can I see the full service history of a vehicle?",
-      "answer": "Yes. Service History keeps every completed job per vehicle with its invoices, parts used, and your ratings, all in one place."
+      "answer": "Yes. Service History keeps every completed task per vehicle with its invoices, parts used, and your ratings, all in one place."
     },
     {
       "id": "faq-023",
@@ -155,13 +155,13 @@
       "id": "faq-026",
       "category": "Warranty",
       "question": "How do I claim warranty service?",
-      "answer": "Book a follow-up appointment referencing the original job card or invoice number. The advisor verifies coverage when your vehicle arrives."
+      "answer": "Book a follow-up appointment referencing the original task card or invoice number. The advisor verifies coverage when your vehicle arrives."
     },
     {
       "id": "faq-027",
       "category": "Invoices",
       "question": "When do I receive my invoice?",
-      "answer": "Automatically, as soon as your job is marked complete. Find it under Payments with full line items for services, parts, labor, and 8.5% tax."
+      "answer": "Automatically, as soon as your task is marked complete. Find it under Payments with full line items for services, parts, labor, and 8.5% tax."
     },
     {
       "id": "faq-028",
@@ -185,7 +185,7 @@
       "id": "faq-031",
       "category": "Support",
       "question": "How do I contact my service advisor?",
-      "answer": "Open the Communication Center from your dashboard to chat directly with your advisor. Every conversation stays linked to your vehicles and jobs."
+      "answer": "Open the Communication Center from your dashboard to chat directly with your advisor. Every conversation stays linked to your vehicles and tasks."
     },
     {
       "id": "faq-032",
@@ -203,7 +203,7 @@
       "id": "faq-034",
       "category": "Support",
       "question": "Where can I leave feedback about my service?",
-      "answer": "Rate any completed job from Service History with a score and review. Your feedback helps the workshop improve and guides other owners."
+      "answer": "Rate any completed task from Service History with a score and review. Your feedback helps the workshop improve and guides other owners."
     }
   ],
   "cta": {

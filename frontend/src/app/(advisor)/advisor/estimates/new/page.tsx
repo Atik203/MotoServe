@@ -5,11 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Car, Mail, Phone, Plus, Send, User } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchTasks } from "@/store/slices/tasksSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
 import { fetchEstimates, createEstimate } from "@/store/slices/estimatesSlice";
-import type { Customer, Estimate, EstimateItem, JobCard, Vehicle } from "@/types";
+import type { Customer, Estimate, EstimateItem, TaskCard, Vehicle } from "@/types";
 import { FormLoading } from "@/components/ui/loading";
 
 const card =
@@ -44,23 +44,24 @@ const newLineId = () => `est-new-${++lineSeq}`;
 
 function lineFromEstimate(item: EstimateItem): LineItem {
   const cat = CATEGORY_META[item.category];
+  const amt = typeof item.amount === "number" ? item.amount : 0;
   return {
     id: item.id ?? newLineId(),
     name: item.description,
     sub: cat.sub,
     category: item.category,
     qty: "1",
-    unit: cat.unit === "price" ? item.amount.toFixed(2) : "0",
-    labor: cat.unit === "labor" ? item.amount.toFixed(2) : "0",
+    unit: cat.unit === "price" ? amt.toFixed(2) : "0",
+    labor: cat.unit === "labor" ? amt.toFixed(2) : "0",
   };
 }
 
 interface EditorProps {
-  job: JobCard;
+  task: TaskCard;
   estimates: Estimate[];
 }
 
-function LineItemEditor({ job, estimates }: EditorProps) {
+function LineItemEditor({ task, estimates }: EditorProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [internalNotes, setInternalNotes] = useState("");
@@ -68,10 +69,10 @@ function LineItemEditor({ job, estimates }: EditorProps) {
   const [submitting, setSubmitting] = useState(false);
 
   const initialItems = (() => {
-    const estimate = estimates.find((e) => e.jobId === job.id || e.jobCardId === job.id);
+    const estimate = estimates.find((e) => e.taskId === task.id || e.taskCardId === task.id);
     if (estimate) return estimate.items.map(lineFromEstimate);
-    return job.services.map((s) =>
-      lineFromEstimate({ id: newLineId(), description: s.name, category: "service" as const, amount: s.price }),
+    return (task.services ?? []).map((s) =>
+      lineFromEstimate({ id: newLineId(), description: s.name, category: "service" as const, amount: typeof s.price === "number" ? s.price : 0 }),
     );
   })();
 
@@ -115,7 +116,7 @@ function LineItemEditor({ job, estimates }: EditorProps) {
     try {
       await dispatch(
         createEstimate({
-          jobId: job.id,
+          taskId: task.id,
           summary: message.trim() || "Estimate ready for review",
           internalNotes: internalNotes.trim() || undefined,
           items: rows.map((r) => ({
@@ -222,7 +223,7 @@ function LineItemEditor({ job, estimates }: EditorProps) {
           </table>
           {rows.length === 0 && (
             <p className="py-8 text-center text-sm text-[#9ca3af]">
-              Line items load from the job&apos;s services — adjust quantities and prices as needed.
+              Line items load from the task&apos;s services — adjust quantities and prices as needed.
             </p>
           )}
 
@@ -298,29 +299,29 @@ function LineItemEditor({ job, estimates }: EditorProps) {
 function SendEstimatePage() {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
-  const jobs = useAppSelector((s) => s.jobs.items);
-  const jobsStatus = useAppSelector((s) => s.jobs.status);
+  const tasks = useAppSelector((s) => s.tasks.items);
+  const tasksStatus = useAppSelector((s) => s.tasks.status);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const customers = useAppSelector((s) => s.customers.items);
   const estimates = useAppSelector((s) => s.estimates.items);
-  const [jobId, setJobId] = useState(searchParams.get("job") ?? "");
+  const [taskId, setTaskId] = useState(searchParams.get("task") ?? "");
 
   useEffect(() => {
-    dispatch(fetchJobs());
+    dispatch(fetchTasks());
     dispatch(fetchVehicles());
     dispatch(fetchCustomers());
     dispatch(fetchEstimates());
   }, [dispatch]);
 
-  const activeJobs = jobs.filter((j) => !["completed", "ready"].includes(j.status));
-  const job: JobCard | null = jobId ? jobs.find((j) => j.id === jobId) ?? null : null;
-  const vehicle: Vehicle | null = job?.vehicle ?? vehicles.find((v) => v.id === job?.vehicleId) ?? null;
+  const activeTasks = tasks.filter((j) => !["completed", "ready"].includes(j.status));
+  const task: TaskCard | null = taskId ? tasks.find((j) => j.id === taskId) ?? null : null;
+  const vehicle: Vehicle | null = task?.vehicle ?? vehicles.find((v) => v.id === task?.vehicleId) ?? null;
   const customer: Customer | null =
-    customers.find((c) => c.id === job?.customerId) ??
-    (job?.customer
+    customers.find((c) => c.id === task?.customerId) ??
+    (task?.customer
       ? {
-          id: job.customer.id,
-          name: job.customer.name,
+          id: task.customer.id,
+          name: task.customer.name,
           phone: "",
           email: "",
           nid: "",
@@ -330,7 +331,7 @@ function SendEstimatePage() {
         }
       : null);
 
-  if ((jobsStatus === "idle" || jobsStatus === "loading") && jobs.length === 0) {
+  if ((tasksStatus === "idle" || tasksStatus === "loading") && tasks.length === 0) {
     return <FormLoading label="Loading estimate builder" />;
   }
 
@@ -341,18 +342,18 @@ function SendEstimatePage() {
           <p className="text-[11px] uppercase tracking-[0.55px] text-[#64748b]">
             Estimate Builder
             <span className="mx-1.5 text-[#cbd5e1]">›</span>
-            <span className="font-semibold normal-case text-[#111827]">Job Card #{job?.id ?? "—"}</span>
+            <span className="font-semibold normal-case text-[#111827]">Task Card #{task?.id ?? "—"}</span>
           </p>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-semibold text-[#111827]">Repair Cost Estimate</h1>
               <select
-                value={job?.id ?? ""}
-                onChange={(e) => setJobId(e.target.value)}
+                value={task?.id ?? ""}
+                onChange={(e) => setTaskId(e.target.value)}
                 className="rounded border border-[#e5e7eb] bg-white px-3 py-1.5 text-sm font-medium text-foreground outline-none"
               >
-                <option value="">Select a job...</option>
-                {activeJobs.map((j) => (
+                <option value="">Select a task...</option>
+                {activeTasks.map((j) => (
                   <option key={j.id} value={j.id}>
                     {j.id} — {j.vehicle ? `${j.vehicle.year} ${j.vehicle.make} ${j.vehicle.model}` : "Vehicle"} ({j.status})
                   </option>
@@ -360,7 +361,7 @@ function SendEstimatePage() {
               </select>
             </div>
             <span className="rounded-xl border border-[rgba(76,175,80,0.2)] bg-[rgba(76,175,80,0.1)] px-[13px] py-[7px] text-xs font-semibold capitalize text-[#4caf50]">
-              {job ? `${job.status.replace("_", " ")}` : "No job selected"}
+              {task ? `${task.status.replace("_", " ")}` : "No task selected"}
             </span>
           </div>
         </header>
@@ -411,10 +412,10 @@ function SendEstimatePage() {
           </section>
         </div>
 
-        {job ? <LineItemEditor key={job.id} job={job} estimates={estimates} /> : (
+        {task ? <LineItemEditor key={task.id} task={task} estimates={estimates} /> : (
           <section className={`${card} items-center py-16 text-center`}>
-            <p className="text-sm font-semibold text-foreground">Select a job card to build an estimate</p>
-            <p className="text-sm text-[#727784]">Only jobs that are in progress can be estimated.</p>
+            <p className="text-sm font-semibold text-foreground">Select a task card to build an estimate</p>
+            <p className="text-sm text-[#727784]">Only tasks that are in progress can be estimated.</p>
           </section>
         )}
       </div>

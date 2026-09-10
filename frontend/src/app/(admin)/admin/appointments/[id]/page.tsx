@@ -19,7 +19,7 @@ import { fetchAppointments, updateAppointmentStatus } from "@/store/slices/appoi
 import { DetailLoading } from "@/components/ui/loading";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
-import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchTasks } from "@/store/slices/tasksSlice";
 import { cn } from "@/lib/utils";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { Button } from "@/components/ui/button";
@@ -32,11 +32,11 @@ export default function AdminAppointmentDetailsPage() {
   const appointments = useAppSelector((s) => s.appointments.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const services = useAppSelector((s) => s.services.items);
-  const jobs = useAppSelector((s) => s.jobs.items);
+  const tasks = useAppSelector((s) => s.tasks.items);
 
   useEffect(() => {
     dispatch(fetchAppointments());
-    dispatch(fetchJobs());
+    dispatch(fetchTasks());
     if (vehicles.length === 0) dispatch(fetchVehicles());
     if (services.length === 0) dispatch(fetchServices());
   }, [dispatch, vehicles.length, services.length]);
@@ -48,7 +48,7 @@ export default function AdminAppointmentDetailsPage() {
         .map((id) => services.find((s) => s.id === id))
         .filter((s): s is NonNullable<typeof s> => Boolean(s))
     : [];
-  const linkedJob = appointment ? jobs.find((j) => j.appointmentId === appointment.id) : undefined;
+  const linkedTask = appointment ? tasks.find((t) => t.appointmentId === appointment.id) : undefined;
 
   if (!appointment) {
     if (appointments.length === 0) {
@@ -198,10 +198,10 @@ export default function AdminAppointmentDetailsPage() {
             </div>
 
             <div className="rounded-lg border border-dashed border-border bg-white p-[21px]">
-              {linkedJob ? (
+              {linkedTask ? (
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-[#4caf50]">
-                    Converted to <span className="font-mono">{linkedJob.id}</span>
+                    Converted to <span className="font-mono">{linkedTask.id}</span>
                   </p>
                   <Link href={`/admin/reports`} className="text-xs font-semibold text-primary hover:underline">
                     View reports
@@ -209,7 +209,7 @@ export default function AdminAppointmentDetailsPage() {
                 </div>
               ) : (
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Booking flow: owner books → advisor confirms → advisor creates the job card during intake.
+                  Booking flow: owner books → advisor confirms → advisor creates the task card during intake.
                 </p>
               )}
             </div>

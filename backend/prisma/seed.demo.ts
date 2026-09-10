@@ -198,7 +198,7 @@ async function main() {
   }
 
   console.log("Clearing previous demo transactional data...");
-  await prisma.jobCard.deleteMany({ where: { customerId: { in: [owner.id, davidT.id] } } });
+  await prisma.taskCard.deleteMany({ where: { customerId: { in: [owner.id, davidT.id] } } });
   await prisma.appointment.deleteMany({ where: { ownerId: { in: [owner.id, davidT.id] } } });
   await prisma.chatThread.deleteMany({ where: { ownerId: { in: [owner.id, davidT.id] } } });
   await prisma.auditLog.deleteMany({ where: { id: { startsWith: "demo-audit-" } } });
@@ -282,7 +282,7 @@ async function main() {
     },
   });
 
-  console.log("Seeding demo jobs...");
+  console.log("Seeding demo tasks...");
   const progressSteps = (doneThrough: string) => {
     const order = ["RECEIVED", "INSPECTING", "REPAIRING", "TESTING", "READY"];
     const labels = ["Vehicle Received", "Initial Inspection", "Repairing", "Testing", "Ready for Pickup"];
@@ -295,9 +295,9 @@ async function main() {
     }));
   };
 
-  await prisma.jobCard.create({
+  await prisma.taskCard.create({
     data: {
-      id: "JC-1045",
+      id: "TC-1045",
       vehicleId: f150.id,
       customerId: owner.id,
       advisorId: sarah.id,
@@ -325,9 +325,9 @@ async function main() {
     },
   });
 
-  await prisma.jobCard.create({
+  await prisma.taskCard.create({
     data: {
-      id: "JC-1044",
+      id: "TC-1044",
       vehicleId: camry.id,
       customerId: owner.id,
       advisorId: sarah.id,
@@ -344,9 +344,9 @@ async function main() {
     },
   });
 
-  await prisma.jobCard.create({
+  await prisma.taskCard.create({
     data: {
-      id: "JC-1043",
+      id: "TC-1043",
       vehicleId: f150.id,
       customerId: owner.id,
       advisorId: sarah.id,
@@ -361,9 +361,9 @@ async function main() {
     },
   });
 
-  await prisma.jobCard.create({
+  await prisma.taskCard.create({
     data: {
-      id: "JC-1042",
+      id: "TC-1042",
       vehicleId: camry.id,
       customerId: owner.id,
       advisorId: sarah.id,
@@ -378,9 +378,9 @@ async function main() {
     },
   });
 
-  await prisma.jobCard.create({
+  await prisma.taskCard.create({
     data: {
-      id: "JC-1041",
+      id: "TC-1041",
       vehicleId: f150.id,
       customerId: owner.id,
       advisorId: sarah.id,
@@ -398,12 +398,12 @@ async function main() {
     where: { ownerId: owner.id, vehicleId: f150.id, status: "CONFIRMED" },
   });
   if (confirmedApt) {
-    await prisma.jobCard.update({ where: { id: "JC-1045" }, data: { appointmentId: confirmedApt.id } });
+    await prisma.taskCard.update({ where: { id: "TC-1045" }, data: { appointmentId: confirmedApt.id } });
   }
 
-  await prisma.jobCard.create({
+  await prisma.taskCard.create({
     data: {
-      id: "JC-1046",
+      id: "TC-1046",
       vehicleId: camry.id,
       customerId: owner.id,
       advisorId: sarah.id,
@@ -431,9 +431,9 @@ async function main() {
     },
   });
 
-  await prisma.jobCard.create({
+  await prisma.taskCard.create({
     data: {
-      id: "JC-1047",
+      id: "TC-1047",
       vehicleId: f150.id,
       customerId: owner.id,
       advisorId: sarah.id,
@@ -458,9 +458,9 @@ async function main() {
     },
   });
 
-  await prisma.jobCard.create({
+  await prisma.taskCard.create({
     data: {
-      id: "JC-1040",
+      id: "TC-1040",
       vehicleId: camry.id,
       customerId: owner.id,
       advisorId: sarah.id,
@@ -475,9 +475,9 @@ async function main() {
     },
   });
 
-  await prisma.jobCard.create({
+  await prisma.taskCard.create({
     data: {
-      id: "JC-1039",
+      id: "TC-1039",
       vehicleId: civic.id,
       customerId: davidT.id,
       advisorId: sarah.id,
@@ -496,7 +496,7 @@ async function main() {
   await prisma.estimate.create({
     data: {
       id: "ES-2011",
-      jobCardId: "JC-1044",
+      taskCardId: "TC-1044",
       customerId: owner.id,
       advisorId: sarah.id,
       status: "PENDING",
@@ -514,7 +514,7 @@ async function main() {
   await prisma.estimate.create({
     data: {
       id: "ES-2010",
-      jobCardId: "JC-1045",
+      taskCardId: "TC-1045",
       customerId: owner.id,
       advisorId: sarah.id,
       status: "APPROVED",
@@ -533,7 +533,7 @@ async function main() {
   await prisma.estimate.create({
     data: {
       id: "ES-2012",
-      jobCardId: "JC-1046",
+      taskCardId: "TC-1046",
       customerId: owner.id,
       advisorId: sarah.id,
       status: "PENDING",
@@ -557,7 +557,7 @@ async function main() {
   await prisma.invoice.create({
     data: {
       id: "INV-3003",
-      jobId: "JC-1043",
+      taskId: "TC-1043",
       customerId: owner.id,
       vehicleId: f150.id,
       status: "PAID",
@@ -571,14 +571,14 @@ async function main() {
     },
   });
   await prisma.payment.create({
-    data: { invoiceId: "INV-3003", jobCardId: "JC-1043", amount: inv3.total, method: "CARD", status: "PAID" },
+    data: { invoiceId: "INV-3003", taskCardId: "TC-1043", amount: inv3.total, method: "CARD", status: "PAID" },
   });
 
   const inv2 = withTax(194.99);
   await prisma.invoice.create({
     data: {
       id: "INV-3002",
-      jobId: "JC-1042",
+      taskId: "TC-1042",
       customerId: owner.id,
       vehicleId: camry.id,
       status: "UNPAID",
@@ -593,7 +593,7 @@ async function main() {
   await prisma.invoice.create({
     data: {
       id: "INV-3001",
-      jobId: "JC-1041",
+      taskId: "TC-1041",
       customerId: owner.id,
       vehicleId: f150.id,
       status: "UNPAID",
@@ -608,7 +608,7 @@ async function main() {
   await prisma.invoice.create({
     data: {
       id: "INV-3000",
-      jobId: "JC-1040",
+      taskId: "TC-1040",
       customerId: owner.id,
       vehicleId: camry.id,
       status: "PAID",
@@ -623,14 +623,14 @@ async function main() {
     },
   });
   await prisma.payment.create({
-    data: { invoiceId: "INV-3000", jobCardId: "JC-1040", amount: inv0.total, method: "CARD", status: "PAID" },
+    data: { invoiceId: "INV-3000", taskCardId: "TC-1040", amount: inv0.total, method: "CARD", status: "PAID" },
   });
 
   const inv99 = withTax(109.98);
   await prisma.invoice.create({
     data: {
       id: "INV-2099",
-      jobId: "JC-1039",
+      taskId: "TC-1039",
       customerId: davidT.id,
       vehicleId: civic.id,
       status: "PAID",
@@ -644,13 +644,13 @@ async function main() {
     },
   });
   await prisma.payment.create({
-    data: { invoiceId: "INV-2099", jobCardId: "JC-1039", amount: inv99.total, method: "CASH", status: "PAID" },
+    data: { invoiceId: "INV-2099", taskCardId: "TC-1039", amount: inv99.total, method: "CASH", status: "PAID" },
   });
 
   console.log("Seeding demo rating + chat...");
   await prisma.rating.create({
     data: {
-      jobId: "JC-1043",
+      taskId: "TC-1043",
       customerId: owner.id,
       serviceName: "Full Synthetic Oil Change",
       score: 5,
@@ -659,7 +659,7 @@ async function main() {
   });
   await prisma.rating.create({
     data: {
-      jobId: "JC-1039",
+      taskId: "TC-1039",
       customerId: davidT.id,
       serviceName: "Oil Change",
       score: 4,
@@ -671,7 +671,7 @@ async function main() {
     data: {
       ownerId: owner.id,
       advisorId: sarah.id,
-      subject: "Brake service for Ford F-150 (JC-1045)",
+      subject: "Brake service for Ford F-150 (TC-1045)",
       ownerUnread: 1,
       advisorUnread: 0,
       messages: {
@@ -692,7 +692,7 @@ async function main() {
     data: {
       ownerId: davidT.id,
       advisorId: alexReed.id,
-      subject: "Civic oil change follow-up (JC-1039)",
+      subject: "Civic oil change follow-up (TC-1039)",
       ownerUnread: 0,
       advisorUnread: 1,
       messages: {
@@ -709,11 +709,11 @@ async function main() {
   console.log("Seeding demo activity log...");
   await prisma.auditLog.createMany({
     data: [
-      { id: "demo-audit-1", user: "Sarah Jenkins", action: "Created job card JC-1045 for 2023 Ford F-150", time: new Date("2026-09-08T08:05:00.000Z") },
+      { id: "demo-audit-1", user: "Sarah Jenkins", action: "Created task card TC-1045 for 2023 Ford F-150", time: new Date("2026-09-08T08:05:00.000Z") },
       { id: "demo-audit-2", user: "John Doe", action: "Approved estimate ES-2010 (front brake overhaul)", time: new Date("2026-09-07T18:40:00.000Z") },
       { id: "demo-audit-3", user: "John Doe", action: "Paid invoice INV-3003 ($119.33) by card", time: new Date("2026-09-05T14:20:00.000Z") },
       { id: "demo-audit-4", user: "Admin User", action: "Approved owner account david.thompson@example.com", time: new Date("2026-08-29T10:00:00.000Z") },
-      { id: "demo-audit-5", user: "Alex Turner", action: "Marked job JC-1041 as ready for pickup", time: new Date("2026-09-08T07:50:00.000Z") },
+      { id: "demo-audit-5", user: "Alex Turner", action: "Marked task TC-1041 as ready for pickup", time: new Date("2026-09-08T07:50:00.000Z") },
     ],
   });
 

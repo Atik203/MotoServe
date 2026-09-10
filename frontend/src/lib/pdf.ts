@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import type { Appointment, Invoice, JobCard, Vehicle } from "@/types";
+import type { Appointment, Invoice, TaskCard, Vehicle } from "@/types";
 
 const PRIMARY: [number, number, number] = [0, 82, 204];
 const DARK: [number, number, number] = [17, 24, 39];
@@ -108,7 +108,7 @@ export function buildInvoicePdf(invoice: Invoice, vehicle?: Vehicle | null): jsP
   y = infoRow(doc, y, "Issued", new Date(invoice.issuedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }));
   y = infoRow(doc, y, "Status", invoice.status === "paid" ? "PAID" : "UNPAID");
   if (vehicle) y = infoRow(doc, y, "Vehicle", `${vehicle.year} ${vehicle.make} ${vehicle.model} (${vehicle.regNo})`);
-  y = infoRow(doc, y, "Job Card", invoice.jobId);
+  y = infoRow(doc, y, "Task Card", invoice.taskId);
   if (invoice.payment) {
     const method = (invoice.payment.method ?? "card").toUpperCase();
     y = infoRow(doc, y, "Payment", `${method}${invoice.payment.last4 ? ` •••• ${invoice.payment.last4}` : ""}`);
@@ -177,20 +177,20 @@ export function downloadInvoicePdf(invoice: Invoice, vehicle?: Vehicle | null): 
   buildInvoicePdf(invoice, vehicle).save(`${invoice.id}.pdf`);
 }
 
-export function buildJobCardPdf(job: JobCard): jsPDF {
+export function buildTaskCardPdf(task: TaskCard): jsPDF {
   const doc = new jsPDF();
-  const vehicle = job.vehicle;
-  header(doc, "JOB CARD", job.id);
+  const vehicle = task.vehicle;
+  header(doc, "TASK CARD", task.id);
 
   let y = 50;
-  y = infoRow(doc, y, "Vehicle", vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model} (${vehicle.regNo})` : job.vehicleId);
-  y = infoRow(doc, y, "Customer", job.customer?.name ?? job.customerId);
-  y = infoRow(doc, y, "Advisor", job.advisor?.name ?? job.advisorId);
-  y = infoRow(doc, y, "Mechanic", job.mechanic?.name ?? job.mechanicId ?? "Not assigned");
-  y = infoRow(doc, y, "Station", job.station ?? "Not assigned");
-  y = infoRow(doc, y, "Priority", job.priority.toUpperCase());
-  y = infoRow(doc, y, "Status", job.status.toUpperCase());
-  y = infoRow(doc, y, "Reported Issues", job.issues);
+  y = infoRow(doc, y, "Vehicle", vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model} (${vehicle.regNo})` : task.vehicleId);
+  y = infoRow(doc, y, "Customer", task.customer?.name ?? task.customerId);
+  y = infoRow(doc, y, "Advisor", task.advisor?.name ?? task.advisorId);
+  y = infoRow(doc, y, "Mechanic", task.mechanic?.name ?? task.mechanicId ?? "Not assigned");
+  y = infoRow(doc, y, "Station", task.station ?? "Not assigned");
+  y = infoRow(doc, y, "Priority", task.priority.toUpperCase());
+  y = infoRow(doc, y, "Status", task.status.toUpperCase());
+  y = infoRow(doc, y, "Reported Issues", task.issues);
   y += 2;
 
   y = sectionTitle(doc, y, "Services");
@@ -198,7 +198,7 @@ export function buildJobCardPdf(job: JobCard): jsPDF {
     { label: "Service", w: 140 },
     { label: "Price", w: 40, align: "right" },
   ]);
-  for (const service of job.services) {
+  for (const service of task.services) {
     y = tableRow(doc, y, [
       { text: service.name, w: 140 },
       { text: money(service.price), w: 40, align: "right" },
@@ -207,7 +207,7 @@ export function buildJobCardPdf(job: JobCard): jsPDF {
   y += 3;
 
   y = sectionTitle(doc, y, "Repair Progress");
-  for (const step of job.progress) {
+  for (const step of task.progress) {
     const mark = step.done ? "DONE" : "PENDING";
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
@@ -225,7 +225,7 @@ export function buildJobCardPdf(job: JobCard): jsPDF {
   }
   y += 2;
 
-  if (job.partsUsed.length > 0) {
+  if (task.partsUsed.length > 0) {
     y = sectionTitle(doc, y, "Parts Used");
     y = tableHeader(doc, y, [
       { label: "Part", w: 85 },
@@ -234,7 +234,7 @@ export function buildJobCardPdf(job: JobCard): jsPDF {
       { label: "Supplier", w: 30 },
       { label: "Subtotal", w: 25, align: "right" },
     ]);
-    for (const part of job.partsUsed) {
+    for (const part of task.partsUsed) {
       y = tableRow(doc, y, [
         { text: part.name, w: 85 },
         { text: String(part.qty), w: 20, align: "right" },
@@ -246,9 +246,9 @@ export function buildJobCardPdf(job: JobCard): jsPDF {
     y += 3;
   }
 
-  if (job.notes.length > 0) {
+  if (task.notes.length > 0) {
     y = sectionTitle(doc, y, "Notes");
-    for (const note of job.notes) {
+    for (const note of task.notes) {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
       doc.setTextColor(...DARK);
@@ -268,9 +268,8 @@ export function buildJobCardPdf(job: JobCard): jsPDF {
   footer(doc);
   return doc;
 }
-
-export function downloadJobCardPdf(job: JobCard): void {
-  buildJobCardPdf(job).save(`${job.id}.pdf`);
+export function downloadTaskCardPdf(task: TaskCard): void {
+  buildTaskCardPdf(task).save(`${task.id}.pdf`);
 }
 
 export function buildAppointmentPdf(appointment: Appointment, vehicle: Vehicle | null, serviceNames: string[]): jsPDF {

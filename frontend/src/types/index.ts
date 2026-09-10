@@ -75,27 +75,31 @@ export interface Employee {
   specialization?: string;
   status: "active" | "inactive";
   joinedAt: string;
-  activeJobs?: number;
-  completedJobs?: number;
+  nid?: string;
+  documents?: { name: string; key: string; kind?: string; url?: string }[] | null;
+  documentUrl?: string | null;
+  activeTasks?: number;
+  completedTasks?: number;
 }
 
-export type JobStatus = "received" | "inspecting" | "repairing" | "testing" | "ready" | "completed";
-export type JobPriority = "low" | "medium" | "high";
+export type TaskStatus = "received" | "inspecting" | "repairing" | "testing" | "ready" | "completed";
 
-export interface JobServiceLine {
+export type TaskPriority = "low" | "medium" | "high";
+
+export interface TaskServiceLine {
   id: string;
   name: string;
   price: number;
 }
 
-export interface JobProgressStep {
-  step: JobStatus;
+export interface TaskProgressStep {
+  step: TaskStatus;
   label: string;
   timestamp: string | null;
   done: boolean;
 }
 
-export interface JobNote {
+export interface TaskNote {
   id: string;
   author: string;
   time: string;
@@ -111,7 +115,7 @@ export interface PartUsed {
   subtotal: number;
 }
 
-export interface JobCard {
+export interface TaskCard {
   id: string;
   vehicleId: string;
   customerId: string;
@@ -119,12 +123,12 @@ export interface JobCard {
   mechanicId: string | null;
   station: string | null;
   assignmentNotes?: string | null;
-  priority: JobPriority;
-  status: JobStatus;
-  services: JobServiceLine[];
+  priority: TaskPriority;
+  status: TaskStatus;
+  services: TaskServiceLine[];
   issues: string;
-  progress: JobProgressStep[];
-  notes: JobNote[];
+  progress: TaskProgressStep[];
+  notes: TaskNote[];
   partsUsed: PartUsed[];
   photos: string[];
   vehicle?: Vehicle;
@@ -140,6 +144,7 @@ export interface JobCard {
   accessories?: string | null;
   ownerArchivedAt?: string | null;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Part {
@@ -163,7 +168,7 @@ export interface Appointment {
   createdAt: string;
   owner?: { id: string; name: string; phone?: string; email?: string; avatar?: string };
   vehicle?: Vehicle;
-  jobCard?: JobCard | null;
+  taskCard?: TaskCard | null;
 }
 
 export interface CreateCustomerInput {
@@ -188,8 +193,8 @@ export interface EstimateItem {
 
 export interface Estimate {
   id: string;
-  jobId: string;
-  jobCardId: string;
+  taskId: string;
+  taskCardId?: string;
   customerId: string;
   advisorId: string;
   createdAt: string;
@@ -198,7 +203,7 @@ export interface Estimate {
   internalNotes?: string | null;
   items: EstimateItem[];
   total: number;
-  jobCard?: { id: string; vehicle?: Vehicle };
+  taskCard?: { id: string; vehicle?: Vehicle };
 }
 
 export interface InvoiceItem {
@@ -210,7 +215,7 @@ export interface InvoiceItem {
 
 export interface Invoice {
   id: string;
-  jobId: string;
+  taskId: string;
   customerId: string;
   vehicleId: string;
   issuedAt: string;
@@ -245,7 +250,7 @@ export interface ChatThread {
 
 export interface Rating {
   id: string;
-  jobId: string;
+  taskId: string;
   customerId: string;
   serviceName: string;
   score: number;
@@ -264,21 +269,22 @@ export interface KpiCard {
 
 export interface ReportsData {
   totalRevenue: number;
-  activeJobs: number;
+  activeTasks: number;
   registeredCustomers: number;
   activeEmployees: number;
   revenueByMonth: { month: string; revenue: number }[];
-  jobsByStatus: { status: string; count: number }[];
+  tasksByStatus: { status: string; count: number }[];
   workloadByMechanic: {
     mechanic: string;
     role: string;
     active: number;
     completed: number;
-    avgHoursPerJob?: number;
+    avgHoursPerTask?: number;
   }[];
   serviceDistribution: { name: string; pct: number }[];
   activityLog: { id: string; user: string; action: string; time: string }[];
 }
+
 
 export interface Testimonial {
   id: string;

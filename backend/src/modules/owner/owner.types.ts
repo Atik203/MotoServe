@@ -29,7 +29,7 @@ export interface PayInvoiceBody {
   method: "card" | "cash" | "mobile";
 }
 
-export interface RateJobBody {
+export interface RateTaskBody {
   score: number;
   review: string;
   serviceName: string;
@@ -41,6 +41,7 @@ export interface CreateThreadBody {
   text: string;
 }
 
-export interface BulkArchiveJobsBody {
+export interface BulkArchiveTasksBody {
   ids: string[];
 }
+

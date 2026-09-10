@@ -1,8 +1,8 @@
 "use client";
 
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { UserMenu } from "./UserMenu";
-import { useAppSelector } from "@/store/hooks";
+import { NotificationMenu } from "./NotificationMenu";
 
 interface AppTopbarProps {
   searchPlaceholder?: string;
@@ -13,8 +13,6 @@ export function AppTopbar({
   searchPlaceholder = "Search vehicles, services...",
   links,
 }: AppTopbarProps) {
-  const unreadCount = useAppSelector((s) => s.chat.threads.reduce((sum, t) => sum + t.unread, 0));
-
   return (
     <header className="bg-white border-b border-border fixed top-0 right-0 left-64 z-20 flex h-16 items-center justify-between px-6">
       {links ? (
@@ -35,15 +33,8 @@ export function AppTopbar({
           />
         </div>
       )}
-      <div className="flex items-center gap-4 pr-2">
-        <button className="relative flex items-center justify-center" aria-label="Notifications">
-          <Bell className="h-5 w-[17.5px] text-muted-foreground" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-1 flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 py-0.5 text-[9px] font-bold text-white ring-2 ring-white">
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </span>
-          )}
-        </button>
+      <div className="flex items-center gap-3 pr-2">
+        <NotificationMenu />
         <UserMenu />
       </div>
     </header>

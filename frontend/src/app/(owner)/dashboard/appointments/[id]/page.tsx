@@ -20,7 +20,7 @@ import { fetchAppointments, updateAppointmentStatus } from "@/store/slices/appoi
 import { DetailLoading } from "@/components/ui/loading";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
-import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchTasks } from "@/store/slices/tasksSlice";
 import { cn } from "@/lib/utils";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { Button } from "@/components/ui/button";
@@ -32,13 +32,13 @@ export default function OwnerAppointmentDetailsPage() {
   const appointments = useAppSelector((s) => s.appointments.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const services = useAppSelector((s) => s.services.items);
-  const jobs = useAppSelector((s) => s.jobs.items);
+  const tasks = useAppSelector((s) => s.tasks.items);
 
   useEffect(() => {
     dispatch(fetchAppointments());
     if (vehicles.length === 0) dispatch(fetchVehicles());
     if (services.length === 0) dispatch(fetchServices());
-    dispatch(fetchJobs());
+    dispatch(fetchTasks());
   }, [dispatch, vehicles.length, services.length]);
 
   const appointment = appointments.find((a) => a.id === params.id) ?? null;
@@ -48,7 +48,7 @@ export default function OwnerAppointmentDetailsPage() {
         .map((id) => services.find((s) => s.id === id))
         .filter((s): s is NonNullable<typeof s> => Boolean(s))
     : [];
-  const linkedJob = appointment ? jobs.find((j) => j.appointmentId === appointment.id) : undefined;
+  const linkedTask = appointment ? tasks.find((t) => t.appointmentId === appointment.id) : undefined;
 
   if (!appointment) {
     if (appointments.length === 0) {
@@ -71,11 +71,11 @@ export default function OwnerAppointmentDetailsPage() {
 
   const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
   const date = new Date(appointment.date);
-  const stepsDone = appointment.status === "cancelled" ? 0 : appointment.status === "confirmed" || linkedJob ? 2 : 1;
+  const stepsDone = appointment.status === "cancelled" ? 0 : appointment.status === "confirmed" || linkedTask ? 2 : 1;
   const steps = [
     { label: "Booked", icon: CalendarCheck },
     { label: "Confirmed", icon: CheckCircle2 },
-    { label: "Job Card", icon: Wrench },
+    { label: "Task Card", icon: Wrench },
   ];
 
   return (
@@ -119,16 +119,16 @@ export default function OwnerAppointmentDetailsPage() {
                   >
                     {appointment.status}
                   </span>
-                  {linkedJob && (
+                  {linkedTask && (
                     <span className="rounded-full bg-[rgba(76,175,80,0.12)] px-3 py-1 text-xs font-semibold text-[#4caf50]">
-                      Converted to {linkedJob.id}
+                      Converted to {linkedTask.id}
                     </span>
                   )}
                 </div>
                 <h1 className="text-3xl font-bold tracking-[-0.72px] text-foreground">
                   {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : "Vehicle Service"}
                 </h1>
-                <div className="flex flex-wrap items-center gap-2 text-sm text-[#414754]">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-[#424753]">
                   <span className="flex items-center gap-1.5">
                     <Clock3 className="size-4 text-primary" />
                     {date.toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric" })} • {appointment.time}
@@ -171,9 +171,9 @@ export default function OwnerAppointmentDetailsPage() {
                     View Vehicle
                   </Link>
                 )}
-                {linkedJob && (
-                  <Link href={`/dashboard/services/${linkedJob.id}`} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white">
-                    Track {linkedJob.id} <ChevronRight className="size-4" />
+                {linkedTask && (
+                  <Link href={`/dashboard/services/${linkedTask.id}`} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white">
+                    Track {linkedTask.id} <ChevronRight className="size-4" />
                   </Link>
                 )}
                 {appointment.status !== "cancelled" && (
@@ -252,8 +252,8 @@ export default function OwnerAppointmentDetailsPage() {
 
             <div className="rounded-[12px] border border-dashed border-border bg-white p-6">
               <p className="text-sm text-muted-foreground">
-                {linkedJob
-                  ? `This booking was converted to job card ${linkedJob.id}. Track its progress anytime.`
+                {linkedTask
+                  ? `This booking was converted to task card ${linkedTask.id}. Track its progress anytime.`
                   : "The workshop will confirm your booking soon. Bookings are handled by our service advisors."}
               </p>
             </div>

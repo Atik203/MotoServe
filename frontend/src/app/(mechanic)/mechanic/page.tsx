@@ -12,7 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchTasks } from "@/store/slices/tasksSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchParts } from "@/store/slices/partsSlice";
 import { buildKpis } from "@/lib/kpis";
@@ -46,7 +46,7 @@ const kpiChip: Record<string, string> = {
 const STEP_ORDER = ["received", "inspecting", "repairing", "testing", "ready", "completed"];
 
 const quickActions: { label: string; icon: LucideIcon; href?: string }[] = [
-  { label: "Repair Progress", icon: Wrench, href: "/mechanic/jobs" },
+  { label: "Repair Progress", icon: Wrench, href: "/mechanic/tasks" },
   { label: "Parts Inventory", icon: Package, href: "/mechanic/parts" },
   { label: "History", icon: ClipboardList, href: "/mechanic/history" },
 ];
@@ -54,13 +54,13 @@ const quickActions: { label: string; icon: LucideIcon; href?: string }[] = [
 export default function MechanicDashboardPage() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
-  const jobs = useAppSelector((s) => s.jobs.items);
-  const jobsStatus = useAppSelector((s) => s.jobs.status);
+  const tasks = useAppSelector((s) => s.tasks.items);
+  const tasksStatus = useAppSelector((s) => s.tasks.status);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const parts = useAppSelector((s) => s.parts.items);
 
   useEffect(() => {
-    dispatch(fetchJobs());
+    dispatch(fetchTasks());
     dispatch(fetchVehicles());
     if (parts.length === 0) dispatch(fetchParts());
   }, [dispatch, parts.length]);
@@ -69,22 +69,22 @@ export default function MechanicDashboardPage() {
 
   const mechanicId = user?.id;
 
-  const assignedJobs = useMemo(
-    () => jobs.filter((j) => (mechanicId ? j.mechanicId === mechanicId : j.mechanicId === null || j.status === "repairing")),
-    [jobs, mechanicId],
+  const assignedTasks = useMemo(
+    () => tasks.filter((j) => (mechanicId ? j.mechanicId === mechanicId : j.mechanicId === null || j.status === "repairing")),
+    [tasks, mechanicId],
   );
 
-  const activeJob = useMemo(
-    () => assignedJobs.find((j) => j.status === "repairing") ?? assignedJobs[0],
-    [assignedJobs],
+  const activeTask = useMemo(
+    () => assignedTasks.find((j) => j.status === "repairing") ?? assignedTasks[0],
+    [assignedTasks],
   );
 
   const kpiCards = useMemo(
-    () => buildKpis("mechanic", { jobs: assignedJobs, userId: mechanicId }),
-    [assignedJobs, mechanicId],
+    () => buildKpis("mechanic", { tasks: assignedTasks, userId: mechanicId }),
+    [assignedTasks, mechanicId],
   );
 
-  if (jobsStatus === "loading" || jobsStatus === "idle" || (jobs.length > 0 && vehicles.length === 0)) {
+  if (tasksStatus === "loading" || tasksStatus === "idle" || (tasks.length > 0 && vehicles.length === 0)) {
     return <DashboardLoading label="Loading mechanic dashboard" />;
   }
 
@@ -92,17 +92,17 @@ export default function MechanicDashboardPage() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
   const todayLabel = new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
-  const activeCount = jobs.filter((j) => !["completed", "ready"].includes(j.status)).length;
-  const todayParts = assignedJobs.flatMap((j) => j.partsUsed);
+  const activeCount = tasks.filter((j) => !["completed", "ready"].includes(j.status)).length;
+  const todayParts = assignedTasks.flatMap((j) => j.partsUsed);
 
-  if (assignedJobs.length === 0) {
+  if (assignedTasks.length === 0) {
     return (
       <div className="bg-background min-h-screen p-8">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
           <div className="flex items-end justify-between">
             <div className="flex flex-col gap-1">
               <h1 className="text-2xl font-semibold text-foreground">{greeting}, {firstName}</h1>
-              <p className="text-sm text-[#64748b]">{user?.station ?? "Main Bay"} • {activeCount} active jobs</p>
+              <p className="text-sm text-[#64748b]">{user?.station ?? "Main Bay"} • {activeCount} active tasks</p>
             </div>
             <div className="flex items-center gap-1">
               <Calendar className="size-3 text-[#64748b]" />
@@ -112,11 +112,11 @@ export default function MechanicDashboardPage() {
           <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-border bg-white py-24 text-center">
             <Wrench className="size-8 text-muted-foreground" />
             <div>
-              <p className="text-sm font-semibold text-foreground">No assigned jobs yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">Jobs assigned to you by the service advisor will appear here.</p>
+              <p className="text-sm font-semibold text-foreground">No assigned tasks yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">Tasks assigned to you by the service advisor will appear here.</p>
             </div>
             <Button asChild className="mt-2 rounded-lg text-sm font-semibold">
-              <Link href="/mechanic/jobs">View All Jobs</Link>
+              <Link href="/mechanic/tasks">View All Tasks</Link>
             </Button>
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function MechanicDashboardPage() {
     );
   }
 
-  const activeIdx = activeJob ? STEP_ORDER.indexOf(activeJob.status) : -1;
+  const activeIdx = activeTask ? STEP_ORDER.indexOf(activeTask.status) : -1;
 
   return (
     <div className="bg-background min-h-screen p-8">
@@ -132,7 +132,7 @@ export default function MechanicDashboardPage() {
         <div className="flex items-end justify-between">
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold text-foreground">{greeting}, {firstName}</h1>
-            <p className="text-sm text-[#64748b]">{user?.station ?? "Main Bay"} • {activeCount} active jobs</p>
+            <p className="text-sm text-[#64748b]">{user?.station ?? "Main Bay"} • {activeCount} active tasks</p>
           </div>
           <div className="flex items-center gap-1">
             <Calendar className="size-3 text-[#64748b]" />
@@ -180,15 +180,15 @@ export default function MechanicDashboardPage() {
                   <Wrench className="size-5" />
                   Assigned Tasks
                 </h2>
-                <span className="text-xs font-semibold tracking-[0.24px] text-primary">View All</span>
+                <Link href="/mechanic/tasks" className="text-xs font-semibold tracking-[0.24px] text-primary">View All</Link>
               </div>
 
               <div className="flex flex-col gap-3">
-                {assignedJobs.map((job) => {
-                  const vehicle = vehicleById.get(job.vehicleId);
+                {assignedTasks.map((task) => {
+                  const vehicle = vehicleById.get(task.vehicleId);
                   return (
                     <div
-                      key={job.id}
+                      key={task.id}
                       className="flex items-center justify-between gap-4 rounded-lg border border-border p-[17px]"
                     >
                       <div className="flex min-w-0 items-center gap-4">
@@ -197,27 +197,27 @@ export default function MechanicDashboardPage() {
                         </span>
                         <div className="flex min-w-0 flex-col gap-1">
                           <p className="truncate text-sm font-semibold text-foreground">
-                            {vehicle ? `${vehicle.make} ${vehicle.model}` : job.vehicleId}
+                            {vehicle ? `${vehicle.make} ${vehicle.model}` : task.vehicleId}
                           </p>
                           <p className="truncate text-xs text-[#64748b]">
-                            Plate {vehicle?.regNo ?? "—"} • {job.services[0]?.name ?? job.issues}
+                            Plate {vehicle?.regNo ?? "—"} • {task.services[0]?.name ?? task.issues}
                           </p>
                           <div className="flex items-center gap-2">
-                            <StatusBadge status={job.status} />
-                            <PriorityPill priority={job.priority} />
+                            <StatusBadge status={task.status} />
+                            <PriorityPill priority={task.priority} />
                           </div>
                         </div>
                       </div>
                       <div className="flex shrink-0 gap-2">
                         <Button variant="outline" size="sm" asChild className="rounded border-border bg-background text-foreground">
-                          <Link href={`/mechanic/jobs/${job.id}`}>View Details</Link>
+                          <Link href={`/mechanic/tasks/${task.id}`}>View Details</Link>
                         </Button>
                         <Button
                           size="sm"
                           asChild
                           className="rounded bg-primary-soft text-primary hover:bg-primary/10"
                         >
-                          <Link href={`/mechanic/jobs/${job.id}`}>Update Progress</Link>
+                          <Link href={`/mechanic/tasks/${task.id}`}>Update Progress</Link>
                         </Button>
                       </div>
                     </div>
@@ -245,7 +245,7 @@ export default function MechanicDashboardPage() {
                   {todayParts.length === 0 && (
                     <TableRow className="border-border">
                       <TableCell className="py-6 text-sm text-muted-foreground" colSpan={4}>
-                        No parts have been flagged for your current jobs.
+                        No parts have been flagged for your current tasks.
                       </TableCell>
                     </TableRow>
                   )}
@@ -296,12 +296,12 @@ export default function MechanicDashboardPage() {
             <section className="flex flex-col gap-6 rounded-lg border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-foreground">Current Repair Progress</h2>
-                <span className="text-[11px] font-medium text-muted-foreground">{activeJob.id}</span>
+                <span className="text-[11px] font-medium text-muted-foreground">{activeTask.id}</span>
               </div>
 
               <div className="relative flex flex-col gap-6 pb-2 pl-6">
                 <div className="absolute top-2 bottom-4 left-[11px] w-0.5 bg-border" />
-                {activeJob.progress.map((step, i) => {
+                {activeTask.progress.map((step, i) => {
                   const isDone = i < activeIdx;
                   const isActive = i === activeIdx;
                   return (
@@ -335,7 +335,7 @@ export default function MechanicDashboardPage() {
                 })}
               </div>
 
-              <Link href={`/mechanic/jobs/${activeJob.id}`} className="text-xs font-semibold text-primary">
+              <Link href={`/mechanic/tasks/${activeTask.id}`} className="text-xs font-semibold text-primary">
                 View full timeline
               </Link>
             </section>

@@ -1,12 +1,12 @@
 import { z } from "zod";
 
-export const updateJobStatusSchema = z.object({
+export const updateTaskStatusSchema = z.object({
   body: z.object({
     status: z.enum(["received", "inspecting", "repairing", "testing", "ready", "completed"]),
   }),
 });
 
-export const addJobNoteSchema = z.object({
+export const addTaskNoteSchema = z.object({
   body: z.object({
     author: z.string(),
     time: z.string().optional(),
@@ -23,8 +23,9 @@ export const addPartUsedSchema = z.object({
   }),
 });
 
-export const addJobPhotoSchema = z.object({
+export const addTaskPhotoSchema = z.object({
   body: z.object({
     key: z.string().min(1),
   }),
 });
+

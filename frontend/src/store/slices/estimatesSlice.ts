@@ -21,7 +21,7 @@ export const fetchEstimates = createAsyncThunk("estimates/fetchAll", async () =>
 export const createEstimate = createAsyncThunk(
   "estimates/create",
   async (data: {
-    jobId: string;
+    taskId: string;
     summary?: string;
     internalNotes?: string;
     items: { description: string; category: "service" | "parts" | "labor"; amount: number }[];

@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma.js";
 import { ApiError } from "../../middleware/error.js";
 import { findUserByEmail } from "../shared/shared.service.js";
+import type { Prisma } from "../../generated/prisma/client.js";
 import type { CreateEmployeeBody, CreateServiceBody, ReportDto, UpdateEmployeeBody } from "./admin.types.js";
 
 export function createService(data: CreateServiceBody) {
@@ -38,16 +39,20 @@ const employeeSelect = {
   station: true,
   specialization: true,
   status: true,
+  nid: true,
+  documents: true,
+  documentUrl: true,
   joinedAt: true,
 } as const;
 
 export async function createEmployee(data: CreateEmployeeBody) {
   const existing = await findUserByEmail(data.email);
   if (existing) throw new ApiError(409, "Email already registered");
-  const { password, role, dateOfBirth, ...profile } = data;
+  const { password, role, dateOfBirth, documents, ...profile } = data;
   return prisma.user.create({
     data: {
       ...profile,
+      ...(documents ? { documents: documents as unknown as Prisma.InputJsonValue } : {}),
       ...(dateOfBirth ? { dateOfBirth: new Date(dateOfBirth) } : {}),
       passwordHash: await bcrypt.hash(password, 10),
       role: role.toUpperCase() as never,
@@ -58,11 +63,12 @@ export async function createEmployee(data: CreateEmployeeBody) {
 }
 
 export function updateEmployee(id: string, data: UpdateEmployeeBody) {
-  const { password, status, dateOfBirth, ...rest } = data;
+  const { password, status, dateOfBirth, documents, ...rest } = data;
   return prisma.user.update({
     where: { id },
     data: {
       ...rest,
+      ...(documents ? { documents: documents as unknown as Prisma.InputJsonValue } : {}),
       ...(dateOfBirth ? { dateOfBirth: new Date(dateOfBirth) } : {}),
       ...(password ? { passwordHash: bcrypt.hashSync(password, 10) } : {}),
       ...(status ? { status: status.toUpperCase() as never } : {}),
@@ -76,25 +82,25 @@ export function deactivateEmployee(id: string) {
 }
 
 export async function getReportData(): Promise<ReportDto> {
-  const [stats, jobsByStatus, mechanics, activityLog, jobCards] = await Promise.all([
+  const [stats, tasksByStatus, mechanics, activityLog, taskCards] = await Promise.all([
     getDashboardStats(),
-    prisma.jobCard.groupBy({ by: ["status"], _count: true }),
+    prisma.taskCard.groupBy({ by: ["status"], _count: true }),
     prisma.user.findMany({
       where: { role: "MECHANIC" },
-      include: { _count: { select: { jobCardsAssigned: true } } },
+      include: { _count: { select: { taskCardsAssigned: true } } },
     }),
     listAuditLogs(),
-    prisma.jobCard.findMany({ select: { mechanicId: true, status: true, services: true } }),
+    prisma.taskCard.findMany({ select: { mechanicId: true, status: true, services: true } }),
   ]);
 
-  const completedByMechanic = jobCards
+  const completedByMechanic = taskCards
     .filter((j) => j.status === "COMPLETED" && j.mechanicId)
     .reduce<Record<string, number>>((map, j) => {
       map[j.mechanicId!] = (map[j.mechanicId!] ?? 0) + 1;
       return map;
     }, {});
 
-  const activeByMechanic = jobCards
+  const activeByMechanic = taskCards
     .filter((j) => j.mechanicId && j.status !== "COMPLETED" && j.status !== "READY")
     .reduce<Record<string, number>>((map, j) => {
       map[j.mechanicId!] = (map[j.mechanicId!] ?? 0) + 1;
@@ -102,8 +108,8 @@ export async function getReportData(): Promise<ReportDto> {
     }, {});
 
   const serviceCount = new Map<string, number>();
-  for (const job of jobCards) {
-    const services = (job.services ?? []) as { name?: string }[];
+  for (const task of taskCards) {
+    const services = (task.services ?? []) as { name?: string }[];
     for (const s of services) {
       if (!s.name) continue;
       serviceCount.set(s.name, (serviceCount.get(s.name) ?? 0) + 1);
@@ -123,10 +129,13 @@ export async function getReportData(): Promise<ReportDto> {
           pct: fallbackTotal > 0 ? Math.round((c._count / fallbackTotal) * 100) : 0,
         }));
 
+  const mappedStatus = tasksByStatus.map((j) => ({ status: j.status.toLowerCase(), count: j._count }));
+
   return {
     ...stats,
+    activeTasks: stats.activeTasks,
     revenueByMonth: stats.revenueByMonth,
-    jobsByStatus: jobsByStatus.map((j) => ({ status: j.status.toLowerCase(), count: j._count })),
+    tasksByStatus: mappedStatus,
     workloadByMechanic: mechanics.map((m) => ({
       mechanic: m.name,
       role: m.specialization ?? "Technician",
@@ -143,8 +152,8 @@ function listAuditLogs() {
 }
 
 async function getDashboardStats() {
-  const [activeJobs, totalRevenue, revenueByMonthRaw, customers, employees] = await Promise.all([
-    prisma.jobCard.count({ where: { status: { notIn: ["COMPLETED", "READY"] } } }),
+  const [activeTasks, totalRevenue, revenueByMonthRaw, customers, employees] = await Promise.all([
+    prisma.taskCard.count({ where: { status: { notIn: ["COMPLETED", "READY"] } } }),
     prisma.invoice.aggregate({ _sum: { total: true }, where: { status: "PAID" } }),
     prisma.invoice.findMany({ select: { issuedAt: true, total: true }, where: { status: "PAID" } }),
     prisma.user.count({ where: { role: "OWNER" } }),
@@ -164,9 +173,10 @@ async function getDashboardStats() {
 
   return {
     totalRevenue: totalRevenue._sum.total ?? 0,
-    activeJobs,
+    activeTasks,
     registeredCustomers: customers,
     activeEmployees: employees,
     revenueByMonth,
   };
 }
+

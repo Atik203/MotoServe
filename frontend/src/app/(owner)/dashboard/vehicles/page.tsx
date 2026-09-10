@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { CalendarPlus, History, Pencil, Plus, Trash2 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchVehicles, deleteVehicle, selectVehicle } from "@/store/slices/vehiclesSlice";
-import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchTasks } from "@/store/slices/tasksSlice";
 import { useRouter } from "next/navigation";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { Button } from "@/components/ui/button";
@@ -26,16 +26,16 @@ export default function MyVehiclesPage() {
   const dispatch = useAppDispatch();
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const vehiclesStatus = useAppSelector((s) => s.vehicles.status);
-  const jobs = useAppSelector((s) => s.jobs.items);
+  const tasks = useAppSelector((s) => s.tasks.items);
   const [deleting, setDeleting] = useState<Vehicle | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (vehicles.length === 0) dispatch(fetchVehicles());
-    if (jobs.length === 0) dispatch(fetchJobs());
-  }, [dispatch, vehicles.length, jobs.length]);
+    if (tasks.length === 0) dispatch(fetchTasks());
+  }, [dispatch, vehicles.length, tasks.length]);
 
-  const jobsByVehicle = (vehicleId: string) => jobs.filter((j) => j.vehicleId === vehicleId);
+  const tasksByVehicle = (vehicleId: string) => tasks.filter((t) => t.vehicleId === vehicleId);
 
   const bookService = (vehicle: Vehicle) => {
     dispatch(selectVehicle(vehicle.id));
@@ -93,8 +93,8 @@ export default function MyVehiclesPage() {
         ) : (
           <div className="grid grid-cols-3 gap-6">
             {vehicles.map((vehicle) => {
-              const vehicleJobs = jobsByVehicle(vehicle.id);
-              const activeJob = vehicleJobs.find((j) => !["completed", "ready"].includes(j.status));
+              const vehicleTasks = tasksByVehicle(vehicle.id);
+              const activeTask = vehicleTasks.find((t) => !["completed", "ready"].includes(t.status));
               return (
                 <div
                   key={vehicle.id}
@@ -106,7 +106,7 @@ export default function MyVehiclesPage() {
                       <span className="absolute right-3 bottom-3 rounded-sm bg-[rgba(46,49,50,0.8)] px-2.5 py-1 text-[11px] font-semibold tracking-[0.5px] text-white">
                         {vehicle.regNo}
                       </span>
-                      {activeJob && (
+                      {activeTask && (
                         <span className="absolute top-3 left-3 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-white">
                           In Service
                         </span>
@@ -136,7 +136,7 @@ export default function MyVehiclesPage() {
                         className="flex flex-1 items-center justify-center gap-1.5 rounded border border-border py-2 text-xs font-semibold text-foreground transition-colors hover:border-primary/50"
                       >
                         <History className="size-3.5" />
-                        History ({vehicleJobs.length})
+                        History ({vehicleTasks.length})
                       </Link>
                       <Link
                         href={`/dashboard/vehicles/${vehicle.id}/edit`}
@@ -154,12 +154,12 @@ export default function MyVehiclesPage() {
                         <Trash2 className="size-3.5" />
                       </button>
                     </div>
-                    {activeJob && (
+                    {activeTask && (
                       <Link
-                        href={`/dashboard/services/${activeJob.id}`}
+                        href={`/dashboard/services/${activeTask.id}`}
                         className="text-center text-xs font-semibold text-primary hover:underline"
                       >
-                        Track {activeJob.id} — {activeJob.status.charAt(0).toUpperCase() + activeJob.status.slice(1)}
+                        Track {activeTask.id} — {activeTask.status.charAt(0).toUpperCase() + activeTask.status.slice(1)}
                       </Link>
                     )}
                   </div>

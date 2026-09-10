@@ -118,7 +118,7 @@ export default function LoginPage() {
             Management.
           </h1>
           <p className="text-base leading-[26px] text-muted-foreground">
-            Streamline your vehicle services, manage job cards efficiently, and
+            Streamline your vehicle services, manage task cards efficiently, and
             keep your inventory in check with precision-engineered tools.
           </p>
           <div className="flex gap-4 pt-4">
@@ -128,7 +128,7 @@ export default function LoginPage() {
               </span>
               <div>
                 <p className="text-xs font-semibold tracking-[0.6px] text-foreground uppercase">
-                  Job Cards
+                  Task Cards
                 </p>
                 <p className="text-[11px] font-medium text-muted-foreground">
                   Streamlined workflow

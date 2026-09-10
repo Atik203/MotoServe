@@ -3,7 +3,7 @@ import authReducer from "./slices/authSlice";
 import uiReducer from "./slices/uiSlice";
 import servicesReducer from "./slices/servicesSlice";
 import vehiclesReducer from "./slices/vehiclesSlice";
-import jobsReducer from "./slices/jobsSlice";
+import tasksReducer from "./slices/tasksSlice";
 import appointmentsReducer from "./slices/appointmentsSlice";
 import chatReducer from "./slices/chatSlice";
 import customersReducer from "./slices/customersSlice";
@@ -22,7 +22,7 @@ export const makeStore = () =>
       ui: uiReducer,
       services: servicesReducer,
       vehicles: vehiclesReducer,
-      jobs: jobsReducer,
+      tasks: tasksReducer,
       appointments: appointmentsReducer,
       chat: chatReducer,
       customers: customersReducer,

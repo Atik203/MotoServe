@@ -66,8 +66,8 @@ export const roleNav: Record<Role, RoleNavConfig> = {
       { label: "Dashboard", href: "/advisor", icon: LayoutDashboard },
       { label: "Appointments", href: "/advisor/appointments", icon: CalendarDays },
       { label: "Receive Vehicle", href: "/advisor/receive", icon: Truck },
-      { label: "Create Job Card", href: "/advisor/job-cards/new", icon: FileText },
-      { label: "Assign Mechanic", href: "/advisor/job-cards/assign", icon: Users },
+      { label: "Create Task Card", href: "/advisor/task-cards/new", icon: FileText },
+      { label: "Assign Mechanic", href: "/advisor/task-cards/assign", icon: Users },
       { label: "Send Estimate", href: "/advisor/estimates/new", icon: FileCheck },
       { label: "Communication Center", href: "/advisor/chat", icon: MessageSquare },
     ],
@@ -79,8 +79,8 @@ export const roleNav: Record<Role, RoleNavConfig> = {
   mechanic: {
     brand: "MotoServe",
     items: [
-      { label: "Current Jobs", href: "/mechanic", icon: ClipboardList },
-      { label: "Repair Progress", href: "/mechanic/jobs", icon: Wrench },
+      { label: "Current Tasks", href: "/mechanic", icon: ClipboardList },
+      { label: "Repair Progress", href: "/mechanic/tasks", icon: Wrench },
       { label: "History", href: "/mechanic/history", icon: History },
       { label: "Parts Request", href: "/mechanic/parts", icon: Package },
     ],

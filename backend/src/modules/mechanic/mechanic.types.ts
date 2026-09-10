@@ -1,8 +1,8 @@
-export interface UpdateJobStatusBody {
+export interface UpdateTaskStatusBody {
   status: "received" | "inspecting" | "repairing" | "testing" | "ready" | "completed";
 }
 
-export interface AddJobNoteBody {
+export interface AddTaskNoteBody {
   author: string;
   text: string;
   time?: string;

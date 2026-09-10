@@ -7,8 +7,8 @@ Source of truth for screens, design references, build status, and data model. Ag
 | Role                | Capabilities                                                                                                                    |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | **Admin**           | Manage service types & prices · manage advisors/mechanics · income & workload reports · verify owner accounts                   |
-| **Service Advisor** | Receive vehicles · create job cards · assign mechanics · send cost estimates · chat with owners                                 |
-| **Mechanic**        | See assigned task cards · update repair progress + parts used · mark jobs completed                                             |
+| **Service Advisor** | Receive vehicles · create task cards · assign mechanics · send cost estimates · chat with owners                                |
+| **Mechanic**        | See assigned task cards · update repair progress + parts used · mark tasks completed                                            |
 | **Vehicle Owner**   | Register vehicles · book appointments · approve/reject estimates · track service status · pay + download invoice · rate service |
 | **Guest**           | Browse services, prices, workshop info                                                                                          |
 
@@ -50,7 +50,7 @@ backend/    Express API  ->  src/{routes,controllers,services,middleware,validat
 | `services.json`     | service types: name, category, basePrice, durationMins, description                                | Services, Book Appointment, Add/Edit Service                |
 | `vehicles.json`     | owner vehicles: make, model, year, regNo, fuelType, mileage, image                                 | Owner Dashboard, Book Appointment, Register Vehicle         |
 | `appointments.json` | date, time, vehicleId, serviceIds, status (pending/confirmed)                                      | Book Appointment, Confirmation, Advisor Dashboard           |
-| `jobs.json`         | job cards: id (JC-1045), vehicle, customer, advisor, mechanic, station, priority, status, progress | Mechanic Dashboard, Repair Progress, Receive Vehicle, Admin |
+| `tasks.json`        | task cards: id (TC-1045), vehicle, customer, advisor, mechanic, station, priority, status, progress | Mechanic Dashboard, Repair Progress, Receive Vehicle, Admin |
 | `parts.json`        | parts: name, qty, unitPrice, supplier, stock                                                       | Parts Used, Create Job Card                                 |
 | `employees.json`    | advisors & mechanics: name, role, specialization, station, workload                                | Assign Mechanic, Employee Management, Dashboards            |
 | `customers.json`    | owners: name, phone, email, nid, drivingLicense, status (pending/approved)                         | Verification, Receive Vehicle, Communication                |
@@ -92,11 +92,11 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 | 20  | Service History & Rating      | `/dashboard/history`                   | `12:1610` (dupe `110:2` — verify) | ✅     |
 | 21  | Advisor Dashboard             | `/advisor`                             | `1:2936`                          | ✅     |
 | 22  | Receive Vehicle               | `/advisor/receive`                     | `1:2641`                          | ✅     |
-| 23  | Create Job Card               | `/advisor/job-cards/new`               | `14:2006`                         | ✅     |
-| 24  | Assign Mechanic               | `/advisor/job-cards/assign`            | `14:2306`                         | ✅     |
+| 23  | Create Task Card              | `/advisor/task-cards/new`              | `14:2006`                         | ✅     |
+| 24  | Assign Mechanic               | `/advisor/task-cards/assign`           | `14:2306`                         | ✅     |
 | 25  | Send Estimate                 | `/advisor/estimates/new`               | `1:2140`                          | ✅     |
 | 26  | Mechanic Dashboard            | `/mechanic`                            | `1:157`                           | ✅     |
-| 27  | Repair Progress               | `/mechanic/jobs/[id]`                  | `194:1716` (updated)              | ✅     |
+| 27  | Repair Progress               | `/mechanic/tasks/[id]`                 | `194:1716` (updated)              | ✅     |
 | 28  | Admin Dashboard               | `/admin`                               | `1:773`                           | ✅     |
 | 29  | Management & Reports          | `/admin/reports`                       | `1:1238`                          | ✅     |
 | 30  | Add / Edit Service            | `/admin/services/new`                  | `15:2638`                         | ✅     |
@@ -108,7 +108,7 @@ All desktop (1280px). Design fetch per screen: `figma-desktop_get_design_context
 | 36  | My Appointments (list)        | `/dashboard/appointments`              | — (no Figma ref)                  | ✅     |
 | 37  | My Estimates (list)           | `/dashboard/estimates`                 | — (no Figma ref)                  | ✅     |
 | 38  | Service Tracking (list)       | `/dashboard/services`                  | — (no Figma ref)                  | ✅     |
-| 39  | Mechanic Jobs (list)          | `/mechanic/jobs`                       | — (no Figma ref)                  | ✅     |
+| 39  | Mechanic Tasks (list)         | `/mechanic/tasks`                      | — (no Figma ref)                  | ✅     |
 | 40  | Mechanic History              | `/mechanic/history`                    | — (no Figma ref)                  | ✅     |
 | 41  | Parts Inventory               | `/mechanic/parts`                      | — (no Figma ref)                  | ✅     |
 | 43  | Reset Password                | `/reset-password`                      | — (no Figma ref)                  | ✅     |

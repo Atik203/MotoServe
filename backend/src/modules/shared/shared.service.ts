@@ -21,9 +21,9 @@ export function listVehicles(ownerId?: string) {
   });
 }
 
-export function listJobs(role?: string, userId?: string) {
+export function listTasks(role?: string, userId?: string) {
   const normalized = role?.toLowerCase();
-  return prisma.jobCard.findMany({
+  return prisma.taskCard.findMany({
     where: {
       mechanicId: normalized === "mechanic" ? userId : undefined,
       customerId: normalized === "owner" ? userId : undefined,
@@ -43,8 +43,8 @@ export function listJobs(role?: string, userId?: string) {
   });
 }
 
-export function findJobById(id: string) {
-  return prisma.jobCard.findUnique({
+export function findTaskById(id: string) {
+  return prisma.taskCard.findUnique({
     where: { id },
     include: {
       vehicle: true,
@@ -61,8 +61,8 @@ export function findJobById(id: string) {
   });
 }
 
-export function listArchivedJobs(userId: string) {
-  return prisma.jobCard.findMany({
+export function listArchivedTasks(userId: string) {
+  return prisma.taskCard.findMany({
     where: { customerId: userId, ownerArchivedAt: { not: null } },
     include: {
       vehicle: true,
@@ -77,6 +77,7 @@ export function listArchivedJobs(userId: string) {
     orderBy: { createdAt: "desc" },
   });
 }
+
 
 export function listAppointments(ownerId?: string) {
   return prisma.appointment.findMany({
@@ -127,6 +128,9 @@ export function listEmployees(role?: string) {
       station: true,
       specialization: true,
       status: true,
+      nid: true,
+      documents: true,
+      documentUrl: true,
       joinedAt: true,
     },
     orderBy: { name: "asc" },
@@ -167,7 +171,7 @@ export function listEstimates(customerId?: string) {
     where: { customerId: customerId ?? undefined },
     include: {
       items: true,
-      jobCard: { select: { id: true, vehicle: true } },
+      taskCard: { select: { id: true, vehicle: true } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -176,7 +180,7 @@ export function listEstimates(customerId?: string) {
 export function listInvoices(customerId?: string) {
   return prisma.invoice.findMany({
     where: { customerId: customerId ?? undefined },
-    include: { job: true, vehicle: true, payment: true },
+    include: { task: true, vehicle: true, payment: true },
     orderBy: { issuedAt: "desc" },
   });
 }
@@ -208,10 +212,11 @@ export function listParts() {
 export function listRatings(customerId?: string) {
   return prisma.rating.findMany({
     where: { customerId: customerId ?? undefined },
-    include: { job: true },
+    include: { task: true },
     orderBy: { date: "desc" },
   });
 }
+
 
 export function listTestimonials() {
   return prisma.testimonial.findMany({ orderBy: { date: "desc" } });

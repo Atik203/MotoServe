@@ -40,7 +40,7 @@ enum AppointmentStatus {
   CANCELLED
 }
 
-enum JobStatus {
+enum TaskStatus {
   RECEIVED
   INSPECTING
   REPAIRING
@@ -49,7 +49,7 @@ enum JobStatus {
   COMPLETED
 }
 
-enum JobPriority {
+enum TaskPriority {
   LOW
   MEDIUM
   HIGH
@@ -109,11 +109,11 @@ model User {
   verifiedAt     DateTime?
   joinedAt       DateTime  @default(now())
 
-  vehicles       Vehicle[]
-  appointments   Appointment[]
-  jobCardsAdvised JobCard[]   @relation("AdvisorJobs")
-  jobCardsAssigned JobCard[]  @relation("MechanicJobs")
-  jobCardsCustomer JobCard[]  @relation("CustomerJobs")
+  vehicles         Vehicle[]
+  appointments     Appointment[]
+  taskCardsAdvised TaskCard[]   @relation("AdvisorTasks")
+  taskCardsAssigned TaskCard[]  @relation("MechanicTasks")
+  taskCardsCustomer TaskCard[]  @relation("CustomerTasks")
   threadsOwned     ChatThread[] @relation("OwnerThreads")
   threadsAdvised ChatThread[] @relation("AdvisorThreads")
   ratings        Rating[]
@@ -139,7 +139,7 @@ model Vehicle {
   photos       Json?
 
   appointments Appointment[]
-  jobCards     JobCard[]
+  taskCards    TaskCard[]
   invoices     Invoice[]
 
   createdAt DateTime @default(now())
@@ -172,26 +172,26 @@ model Appointment {
   status     AppointmentStatus @default(PENDING)
   notes      String
 
-  jobCard JobCard?
+  taskCard TaskCard?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model JobCard {
+model TaskCard {
   id             String     @id
   vehicleId      String
   vehicle        Vehicle    @relation(fields: [vehicleId], references: [id])
   customerId     String
-  customer       User       @relation("CustomerJobs", fields: [customerId], references: [id])
+  customer       User       @relation("CustomerTasks", fields: [customerId], references: [id])
   advisorId      String
-  advisor        User       @relation("AdvisorJobs", fields: [advisorId], references: [id])
+  advisor        User       @relation("AdvisorTasks", fields: [advisorId], references: [id])
   mechanicId     String?
-  mechanic       User?      @relation("MechanicJobs", fields: [mechanicId], references: [id])
+  mechanic       User?      @relation("MechanicTasks", fields: [mechanicId], references: [id])
   station        String?
   assignmentNotes String?
-  priority       JobPriority @default(MEDIUM)
-  status         JobStatus  @default(RECEIVED)
+  priority       TaskPriority @default(MEDIUM)
+  status         TaskStatus  @default(RECEIVED)
   issues         String
   services       Json?
   photos         Json?
@@ -205,8 +205,8 @@ model JobCard {
   accessories    String?
   ownerArchivedAt DateTime?
 
-  progress       JobProgress[]
-  notes          JobNote[]
+  progress       TaskProgress[]
+  notes          TaskNote[]
   partsUsed      PartsUsed[]
   estimates      Estimate[]
   invoices       Invoice[]
@@ -216,34 +216,34 @@ model JobCard {
   updatedAt DateTime @updatedAt
 }
 
-model JobProgress {
-  id        String    @id @default(cuid())
-  jobCardId String
-  jobCard   JobCard   @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
-  step      JobStatus
-  label     String
-  timestamp String?
-  done      Boolean   @default(false)
+model TaskProgress {
+  id         String    @id @default(cuid())
+  taskCardId String
+  taskCard   TaskCard  @relation(fields: [taskCardId], references: [id], onDelete: Cascade)
+  step       TaskStatus
+  label      String
+  timestamp  String?
+  done       Boolean   @default(false)
 }
 
-model JobNote {
-  id        String  @id @default(cuid())
-  jobCardId String
-  jobCard   JobCard @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
-  author    String
-  time      String
-  text      String
+model TaskNote {
+  id         String   @id @default(cuid())
+  taskCardId String
+  taskCard   TaskCard @relation(fields: [taskCardId], references: [id], onDelete: Cascade)
+  author     String
+  time       String
+  text       String
 }
 
 model PartsUsed {
-  id        String  @id @default(cuid())
-  jobCardId String
-  jobCard   JobCard @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
-  name      String
-  qty       Int
-  unitPrice Float
-  supplier  String
-  subtotal  Float
+  id         String   @id @default(cuid())
+  taskCardId String
+  taskCard   TaskCard @relation(fields: [taskCardId], references: [id], onDelete: Cascade)
+  name       String
+  qty        Int
+  unitPrice  Float
+  supplier   String
+  subtotal   Float
 }
 
 model Part {
@@ -260,8 +260,8 @@ model Part {
 
 model Estimate {
   id            String          @id
-  jobCardId     String
-  jobCard       JobCard         @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
+  taskCardId    String
+  taskCard      TaskCard        @relation(fields: [taskCardId], references: [id], onDelete: Cascade)
   customerId    String
   advisorId     String
   createdAt     DateTime        @default(now())
@@ -309,8 +309,8 @@ model Message {
 
 model Invoice {
   id         String        @id
-  jobId      String
-  job        JobCard       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  taskId     String
+  task       TaskCard      @relation(fields: [taskId], references: [id], onDelete: Cascade)
   customerId String
   vehicleId  String
   vehicle    Vehicle       @relation(fields: [vehicleId], references: [id])
@@ -330,28 +330,28 @@ model Invoice {
 }
 
 model Payment {
-  id        String        @id @default(cuid())
-  invoiceId String        @unique
-  invoice   Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  jobCardId String
-  amount    Float
-  method    PaymentMethod
-  status    InvoiceStatus @default(PAID)
-  paidAt    DateTime      @default(now())
+  id         String        @id @default(cuid())
+  invoiceId  String        @unique
+  invoice    Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  taskCardId String
+  amount     Float
+  method     PaymentMethod
+  status     InvoiceStatus @default(PAID)
+  paidAt     DateTime      @default(now())
 }
 
 model Rating {
-  id          String  @id @default(cuid())
-  jobId       String
-  job         JobCard @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  taskId      String
+  task        TaskCard @relation(fields: [taskId], references: [id], onDelete: Cascade)
   customerId  String
-  customer    User    @relation(fields: [customerId], references: [id])
+  customer    User     @relation(fields: [customerId], references: [id])
   serviceName String
   score       Int
   review      String
   date        DateTime @default(now())
 
-  @@unique([jobId, customerId])
+  @@unique([taskId, customerId])
 }
 
 model Testimonial {
