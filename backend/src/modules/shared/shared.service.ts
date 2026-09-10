@@ -42,7 +42,6 @@ export function listTasks(role?: string, userId?: string) {
     orderBy: { createdAt: "desc" },
   });
 }
-export const listJobs = listTasks;
 
 export function findTaskById(id: string) {
   return prisma.taskCard.findUnique({
@@ -61,7 +60,6 @@ export function findTaskById(id: string) {
     },
   });
 }
-export const findJobById = findTaskById;
 
 export function listArchivedTasks(userId: string) {
   return prisma.taskCard.findMany({
@@ -79,7 +77,6 @@ export function listArchivedTasks(userId: string) {
     orderBy: { createdAt: "desc" },
   });
 }
-export const listArchivedJobs = listArchivedTasks;
 
 
 export function listAppointments(ownerId?: string) {

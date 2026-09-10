@@ -61,20 +61,16 @@ function mapTask(task: {
     progress: task.progress.map((p) => ({ ...p, step: p.step.toLowerCase() })),
   };
 }
-const mapJob = mapTask;
-
 export async function getTasks(req: Request, res: Response): Promise<void> {
   const tasks = await listTasks(req.user?.role, req.user?.userId);
   res.json(tasks.map(mapTask));
 }
-export const getJobs = getTasks;
 
 export async function getArchivedTasks(req: Request, res: Response): Promise<void> {
   if (!req.user) throw new ApiError(401, "Authentication required");
   const tasks = await listArchivedTasks(req.user.userId);
   res.json(tasks.map(mapTask));
 }
-export const getArchivedJobs = getArchivedTasks;
 
 export async function getTask(req: Request, res: Response): Promise<void> {
   const task = await findTaskById(req.params.id as string);
@@ -87,7 +83,6 @@ export async function getTask(req: Request, res: Response): Promise<void> {
   }
   res.json(mapTask(task));
 }
-export const getJob = getTask;
 
 export async function getAppointments(req: Request, res: Response): Promise<void> {
   const ownerId = req.user?.role === "OWNER" ? req.user.userId : undefined;
@@ -133,10 +128,8 @@ export async function getEstimates(req: Request, res: Response): Promise<void> {
     estimates.map((e) => ({
       ...e,
       taskId: e.taskCardId,
-      jobId: e.taskCardId,
       taskCardId: e.taskCardId,
       taskCard: e.taskCard,
-      jobCard: e.taskCard,
       status: e.status.toLowerCase(),
       items: e.items.map((i) => ({ ...i, category: i.category.toLowerCase() })),
     })),
@@ -150,7 +143,6 @@ export async function getInvoices(req: Request, res: Response): Promise<void> {
     invoices.map((i) => ({
       ...i,
       taskId: i.taskId,
-      jobId: i.taskId,
       status: i.status.toLowerCase(),
       payment: i.paymentMethod
         ? {

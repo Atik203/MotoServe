@@ -389,7 +389,7 @@ export default function AdvisorDashboardPage() {
               ) : (
                 pendingEstimates.slice(0, 3).map((estimate) => {
                   const customer = customers.find((c) => c.id === estimate.customerId);
-                  const vehicle = estimate.jobCard && "vehicle" in estimate.jobCard ? estimate.jobCard.vehicle : undefined;
+                  const vehicle = estimate.taskCard && "vehicle" in estimate.taskCard ? estimate.taskCard.vehicle : undefined;
                   return (
                     <div key={estimate.id} className="flex flex-col gap-2.5 rounded border border-[#e5e7eb] p-[13px]">
                       <div className="flex items-center justify-between">

@@ -19,7 +19,6 @@ const statusMiddleware = [
 ] as const;
 
 router.patch("/tasks/:id/status", ...statusMiddleware);
-router.patch("/jobs/:id/status", ...statusMiddleware);
 
 const notesMiddleware = [
   requireAuth,
@@ -29,7 +28,6 @@ const notesMiddleware = [
 ] as const;
 
 router.post("/tasks/:id/notes", ...notesMiddleware);
-router.post("/jobs/:id/notes", ...notesMiddleware);
 
 const partsMiddleware = [
   requireAuth,
@@ -39,7 +37,6 @@ const partsMiddleware = [
 ] as const;
 
 router.post("/tasks/:id/parts", ...partsMiddleware);
-router.post("/jobs/:id/parts", ...partsMiddleware);
 
 const photosMiddleware = [
   requireAuth,
@@ -49,5 +46,4 @@ const photosMiddleware = [
 ] as const;
 
 router.post("/tasks/:id/photos", ...photosMiddleware);
-router.post("/jobs/:id/photos", ...photosMiddleware);
 

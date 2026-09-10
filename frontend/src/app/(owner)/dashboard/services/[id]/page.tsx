@@ -87,8 +87,8 @@ export default function ServiceDetailsPage() {
   if (!vehicle) {
     return <DetailLoading label="Loading service" />;
   }
-  const estimate = estimates.find((e) => (e as unknown as { taskId?: string }).taskId === task.id || e.jobId === task.id) ?? null;
-  const existingRating = ratings.find((r) => (r as unknown as { taskId?: string }).taskId === task.id || r.jobId === task.id) ?? null;
+  const estimate = estimates.find((e) => e.taskId === task.id) ?? null;
+  const existingRating = ratings.find((r) => r.taskId === task.id) ?? null;
 
   const submitRating = async () => {
     setSubmitting(true);

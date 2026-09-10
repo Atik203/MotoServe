@@ -7,19 +7,18 @@ import { useAppDispatch } from "@/store/hooks";
 import { addTaskNote } from "@/store/slices/tasksSlice";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import type { TaskNote, JobNote } from "@/types";
+import type { TaskNote } from "@/types";
 
 interface MechanicNotesProps {
-  jobId?: string;
-  taskId?: string;
-  notes: (TaskNote | JobNote)[];
+  taskId: string;
+  notes: TaskNote[];
   author: string;
 }
 
-export function MechanicNotes({ jobId, taskId, notes, author }: MechanicNotesProps) {
+export function MechanicNotes({ taskId, notes, author }: MechanicNotesProps) {
   const dispatch = useAppDispatch();
   const [draft, setDraft] = useState("");
-  const targetId = taskId ?? jobId ?? "";
+  const targetId = taskId;
 
   const saveNote = async () => {
     if (!draft.trim() || !targetId) return;

@@ -22,30 +22,23 @@ export const rateTask = createAsyncThunk(
   "ratings/create",
   async ({
     taskId,
-    jobId,
     score,
     review,
     serviceName,
   }: {
-    taskId?: string;
-    jobId?: string;
+    taskId: string;
     score: number;
     review: string;
     serviceName: string;
   }) => {
-    const id = taskId ?? jobId;
-    return await api.post<Rating>(`/tasks/${id}/rate`, { score, review, serviceName });
+    return await api.post<Rating>(`/tasks/${taskId}/rate`, { score, review, serviceName });
   },
 );
 
-export const rateJob = rateTask;
-
 export const deleteTaskRating = createAsyncThunk("ratings/delete", async (taskId: string) => {
   await api.delete(`/tasks/${taskId}/rate`);
-  return { taskId, jobId: taskId };
+  return { taskId };
 });
-
-export const deleteRating = deleteTaskRating;
 
 const ratingsSlice = createSlice({
   name: "ratings",
@@ -65,14 +58,14 @@ const ratingsSlice = createSlice({
         state.error = action.error.message ?? "Failed to load ratings";
       })
       .addCase(rateTask.fulfilled, (state, action) => {
-        const id = (action.payload as unknown as { taskId?: string }).taskId ?? action.payload.jobId;
-        const idx = state.items.findIndex((r) => (r as unknown as { taskId?: string }).taskId === id || r.jobId === id);
+        const id = action.payload.taskId;
+        const idx = state.items.findIndex((r) => r.taskId === id);
         if (idx !== -1) state.items[idx] = action.payload;
         else state.items.unshift(action.payload);
       })
       .addCase(deleteTaskRating.fulfilled, (state, action) => {
         const id = action.payload.taskId;
-        state.items = state.items.filter((r) => (r as unknown as { taskId?: string }).taskId !== id && r.jobId !== id);
+        state.items = state.items.filter((r) => r.taskId !== id);
       });
   },
 });

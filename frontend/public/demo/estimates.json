@@ -2,7 +2,7 @@
   "estimates": [
     {
       "id": "ES-3301",
-      "jobId": "JC-1045",
+      "taskId": "TC-1045",
       "customerId": "cus-001",
       "advisorId": "emp-001",
       "createdAt": "2026-08-12T09:40:00Z",
@@ -17,7 +17,7 @@
     },
     {
       "id": "ES-3298",
-      "jobId": "JC-1043",
+      "taskId": "TC-1043",
       "customerId": "cus-001",
       "advisorId": "emp-001",
       "createdAt": "2026-08-08T16:10:00Z",

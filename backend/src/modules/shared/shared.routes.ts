@@ -4,15 +4,12 @@ import { validate } from "../../middleware/validate.js";
 import {
   getAppointment,
   getAppointments,
-  getArchivedJobs,
   getArchivedTasks,
   getCustomers,
   getEmployees,
   getEstimates,
   getHealth,
   getInvoices,
-  getJob,
-  getJobs,
   getParts,
   getRatings,
   getServices,
@@ -22,7 +19,6 @@ import {
   getContent,
   getThreads,
   getVehicles,
-
   markThreadReadController,
   sendMessage,
   updateAppointmentController,
@@ -43,13 +39,10 @@ router.get("/appointments/:id", requireAuth, getAppointment);
 router.patch("/appointments/:id", requireAuth, requireRole("owner", "advisor", "admin"), validate(updateAppointmentSchema), updateAppointmentController);
 
 router.get("/tasks", requireAuth, getTasks);
-router.get("/jobs", requireAuth, getTasks);
 
 router.get("/tasks/archived", requireAuth, requireRole("owner"), getArchivedTasks);
-router.get("/jobs/archived", requireAuth, requireRole("owner"), getArchivedTasks);
 
 router.get("/tasks/:id", requireAuth, getTask);
-router.get("/jobs/:id", requireAuth, getTask);
 
 
 router.get("/employees", requireAuth, getEmployees);

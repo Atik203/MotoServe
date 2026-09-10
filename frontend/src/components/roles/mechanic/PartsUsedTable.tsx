@@ -27,12 +27,11 @@ import {
 import type { PartUsed } from "@/types";
 
 interface PartsUsedTableProps {
-  jobId?: string;
-  taskId?: string;
+  taskId: string;
   parts: PartUsed[];
 }
 
-export function PartsUsedTable({ jobId, taskId, parts }: PartsUsedTableProps) {
+export function PartsUsedTable({ taskId, parts }: PartsUsedTableProps) {
   const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -40,7 +39,7 @@ export function PartsUsedTable({ jobId, taskId, parts }: PartsUsedTableProps) {
   const [unitPrice, setUnitPrice] = useState("");
   const [supplier, setSupplier] = useState("");
   const [saving, setSaving] = useState(false);
-  const targetId = taskId ?? jobId ?? "";
+  const targetId = taskId;
   const total = parts.reduce((sum, p) => sum + p.subtotal, 0);
 
   const submit = async (e: React.FormEvent) => {
@@ -134,7 +133,7 @@ export function PartsUsedTable({ jobId, taskId, parts }: PartsUsedTableProps) {
         <DialogContent className="max-w-sm rounded-xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-foreground">Add Part</DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">Record a part used on this job.</DialogDescription>
+            <DialogDescription className="text-sm text-muted-foreground">Record a part used on this task.</DialogDescription>
           </DialogHeader>
           <form onSubmit={submit} className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-4">

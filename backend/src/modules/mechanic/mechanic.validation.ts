@@ -5,7 +5,6 @@ export const updateTaskStatusSchema = z.object({
     status: z.enum(["received", "inspecting", "repairing", "testing", "ready", "completed"]),
   }),
 });
-export const updateJobStatusSchema = updateTaskStatusSchema;
 
 export const addTaskNoteSchema = z.object({
   body: z.object({
@@ -14,7 +13,6 @@ export const addTaskNoteSchema = z.object({
     text: z.string().min(1),
   }),
 });
-export const addJobNoteSchema = addTaskNoteSchema;
 
 export const addPartUsedSchema = z.object({
   body: z.object({
@@ -30,5 +28,4 @@ export const addTaskPhotoSchema = z.object({
     key: z.string().min(1),
   }),
 });
-export const addJobPhotoSchema = addTaskPhotoSchema;
 

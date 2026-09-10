@@ -6,7 +6,7 @@ import type {
   CreateVehicleBody,
   DecideEstimateBody,
   PayInvoiceBody,
-  RateJobBody,
+  RateTaskBody,
 } from "./owner.types.js";
 
 export function createVehicle(ownerId: string, body: CreateVehicleBody) {
@@ -84,7 +84,7 @@ export async function payInvoice(id: string, method: PayInvoiceBody["method"], u
   return invoice;
 }
 
-export async function rateTask(taskId: string, customerId: string, body: RateJobBody) {
+export async function rateTask(taskId: string, customerId: string, body: RateTaskBody) {
   const task = await prisma.taskCard.findUnique({ where: { id: taskId } });
   if (!task) throw new ApiError(404, "Task not found");
   if (task.customerId !== customerId) throw new ApiError(403, "Insufficient permissions");
@@ -97,7 +97,6 @@ export async function rateTask(taskId: string, customerId: string, body: RateJob
     create: { taskId, customerId, score: body.score, review: body.review, serviceName: body.serviceName },
   });
 }
-export const rateJob = rateTask;
 
 export async function deleteRating(taskId: string, customerId: string) {
   const task = await prisma.taskCard.findUnique({ where: { id: taskId } });
@@ -115,7 +114,6 @@ export async function archiveTask(taskId: string, customerId: string) {
   }
   return prisma.taskCard.update({ where: { id: taskId }, data: { ownerArchivedAt: new Date() } });
 }
-export const archiveJob = archiveTask;
 
 export async function restoreTask(taskId: string, customerId: string) {
   const task = await prisma.taskCard.findUnique({ where: { id: taskId } });
@@ -123,7 +121,6 @@ export async function restoreTask(taskId: string, customerId: string) {
   if (task.customerId !== customerId) throw new ApiError(403, "Insufficient permissions");
   return prisma.taskCard.update({ where: { id: taskId }, data: { ownerArchivedAt: null } });
 }
-export const restoreJob = restoreTask;
 
 export async function bulkArchiveTasks(ids: string[], customerId: string) {
   if (ids.length === 0) throw new ApiError(400, "No tasks selected");
@@ -137,7 +134,6 @@ export async function bulkArchiveTasks(ids: string[], customerId: string) {
   const res = await prisma.taskCard.updateMany({ where: { id: { in: ids } }, data: { ownerArchivedAt: new Date() } });
   return { archived: res.count };
 }
-export const bulkArchiveJobs = bulkArchiveTasks;
 
 
 export function createChatThread(ownerId: string, advisorId: string, subject: string | undefined, text: string) {

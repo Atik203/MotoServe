@@ -63,19 +63,16 @@ export interface UpdateEmployeeBody {
 export interface ReportDto {
   totalRevenue: number;
   activeTasks: number;
-  activeJobs: number;
   registeredCustomers: number;
   activeEmployees: number;
   revenueByMonth: { month: string; revenue: number }[];
   tasksByStatus: { status: string; count: number }[];
-  jobsByStatus: { status: string; count: number }[];
   workloadByMechanic: {
     mechanic: string;
     role: string;
     active: number;
     completed: number;
     avgHoursPerTask?: number;
-    avgHoursPerJob?: number;
   }[];
   serviceDistribution: { name: string; pct: number }[];
   activityLog: { id: string; user: string; action: string; time: Date }[];

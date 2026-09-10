@@ -52,8 +52,8 @@ export default function MyEstimatesPage() {
         ) : (
           <div className="grid grid-cols-2 gap-6">
             {estimates.map((estimate) => {
-              const taskCard = (estimate as unknown as { taskCard?: typeof estimate.jobCard }).taskCard ?? estimate.jobCard;
-              const taskId = (estimate as unknown as { taskId?: string }).taskId ?? estimate.jobId;
+              const taskCard = estimate.taskCard;
+              const taskId = estimate.taskId;
               const task = tasks.find((t) => t.id === taskId);
               const vehicle = taskCard?.vehicle ?? (task ? vehicles.find((v) => v.id === task.vehicleId) : undefined);
               const Style = statusStyle[estimate.status] ?? statusStyle.pending;

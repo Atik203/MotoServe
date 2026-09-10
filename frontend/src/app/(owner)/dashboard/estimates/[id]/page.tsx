@@ -35,9 +35,9 @@ export default function EstimateApprovalPage() {
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">Estimate not found.</div>;
   }
 
-  const taskId = (estimate as unknown as { taskId?: string }).taskId ?? estimate.jobId;
+  const taskId = estimate.taskId;
   const task = tasks.find((t) => t.id === taskId);
-  const taskCard = (estimate as unknown as { taskCard?: typeof estimate.jobCard }).taskCard ?? estimate.jobCard;
+  const taskCard = estimate.taskCard;
   const resolvedVehicle = taskCard?.vehicle ?? task?.vehicle ?? null;
   const advisor = employees.find((emp) => emp.id === estimate.advisorId) ?? null;
   const advisorInitials =

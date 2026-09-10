@@ -56,11 +56,11 @@ function lineFromEstimate(item: EstimateItem): LineItem {
 }
 
 interface EditorProps {
-  job: TaskCard;
+  task: TaskCard;
   estimates: Estimate[];
 }
 
-function LineItemEditor({ job, estimates }: EditorProps) {
+function LineItemEditor({ task, estimates }: EditorProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [internalNotes, setInternalNotes] = useState("");
@@ -68,9 +68,9 @@ function LineItemEditor({ job, estimates }: EditorProps) {
   const [submitting, setSubmitting] = useState(false);
 
   const initialItems = (() => {
-    const estimate = estimates.find((e) => e.jobId === job.id || e.jobCardId === job.id);
+    const estimate = estimates.find((e) => e.taskId === task.id || e.taskCardId === task.id);
     if (estimate) return estimate.items.map(lineFromEstimate);
-    return job.services.map((s) =>
+    return task.services.map((s) =>
       lineFromEstimate({ id: newLineId(), description: s.name, category: "service" as const, amount: s.price }),
     );
   })();
@@ -115,7 +115,7 @@ function LineItemEditor({ job, estimates }: EditorProps) {
     try {
       await dispatch(
         createEstimate({
-          jobId: job.id,
+          taskId: task.id,
           summary: message.trim() || "Estimate ready for review",
           internalNotes: internalNotes.trim() || undefined,
           items: rows.map((r) => ({
@@ -222,7 +222,7 @@ function LineItemEditor({ job, estimates }: EditorProps) {
           </table>
           {rows.length === 0 && (
             <p className="py-8 text-center text-sm text-[#9ca3af]">
-              Line items load from the job&apos;s services — adjust quantities and prices as needed.
+              Line items load from the task&apos;s services — adjust quantities and prices as needed.
             </p>
           )}
 
@@ -303,7 +303,7 @@ function SendEstimatePage() {
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const customers = useAppSelector((s) => s.customers.items);
   const estimates = useAppSelector((s) => s.estimates.items);
-  const [taskId, setTaskId] = useState(searchParams.get("task") ?? searchParams.get("job") ?? "");
+  const [taskId, setTaskId] = useState(searchParams.get("task") ?? "");
 
   useEffect(() => {
     dispatch(fetchTasks());
@@ -411,7 +411,7 @@ function SendEstimatePage() {
           </section>
         </div>
 
-        {task ? <LineItemEditor key={task.id} job={task} estimates={estimates} /> : (
+        {task ? <LineItemEditor key={task.id} task={task} estimates={estimates} /> : (
           <section className={`${card} items-center py-16 text-center`}>
             <p className="text-sm font-semibold text-foreground">Select a task card to build an estimate</p>
             <p className="text-sm text-[#727784]">Only tasks that are in progress can be estimated.</p>

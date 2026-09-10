@@ -12,7 +12,6 @@ export interface CreateTaskCardBody {
   serviceIds?: string[];
   expectedDate?: string;
 }
-export type CreateJobCardBody = CreateTaskCardBody;
 
 export interface CreateCustomerBody {
   name: string;
@@ -34,8 +33,7 @@ export interface AssignMechanicBody {
 }
 
 export interface CreateEstimateBody {
-  taskId?: string;
-  jobId?: string;
+  taskId: string;
   summary?: string;
   internalNotes?: string;
   items: { description: string; category: "service" | "parts" | "labor"; amount: number }[];

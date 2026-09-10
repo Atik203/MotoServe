@@ -13,13 +13,11 @@ export async function updateTaskStatusController(req: Request, res: Response): P
   }
   res.json({ id: task.id, status: task.status.toLowerCase() });
 }
-export const updateJobStatusController = updateTaskStatusController;
 
 export async function addTaskNoteController(req: Request, res: Response): Promise<void> {
   const note = await addTaskNote(req.params.id as string, req.body.body as AddTaskNoteBody);
   res.status(201).json(note);
 }
-export const addJobNoteController = addTaskNoteController;
 
 export async function addPartUsedController(req: Request, res: Response): Promise<void> {
   const part = await addPartUsed(req.params.id as string, req.body.body as AddPartUsedBody);
@@ -31,5 +29,4 @@ export async function addTaskPhotoController(req: Request, res: Response): Promi
   const task = await addTaskPhoto(req.params.id as string, key);
   res.status(201).json({ photos: task.photos });
 }
-export const addJobPhotoController = addTaskPhotoController;
 

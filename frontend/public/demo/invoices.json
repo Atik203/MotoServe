@@ -2,7 +2,6 @@
   "invoices": [
     {
       "id": "INV-2026-0142",
-      "jobId": "TC-1043",
       "taskId": "TC-1043",
       "customerId": "cus-001",
       "vehicleId": "veh-002",
@@ -20,7 +19,6 @@
     },
     {
       "id": "INV-2026-0138",
-      "jobId": "TC-1044",
       "taskId": "TC-1044",
       "customerId": "cus-001",
       "vehicleId": "veh-001",
@@ -39,7 +37,6 @@
     },
     {
       "id": "INV-2026-0150",
-      "jobId": "TC-1045",
       "taskId": "TC-1045",
       "customerId": "cus-001",
       "vehicleId": "veh-001",

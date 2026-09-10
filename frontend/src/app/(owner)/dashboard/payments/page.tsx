@@ -98,7 +98,7 @@ export default function PaymentInvoicePage() {
     sorted[0]!;
 
   const vehicle = vehicles.find((v) => v.id === invoice.vehicleId) ?? null;
-  const task = tasks.find((t) => t.id === invoice.jobId || (invoice as unknown as { taskId?: string }).taskId === t.id) ?? null;
+  const task = tasks.find((t) => t.id === invoice.taskId) ?? null;
   const pickupBadge =
     task?.status === "ready"
       ? { label: "Ready for Pickup", className: "border-[rgba(0,74,49,0.2)] bg-[rgba(0,74,49,0.1)] text-[#004a31]" }
@@ -199,7 +199,7 @@ export default function PaymentInvoicePage() {
                       </span>
                     </div>
                     <p className="truncate text-sm text-[#444651]">
-                      {v ? `${v.year} ${v.make} ${v.model}` : "Vehicle"} · Task #{(inv as unknown as { taskId?: string }).taskId ?? inv.jobId}
+                      {v ? `${v.year} ${v.make} ${v.model}` : "Vehicle"} · Task #{inv.taskId}
                     </p>
                     <div className="flex items-center justify-between pt-0.5">
                       <span className="text-xs text-[#727784]">
@@ -225,7 +225,7 @@ export default function PaymentInvoicePage() {
                       {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : "Vehicle"}
                     </p>
                     <p className="text-base text-[#444651]">
-                      {vehicle ? `Plate: ${vehicle.regNo}` : "—"} • Task Card #{(invoice as unknown as { taskId?: string }).taskId ?? invoice.jobId}
+                      {vehicle ? `Plate: ${vehicle.regNo}` : "—"} • Task Card #{invoice.taskId}
                     </p>
                   </div>
                   <span className={cn("rounded-xl border px-[13px] py-[5px] text-xs font-semibold tracking-[0.6px]", pickupBadge.className)}>

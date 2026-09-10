@@ -38,7 +38,6 @@ export async function updateTaskStatus(id: string, status: UpdateTaskStatusBody[
   }
   return prisma.taskCard.findUniqueOrThrow({ where: { id: task.id } });
 }
-export const updateJobStatus = updateTaskStatus;
 
 export async function ensureInvoiceForTask(taskId: string) {
   const existing = await prisma.invoice.findFirst({ where: { taskId } });
@@ -104,7 +103,6 @@ export async function ensureInvoiceForTask(taskId: string) {
     },
   }));
 }
-export const ensureInvoiceForJob = ensureInvoiceForTask;
 
 export function addTaskNote(id: string, body: AddTaskNoteBody) {
   return prisma.taskNote.create({
@@ -116,7 +114,6 @@ export function addTaskNote(id: string, body: AddTaskNoteBody) {
     },
   });
 }
-export const addJobNote = addTaskNote;
 
 export function addPartUsed(id: string, body: AddPartUsedBody) {
   return prisma.partsUsed.create({
@@ -132,5 +129,4 @@ export async function addTaskPhoto(id: string, key: string) {
     data: { photos: [...photos, key] },
   });
 }
-export const addJobPhoto = addTaskPhoto;
 

@@ -199,7 +199,7 @@ export default function ServiceTrackingPage() {
                   Chat with Advisor
                 </Link>
                 {(() => {
-                  const estimate = estimates.find((e) => (e as unknown as { taskId?: string }).taskId === task.id || e.jobId === task.id);
+                  const estimate = estimates.find((e) => e.taskId === task.id);
                   return estimate ? (
                     <Link href={`/dashboard/estimates/${estimate.id}`} className="flex items-center justify-center gap-2 rounded border border-[#c2c6d5] bg-[#f8f9fa] px-[17px] py-[13px] text-xs font-semibold tracking-[0.24px] text-foreground">
                       <FileCheck className="size-[13.3px]" />
@@ -208,7 +208,7 @@ export default function ServiceTrackingPage() {
                   ) : null;
                 })()}
                 {(() => {
-                  const invoice = invoices.find((i) => (i as unknown as { taskId?: string }).taskId === task.id || i.jobId === task.id);
+                  const invoice = invoices.find((i) => i.taskId === task.id);
                   return invoice ? (
                     <button
                       type="button"

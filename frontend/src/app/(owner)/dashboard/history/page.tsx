@@ -31,7 +31,6 @@ import type { Invoice, TaskCard, Vehicle } from "@/types";
 interface HistoryEntry {
   id: string;
   task: TaskCard;
-  job: TaskCard;
   vehicle: Vehicle;
   invoice: Invoice | null;
   title: string;
@@ -124,13 +123,12 @@ export default function ServiceHistoryPage() {
       .map((task) => {
         const vehicle = task.vehicle ?? vehiclesById.get(task.vehicleId);
         if (!vehicle) return null;
-        const invoice = invoices.find((i) => (i as unknown as { taskId?: string }).taskId === task.id || i.jobId === task.id) ?? null;
-        const rating = ratings.find((r) => (r as unknown as { taskId?: string }).taskId === task.id || r.jobId === task.id);
+        const invoice = invoices.find((i) => i.taskId === task.id) ?? null;
+        const rating = ratings.find((r) => r.taskId === task.id);
         const serviceNames = task.services.map((s) => s.name).join(", ");
         return {
           id: task.id,
           task,
-          job: task,
           vehicle,
           invoice,
           title: task.services[0]?.name ?? "Vehicle Service",
@@ -564,7 +562,7 @@ export default function ServiceHistoryPage() {
                               </Button>
                             )}
                             <Button size="sm" variant="outline" asChild className="rounded-xl px-[17px] py-[9px] text-xs font-semibold">
-                              <Link href={`/dashboard/services/${entry.job.id}`}>View Details</Link>
+                              <Link href={`/dashboard/services/${entry.task.id}`}>View Details</Link>
                             </Button>
                             {!entry.archived && (
                               <>
@@ -594,7 +592,7 @@ export default function ServiceHistoryPage() {
                           </div>
                           <div className="flex gap-2">
                             <Button variant="outline" size="sm" asChild className="rounded-xl px-[17px] py-[9px] text-xs font-semibold">
-                              <Link href={`/dashboard/services/${entry.job.id}`}>View Details</Link>
+                              <Link href={`/dashboard/services/${entry.task.id}`}>View Details</Link>
                             </Button>
                             {entry.rateable && !entry.archived && (
                               <Button size="sm" onClick={() => openRate(entry)} className="rounded-xl bg-[#8b5000] px-4 py-[8.5px] text-xs font-semibold text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]">

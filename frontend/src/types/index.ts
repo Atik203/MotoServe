@@ -76,23 +76,18 @@ export interface Employee {
   status: "active" | "inactive";
   joinedAt: string;
   activeTasks?: number;
-  activeJobs?: number;
   completedTasks?: number;
-  completedJobs?: number;
 }
 
 export type TaskStatus = "received" | "inspecting" | "repairing" | "testing" | "ready" | "completed";
-export type JobStatus = TaskStatus;
 
 export type TaskPriority = "low" | "medium" | "high";
-export type JobPriority = TaskPriority;
 
 export interface TaskServiceLine {
   id: string;
   name: string;
   price: number;
 }
-export type JobServiceLine = TaskServiceLine;
 
 export interface TaskProgressStep {
   step: TaskStatus;
@@ -100,7 +95,6 @@ export interface TaskProgressStep {
   timestamp: string | null;
   done: boolean;
 }
-export type JobProgressStep = TaskProgressStep;
 
 export interface TaskNote {
   id: string;
@@ -108,7 +102,6 @@ export interface TaskNote {
   time: string;
   text: string;
 }
-export type JobNote = TaskNote;
 
 export interface PartUsed {
   id: string;
@@ -149,7 +142,6 @@ export interface TaskCard {
   ownerArchivedAt?: string | null;
   createdAt: string;
 }
-export type JobCard = TaskCard;
 
 export interface Part {
   id: string;
@@ -173,7 +165,6 @@ export interface Appointment {
   owner?: { id: string; name: string; phone?: string; email?: string; avatar?: string };
   vehicle?: Vehicle;
   taskCard?: TaskCard | null;
-  jobCard?: TaskCard | null;
 }
 
 export interface CreateCustomerInput {
@@ -198,10 +189,8 @@ export interface EstimateItem {
 
 export interface Estimate {
   id: string;
-  taskId?: string;
-  jobId: string;
+  taskId: string;
   taskCardId?: string;
-  jobCardId: string;
   customerId: string;
   advisorId: string;
   createdAt: string;
@@ -211,7 +200,6 @@ export interface Estimate {
   items: EstimateItem[];
   total: number;
   taskCard?: { id: string; vehicle?: Vehicle };
-  jobCard?: { id: string; vehicle?: Vehicle };
 }
 
 export interface InvoiceItem {
@@ -223,8 +211,7 @@ export interface InvoiceItem {
 
 export interface Invoice {
   id: string;
-  taskId?: string;
-  jobId: string;
+  taskId: string;
   customerId: string;
   vehicleId: string;
   issuedAt: string;
@@ -259,8 +246,7 @@ export interface ChatThread {
 
 export interface Rating {
   id: string;
-  taskId?: string;
-  jobId: string;
+  taskId: string;
   customerId: string;
   serviceName: string;
   score: number;
@@ -279,20 +265,17 @@ export interface KpiCard {
 
 export interface ReportsData {
   totalRevenue: number;
-  activeTasks?: number;
-  activeJobs: number;
+  activeTasks: number;
   registeredCustomers: number;
   activeEmployees: number;
   revenueByMonth: { month: string; revenue: number }[];
-  tasksByStatus?: { status: string; count: number }[];
-  jobsByStatus: { status: string; count: number }[];
+  tasksByStatus: { status: string; count: number }[];
   workloadByMechanic: {
     mechanic: string;
     role: string;
     active: number;
     completed: number;
     avgHoursPerTask?: number;
-    avgHoursPerJob?: number;
   }[];
   serviceDistribution: { name: string; pct: number }[];
   activityLog: { id: string; user: string; action: string; time: string }[];

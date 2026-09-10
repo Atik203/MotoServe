@@ -62,7 +62,6 @@ export const rateTaskSchema = z.object({
     serviceName: z.string(),
   }),
 });
-export const rateJobSchema = rateTaskSchema;
 
 export const createThreadSchema = z.object({
   body: z.object({
@@ -77,5 +76,4 @@ export const bulkArchiveTasksSchema = z.object({
     ids: z.array(z.string().min(1)).min(1).max(100),
   }),
 });
-export const bulkArchiveJobsSchema = bulkArchiveTasksSchema;
 

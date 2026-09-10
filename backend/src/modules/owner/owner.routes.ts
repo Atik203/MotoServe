@@ -39,19 +39,14 @@ router.patch("/estimates/:id/decide", requireAuth, requireRole("owner"), validat
 router.post("/invoices/:id/pay", requireAuth, requireRole("owner"), validate(payInvoiceSchema), payInvoiceController);
 
 router.post("/tasks/:id/rate", requireAuth, requireRole("owner"), validate(rateTaskSchema), rateTaskController);
-router.post("/jobs/:id/rate", requireAuth, requireRole("owner"), validate(rateTaskSchema), rateTaskController);
 
 router.delete("/tasks/:id/rate", requireAuth, requireRole("owner"), deleteRatingController);
-router.delete("/jobs/:id/rate", requireAuth, requireRole("owner"), deleteRatingController);
 
 router.patch("/tasks/:id/archive", requireAuth, requireRole("owner"), archiveTaskController);
-router.patch("/jobs/:id/archive", requireAuth, requireRole("owner"), archiveTaskController);
 
 router.patch("/tasks/:id/restore", requireAuth, requireRole("owner"), restoreTaskController);
-router.patch("/jobs/:id/restore", requireAuth, requireRole("owner"), restoreTaskController);
 
 router.post("/tasks/archive", requireAuth, requireRole("owner"), validate(bulkArchiveTasksSchema), bulkArchiveTasksController);
-router.post("/jobs/archive", requireAuth, requireRole("owner"), validate(bulkArchiveTasksSchema), bulkArchiveTasksController);
 
 router.post("/chat/threads", requireAuth, requireRole("owner"), validate(createThreadSchema), createThreadController);
 

@@ -102,7 +102,7 @@ export default function AdminDashboardPage() {
                 if (!reports) return;
                 const lines: string[][] = [["Metric", "Value"]];
                 lines.push(["Total Revenue", String(reports.totalRevenue)]);
-                lines.push(["Active Tasks", String(reports.activeJobs)]);
+                lines.push(["Active Tasks", String(reports.activeTasks)]);
                 lines.push(["Registered Customers", String(reports.registeredCustomers)]);
                 lines.push(["Active Employees", String(reports.activeEmployees)]);
                 lines.push([], ["Month", "Revenue"]);
@@ -252,7 +252,7 @@ export default function AdminDashboardPage() {
                 >
                   <div className="flex flex-col items-center bg-white px-3">
                     <span className="text-xl font-bold text-foreground">
-                      {reports.jobsByStatus.reduce((sum, j) => sum + j.count, 0)}
+                      {(reports.tasksByStatus ?? []).reduce((sum, t) => sum + t.count, 0)}
                     </span>
                     <span className="text-[11px] font-medium text-muted-foreground">Tasks</span>
                   </div>

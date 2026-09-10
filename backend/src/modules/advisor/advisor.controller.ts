@@ -10,7 +10,6 @@ export async function createTaskCardController(req: Request, res: Response): Pro
   await logAudit(req.user.name, `Created task card ${task.id}`);
   res.status(201).json({ id: task.id });
 }
-export const createJobCardController = createTaskCardController;
 
 export async function createCustomerController(req: Request, res: Response): Promise<void> {
   if (!req.user) throw new ApiError(401, "Authentication required");

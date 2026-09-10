@@ -2,7 +2,7 @@
   "ratings": [
     {
       "id": "rtg-001",
-      "jobId": "JC-1043",
+      "taskId": "JC-1043",
       "customerId": "cus-001",
       "serviceName": "Tire Rotation",
       "score": 5,
@@ -11,7 +11,7 @@
     },
     {
       "id": "rtg-002",
-      "jobId": "JC-1040",
+      "taskId": "JC-1040",
       "customerId": "cus-001",
       "serviceName": "Full Synthetic Oil Change",
       "score": 4,

@@ -34,7 +34,6 @@ export interface RateTaskBody {
   review: string;
   serviceName: string;
 }
-export type RateJobBody = RateTaskBody;
 
 export interface CreateThreadBody {
   advisorId: string;
@@ -45,5 +44,4 @@ export interface CreateThreadBody {
 export interface BulkArchiveTasksBody {
   ids: string[];
 }
-export type BulkArchiveJobsBody = BulkArchiveTasksBody;
 

@@ -169,8 +169,8 @@ export default function WorkloadReportsPage() {
   const todayDelta = pct(todayIncome, yesterdayIncome);
   const receivedToday = tasks.filter((t) => new Date(t.createdAt).toDateString() === today).length;
 
-  const completedTasks = reports?.jobsByStatus.find((j) => j.status === "completed")?.count ?? 0;
-  const pendingTasks = reports?.activeJobs ?? 0;
+  const completedTasks = reports?.tasksByStatus.find((t) => t.status === "completed")?.count ?? 0;
+  const pendingTasks = reports?.activeTasks ?? 0;
   const totalRevenue = reports?.totalRevenue ?? 0;
 
   const lineData = (() => {
@@ -221,7 +221,7 @@ export default function WorkloadReportsPage() {
       const mechanicId = employees.find((e) => e.name === m.mechanic)?.id;
       const mechanicTasks = mechanicId ? tasks.filter((t) => t.mechanicId === mechanicId) : [];
       const rated = mechanicTasks
-        .map((t) => ratings.find((r) => r.jobId === t.id || (r as unknown as { taskId?: string }).taskId === t.id))
+        .map((t) => ratings.find((r) => r.taskId === t.id))
         .filter((r): r is NonNullable<typeof r> => Boolean(r));
       return {
         ...m,
@@ -233,7 +233,7 @@ export default function WorkloadReportsPage() {
 
   const historyRows = invoices
     .map((inv) => {
-      const task = tasks.find((t) => t.id === inv.jobId || (inv as unknown as { taskId?: string }).taskId === t.id);
+      const task = tasks.find((t) => t.id === inv.taskId);
       return {
         inv,
         task,

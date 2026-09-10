@@ -19,7 +19,6 @@ const taskMiddleware = [
 ] as const;
 
 router.post("/tasks", ...taskMiddleware);
-router.post("/jobs", ...taskMiddleware);
 
 router.post("/customers", requireAuth, requireRole("advisor", "admin"), validate(createCustomerSchema), createCustomerController);
 
@@ -31,7 +30,6 @@ const assignMiddleware = [
 ] as const;
 
 router.post("/tasks/:id/assign", ...assignMiddleware);
-router.post("/jobs/:id/assign", ...assignMiddleware);
 
 router.post("/estimates", requireAuth, requireRole("advisor", "admin"), validate(createEstimateSchema), createEstimateController);
 

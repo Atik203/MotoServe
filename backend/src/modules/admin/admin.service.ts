@@ -128,10 +128,8 @@ export async function getReportData(): Promise<ReportDto> {
   return {
     ...stats,
     activeTasks: stats.activeTasks,
-    activeJobs: stats.activeTasks,
     revenueByMonth: stats.revenueByMonth,
     tasksByStatus: mappedStatus,
-    jobsByStatus: mappedStatus,
     workloadByMechanic: mechanics.map((m) => ({
       mechanic: m.name,
       role: m.specialization ?? "Technician",

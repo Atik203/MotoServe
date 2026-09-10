@@ -110,17 +110,6 @@ export const bulkArchiveTasks = createAsyncThunk("tasks/bulkArchive", async (ids
   return await api.post<{ archived: number }>("/tasks/archive", { ids });
 });
 
-export const fetchJobs = fetchTasks;
-export const fetchJob = fetchTask;
-export const fetchArchivedJobs = fetchArchivedTasks;
-export const createJobCard = createTaskCard;
-export const updateJobStatus = updateTaskStatus;
-export const addJobNote = addTaskNote;
-export const addJobPhoto = addTaskPhoto;
-export const archiveJob = archiveTask;
-export const restoreJob = restoreTask;
-export const bulkArchiveJobs = bulkArchiveTasks;
-
 const tasksSlice = createSlice({
   name: "tasks",
   initialState,

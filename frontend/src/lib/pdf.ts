@@ -108,7 +108,7 @@ export function buildInvoicePdf(invoice: Invoice, vehicle?: Vehicle | null): jsP
   y = infoRow(doc, y, "Issued", new Date(invoice.issuedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }));
   y = infoRow(doc, y, "Status", invoice.status === "paid" ? "PAID" : "UNPAID");
   if (vehicle) y = infoRow(doc, y, "Vehicle", `${vehicle.year} ${vehicle.make} ${vehicle.model} (${vehicle.regNo})`);
-  y = infoRow(doc, y, "Task Card", invoice.taskId ?? invoice.jobId);
+  y = infoRow(doc, y, "Task Card", invoice.taskId);
   if (invoice.payment) {
     const method = (invoice.payment.method ?? "card").toUpperCase();
     y = infoRow(doc, y, "Payment", `${method}${invoice.payment.last4 ? ` •••• ${invoice.payment.last4}` : ""}`);
@@ -268,14 +268,9 @@ export function buildTaskCardPdf(task: TaskCard): jsPDF {
   footer(doc);
   return doc;
 }
-
-export const buildJobCardPdf = buildTaskCardPdf;
-
 export function downloadTaskCardPdf(task: TaskCard): void {
   buildTaskCardPdf(task).save(`${task.id}.pdf`);
 }
-
-export const downloadJobCardPdf = downloadTaskCardPdf;
 
 export function buildAppointmentPdf(appointment: Appointment, vehicle: Vehicle | null, serviceNames: string[]): jsPDF {
   const doc = new jsPDF();

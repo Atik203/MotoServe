@@ -50,7 +50,6 @@ export async function createTaskCard(advisorId: string, body: CreateTaskCardBody
   });
   return task;
 }
-export const createJobCard = createTaskCard;
 
 export async function createCustomer(body: CreateCustomerBody) {
   const passwordHash = await bcrypt.hash(randomBytes(32).toString("hex"), 10);
@@ -84,7 +83,7 @@ export async function assignMechanic(id: string, body: AssignMechanicBody) {
 }
 
 export async function createEstimate(advisorId: string, role: string, body: CreateEstimateBody) {
-  const targetId = body.taskId ?? body.jobId!;
+  const targetId = body.taskId;
   const task = await prisma.taskCard.findUnique({ where: { id: targetId }, select: { customerId: true, status: true, advisorId: true } });
   if (!task) throw new ApiError(404, "Task not found");
   if (task.status === "COMPLETED") throw new ApiError(400, "Cannot estimate a completed task");

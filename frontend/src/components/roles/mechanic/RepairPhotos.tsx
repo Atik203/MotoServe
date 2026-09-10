@@ -10,16 +10,15 @@ import { fetchFileUrl } from "@/store/slices/filesSlice";
 import { fetchTask, addTaskPhoto } from "@/store/slices/tasksSlice";
 
 interface RepairPhotosProps {
-  jobId?: string;
-  taskId?: string;
+  taskId: string;
   photos: string[];
 }
 
-export function RepairPhotos({ jobId, taskId, photos }: RepairPhotosProps) {
+export function RepairPhotos({ taskId, photos }: RepairPhotosProps) {
   const dispatch = useAppDispatch();
   const urls = useAppSelector((s) => s.files.urls);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const targetId = taskId ?? jobId ?? "";
+  const targetId = taskId;
 
   useEffect(() => {
     for (const key of photos) {

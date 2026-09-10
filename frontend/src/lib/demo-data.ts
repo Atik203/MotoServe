@@ -18,7 +18,6 @@ export type DemoFile =
   | "vehicles"
   | "customers"
   | "employees"
-  | "jobs"
   | "tasks"
   | "parts"
   | "appointments"
@@ -38,7 +37,6 @@ type DemoMap = {
   vehicles: Vehicle[];
   customers: Customer[];
   employees: Employee[];
-  jobs: TaskCard[];
   tasks: TaskCard[];
   parts: Part[];
   appointments: Appointment[];
@@ -54,12 +52,10 @@ type DemoMap = {
       role: string;
       active: number;
       completed: number;
-      avgHoursPerJob: number;
       avgHoursPerTask?: number;
     }[];
     serviceDistribution: { name: string; pct: number }[];
-    jobsByStatus: { status: string; count: number }[];
-    tasksByStatus?: { status: string; count: number }[];
+    tasksByStatus: { status: string; count: number }[];
     activityLog: { id: string; user: string; action: string; time: string }[];
   };
   testimonials: {
