@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const createJobCardSchema = z.object({
+export const createTaskCardSchema = z.object({
   body: z.object({
     vehicleId: z.string(),
     customerId: z.string(),
@@ -42,7 +42,7 @@ export const assignMechanicSchema = z.object({
 
 export const createEstimateSchema = z.object({
   body: z.object({
-    jobId: z.string(),
+    taskId: z.string().min(1),
     summary: z.string().optional(),
     internalNotes: z.string().optional(),
     items: z
@@ -56,3 +56,4 @@ export const createEstimateSchema = z.object({
       .min(1),
   }),
 });
+

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Car, Check, Clock, Filter, Info, Search, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchJobs, assignMechanic } from "@/store/slices/jobsSlice";
+import { fetchTasks, assignMechanic } from "@/store/slices/tasksSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
 import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { DetailLoading } from "@/components/ui/loading";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { Employee, JobCard } from "@/types";
+import type { Employee, TaskCard } from "@/types";
 
 const WORKLOAD_LIMIT = 5;
 
@@ -45,12 +45,12 @@ const availabilityFor = (workload: number) => {
 export default function AssignMechanicPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const jobs = useAppSelector((s) => s.jobs.items);
-  const jobsStatus = useAppSelector((s) => s.jobs.status);
+  const tasks = useAppSelector((s) => s.tasks.items);
+  const tasksStatus = useAppSelector((s) => s.tasks.status);
   const employees = useAppSelector((s) => s.employees.items);
   const employeesStatus = useAppSelector((s) => s.employees.status);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [jobId, setJobId] = useState("");
+  const [taskId, setTaskId] = useState("");
   const [search, setSearch] = useState("");
   const [availableOnly, setAvailableOnly] = useState(false);
   const [notes, setNotes] = useState("");
@@ -58,13 +58,13 @@ export default function AssignMechanicPage() {
 
   useEffect(() => {
     dispatch(fetchEmployees());
-    dispatch(fetchJobs());
+    dispatch(fetchTasks());
   }, [dispatch]);
 
-  const assignableJobs = jobs.filter((j) => !["completed", "ready"].includes(j.status));
-  const defaultJob = assignableJobs.find((j) => !j.mechanicId) ?? assignableJobs[0] ?? null;
-  const job: JobCard | null =
-    (jobId ? jobs.find((j) => j.id === jobId) ?? null : null) ?? defaultJob;
+  const assignableTasks = tasks.filter((t) => !["completed", "ready"].includes(t.status));
+  const defaultTask = assignableTasks.find((t) => !t.mechanicId) ?? assignableTasks[0] ?? null;
+  const task: TaskCard | null =
+    (taskId ? tasks.find((t) => t.id === taskId) ?? null : null) ?? defaultTask;
 
   const mechanics = useMemo(
     () => employees.filter((e) => e.role === "mechanic"),
@@ -73,13 +73,13 @@ export default function AssignMechanicPage() {
 
   const workloadOf = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const j of jobs) {
-      if (j.mechanicId && j.status !== "completed" && j.status !== "ready") {
-        counts.set(j.mechanicId, (counts.get(j.mechanicId) ?? 0) + 1);
+    for (const t of tasks) {
+      if (t.mechanicId && t.status !== "completed" && t.status !== "ready") {
+        counts.set(t.mechanicId, (counts.get(t.mechanicId) ?? 0) + 1);
       }
     }
     return (m: Employee) => counts.get(m.id) ?? 0;
-  }, [jobs]);
+  }, [tasks]);
 
   const filteredMechanics = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -91,17 +91,17 @@ export default function AssignMechanicPage() {
   const selectedMechanic = mechanics.find((m) => m.id === selectedId) ?? null;
 
   const handleConfirm = async () => {
-    if (!selectedMechanic || !job) return;
+    if (!selectedMechanic || !task) return;
     setSubmitting(true);
     try {
       await dispatch(
         assignMechanic({
-          id: job.id,
+          id: task.id,
           mechanicId: selectedMechanic.id,
           notes: notes.trim() || undefined,
         }),
       ).unwrap();
-      toast.success(`Assigned ${selectedMechanic.name} to job ${job.id}`);
+      toast.success(`Assigned ${selectedMechanic.name} to task ${task.id}`);
       router.push("/advisor");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Assignment failed");
@@ -111,11 +111,11 @@ export default function AssignMechanicPage() {
   };
 
   const assignLoading =
-    (jobsStatus === "idle" ||
-      jobsStatus === "loading" ||
+    (tasksStatus === "idle" ||
+      tasksStatus === "loading" ||
       employeesStatus === "idle" ||
       employeesStatus === "loading") &&
-    jobs.length === 0 &&
+    tasks.length === 0 &&
     employees.length === 0;
   if (assignLoading) {
     return <DetailLoading label="Loading assign mechanic" />;
@@ -128,24 +128,24 @@ export default function AssignMechanicPage() {
           <nav className="flex items-center gap-2 text-xs font-semibold text-[#727784]">
             <span>Dashboard</span>
             <span>›</span>
-            <span>Job Cards</span>
+            <span>Task Cards</span>
             <span>›</span>
             <span className="text-foreground">Assign Mechanic</span>
           </nav>
           <h1 className="text-4xl font-bold text-foreground">Assign Mechanic</h1>
           <div className="flex items-center gap-3 pt-1">
-            <label className="text-sm text-[#424753]">Job:</label>
+            <label className="text-sm text-[#424753]">Task:</label>
             <select
-              value={job?.id ?? ""}
+              value={task?.id ?? ""}
               onChange={(e) => {
-                setJobId(e.target.value);
+                setTaskId(e.target.value);
                 setSelectedId(null);
               }}
               className="rounded border border-[#e5e7eb] bg-white px-3 py-1.5 text-sm font-medium text-foreground outline-none"
             >
-              {assignableJobs.map((j) => (
-                <option key={j.id} value={j.id}>
-                  {j.id} — {j.vehicle ? `${j.vehicle.year} ${j.vehicle.make} ${j.vehicle.model}` : "Vehicle"} ({j.status})
+              {assignableTasks.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.id} — {t.vehicle ? `${t.vehicle.year} ${t.vehicle.make} ${t.vehicle.model}` : "Vehicle"} ({t.status})
                 </option>
               ))}
             </select>
@@ -164,14 +164,14 @@ export default function AssignMechanicPage() {
                   </span>
                   <div className="flex flex-col gap-1">
                     <span className="text-xl font-semibold text-foreground">
-                      {job?.vehicle ? `${job.vehicle.year} ${job.vehicle.make} ${job.vehicle.model}` : "Select a job"}
+                      {task?.vehicle ? `${task.vehicle.year} ${task.vehicle.make} ${task.vehicle.model}` : "Select a task"}
                     </span>
                     <span className="flex items-center gap-1.5 text-[11px] text-[#424753]">
-                      <span>Customer: {job?.customer?.name ?? "—"}</span>
+                      <span>Customer: {task?.customer?.name ?? "—"}</span>
                       <span>•</span>
                       <span>Plate:</span>
                       <span className="rounded bg-[#edeeef] px-1.5 py-0.5 font-mono text-[11px] font-medium text-[#191c1d]">
-                        {job?.vehicle?.regNo ?? "—"}
+                        {task?.vehicle?.regNo ?? "—"}
                       </span>
                     </span>
                   </div>
@@ -179,9 +179,9 @@ export default function AssignMechanicPage() {
                 <span
                   className={cn(
                     "flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase",
-                    job?.priority === "high"
+                    task?.priority === "high"
                       ? "bg-[rgba(186,26,26,0.1)] text-[#ba1a1a]"
-                      : job?.priority === "medium"
+                      : task?.priority === "medium"
                         ? "bg-[rgba(255,193,7,0.1)] text-[#6a3c00]"
                         : "bg-[rgba(76,175,80,0.1)] text-[#4caf50]",
                   )}
@@ -189,14 +189,14 @@ export default function AssignMechanicPage() {
                   <span
                     className={cn(
                       "size-1.5 rounded-full",
-                      job?.priority === "high"
+                      task?.priority === "high"
                         ? "bg-[#ba1a1a]"
-                        : job?.priority === "medium"
+                        : task?.priority === "medium"
                           ? "bg-[#ffc107]"
                           : "bg-[#4caf50]",
                     )}
                   />
-                  {job ? `${job.priority} Priority` : "No job"}
+                  {task ? `${task.priority} Priority` : "No task"}
                 </span>
               </div>
 
@@ -206,24 +206,24 @@ export default function AssignMechanicPage() {
                 <div className="flex flex-col gap-1">
                   <span className="text-[11px] text-[#727784]">Requested Services</span>
                   <span className="truncate text-sm font-medium text-foreground">
-                    {job?.services.length ? job.services.map((s) => s.name).join(", ") : job?.issues ?? "—"}
+                    {task?.services.length ? task.services.map((s) => s.name).join(", ") : task?.issues ?? "—"}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-[11px] text-[#727784]">Services</span>
                   <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
                     <Clock className="size-3.5 text-[#727784]" />
-                    {job?.services.length ? `${job.services.length} service${job.services.length > 1 ? "s" : ""}` : "TBD"}
+                    {task?.services.length ? `${task.services.length} service${task.services.length > 1 ? "s" : ""}` : "TBD"}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-[11px] text-[#727784]">Station</span>
-                  <span className="truncate text-sm font-medium text-foreground">{job?.station ?? "Not set"}</span>
+                  <span className="truncate text-sm font-medium text-foreground">{task?.station ?? "Not set"}</span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-[11px] text-[#727784]">Job Status</span>
-                  {job ? (
-                    <StatusBadge status={job.status} />
+                  <span className="text-[11px] text-[#727784]">Task Status</span>
+                  {task ? (
+                    <StatusBadge status={task.status} />
                   ) : (
                     <span className="text-sm font-medium text-[#727784]">—</span>
                   )}
@@ -320,7 +320,7 @@ export default function AssignMechanicPage() {
                           <span className="text-[11px] text-[#727784]">Current Workload</span>
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-semibold text-foreground">
-                              {workload}/{WORKLOAD_LIMIT} jobs
+                              {workload}/{WORKLOAD_LIMIT} tasks
                             </span>
                             <span className="h-1.5 w-16 overflow-hidden rounded-full bg-[#edeeef]">
                               <span
@@ -458,14 +458,14 @@ export default function AssignMechanicPage() {
             <section className="rounded-[12px] border border-[#e2e8f0] bg-[rgba(0,68,146,0.05)] p-[17px]">
               <p className="flex items-start gap-2 text-sm leading-5 text-[#424753]">
                 <Info className="mt-0.5 size-4 shrink-0 text-[#004492]" />
-                The mechanic will be notified instantly. Once assigned, they can update repair progress and log parts as the job moves through the workshop.
+                The mechanic will be notified instantly. Once assigned, they can update repair progress and log parts as the task moves through the workshop.
               </p>
             </section>
 
             <section className="flex flex-col gap-3.5 rounded-[12px] border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
               <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-3">
-                <span className="text-sm font-medium text-[#424753]">Job</span>
-                <span className="text-sm font-semibold text-foreground">#{job?.id ?? "—"}</span>
+                <span className="text-sm font-medium text-[#424753]">Task</span>
+                <span className="text-sm font-semibold text-foreground">#{task?.id ?? "—"}</span>
               </div>
               <Button
                 type="button"

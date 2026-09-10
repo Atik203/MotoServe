@@ -4,7 +4,7 @@ import type { UserRole } from "@/types";
 
 export type DemoRole = UserRole;
 
-interface AuthUser {
+export interface AuthUser {
   id: string;
   name: string;
   email: string;

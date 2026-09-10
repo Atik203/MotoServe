@@ -55,7 +55,7 @@ export const payInvoiceSchema = z.object({
   }),
 });
 
-export const rateJobSchema = z.object({
+export const rateTaskSchema = z.object({
   body: z.object({
     score: z.number().int().min(1).max(5),
     review: z.string(),
@@ -71,8 +71,9 @@ export const createThreadSchema = z.object({
   }),
 });
 
-export const bulkArchiveJobsSchema = z.object({
+export const bulkArchiveTasksSchema = z.object({
   body: z.object({
     ids: z.array(z.string().min(1)).min(1).max(100),
   }),
 });
+

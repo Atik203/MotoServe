@@ -6,10 +6,11 @@ import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowLeft, ClipboardList, MessageSquare, Package, Star, Stethoscope } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchTasks } from "@/store/slices/tasksSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
+import { fetchServices } from "@/store/slices/servicesSlice";
 import { fetchEstimates } from "@/store/slices/estimatesSlice";
-import { fetchRatings, rateJob } from "@/store/slices/ratingsSlice";
+import { fetchRatings, rateTask } from "@/store/slices/ratingsSlice";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { Button } from "@/components/ui/button";
 import { DetailLoading } from "@/components/ui/loading";
@@ -64,8 +65,9 @@ const statusMeta: Record<string, { label: string; className: string }> = {
 export default function ServiceDetailsPage() {
   const params = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
-  const jobs = useAppSelector((s) => s.jobs.items);
+  const tasks = useAppSelector((s) => s.tasks.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
+  const services = useAppSelector((s) => s.services.items);
   const estimates = useAppSelector((s) => s.estimates.items);
   const ratings = useAppSelector((s) => s.ratings.items);
   const [score, setScore] = useState(5);
@@ -73,32 +75,33 @@ export default function ServiceDetailsPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (jobs.length === 0) dispatch(fetchJobs());
+    if (tasks.length === 0) dispatch(fetchTasks());
     if (vehicles.length === 0) dispatch(fetchVehicles());
+    if (services.length === 0) dispatch(fetchServices());
     if (estimates.length === 0) dispatch(fetchEstimates());
     dispatch(fetchRatings());
-  }, [dispatch, jobs.length, vehicles.length, estimates.length]);
+  }, [dispatch, tasks.length, vehicles.length, services.length, estimates.length]);
 
-  const job = jobs.find((j) => j.id === params.id);
-  if (!job) {
+  const task = tasks.find((t) => t.id === params.id);
+  if (!task) {
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">Service not found.</div>;
   }
-  const vehicle = vehicles.find((v) => v.id === job.vehicleId);
+  const vehicle = vehicles.find((v) => v.id === task.vehicleId);
   if (!vehicle) {
     return <DetailLoading label="Loading service" />;
   }
-  const estimate = estimates.find((e) => e.jobId === job.id) ?? null;
-  const existingRating = ratings.find((r) => r.jobId === job.id) ?? null;
+  const estimate = estimates.find((e) => e.taskId === task.id) ?? null;
+  const existingRating = ratings.find((r) => r.taskId === task.id) ?? null;
 
   const submitRating = async () => {
     setSubmitting(true);
     try {
       await dispatch(
-        rateJob({
-          jobId: job.id,
+        rateTask({
+          taskId: task.id,
           score,
           review: review.trim(),
-          serviceName: job.services[0]?.name ?? "Vehicle Service",
+          serviceName: task.services[0]?.name ?? "Vehicle Service",
         }),
       ).unwrap();
       toast.success(existingRating ? "Review updated" : "Thanks for rating!");
@@ -120,13 +123,13 @@ export default function ServiceDetailsPage() {
               Back to Service History
             </Link>
             <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-semibold tracking-[-0.24px] text-foreground">Service Details: #{job.id}</h1>
+              <h1 className="text-2xl font-semibold tracking-[-0.24px] text-foreground">Service Details: #{task.id}</h1>
               <span className={cn(
                 "flex items-center gap-1.5 rounded-xl border px-[13px] py-[5px] text-xs font-semibold tracking-[0.24px]",
-                statusMeta[job.status]?.className ?? "border-[rgba(255,193,7,0.2)] bg-[rgba(255,193,7,0.1)] text-[#8b5000]",
+                statusMeta[task.status]?.className ?? "border-[rgba(255,193,7,0.2)] bg-[rgba(255,193,7,0.1)] text-[#8b5000]",
               )}>
                 <span className="size-1.5 rounded-full bg-current" />
-                {statusMeta[job.status]?.label ?? job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                {statusMeta[task.status]?.label ?? task.status.charAt(0).toUpperCase() + task.status.slice(1)}
               </span>
             </div>
           </div>
@@ -144,11 +147,11 @@ export default function ServiceDetailsPage() {
                   <p className="text-xl font-semibold text-foreground">
                     {vehicle.year} {vehicle.make} {vehicle.model}
                   </p>
-                  <p className="text-sm text-[#424753]">{job.issues}</p>
+                  <p className="text-sm text-[#424753]">{task.issues}</p>
                   <div className="flex gap-4 pt-3">
                     <div>
                       <p className="text-[11px] font-medium text-[#727784]">STATUS</p>
-                      <p className="text-sm font-medium text-foreground capitalize">{job.status}</p>
+                      <p className="text-sm font-medium text-foreground capitalize">{task.status}</p>
                     </div>
                     <div>
                       <p className="text-[11px] font-medium text-[#727784]">MILEAGE</p>
@@ -166,15 +169,15 @@ export default function ServiceDetailsPage() {
                 <div className="flex gap-4">
                   <div className="flex-1 rounded border border-border bg-secondary p-[9px] pt-[9px] pb-[29px]">
                     <p className="text-[11px] font-medium tracking-[0.55px] text-[#727784] uppercase">Problem Description</p>
-                    <p className="pt-1 text-sm leading-5 text-foreground">{job.issues}</p>
+                    <p className="pt-1 text-sm leading-5 text-foreground">{task.issues}</p>
                   </div>
                   <div className="flex-1 rounded border border-border bg-secondary p-[9px]">
                     <p className="text-[11px] font-medium tracking-[0.55px] text-[#727784] uppercase">Inspection Notes</p>
                     <div className="flex flex-col gap-2 pt-1">
-                      {(job.notes ?? []).length === 0 ? (
+                      {(task.notes ?? []).length === 0 ? (
                         <p className="text-sm leading-5 text-foreground">No inspection notes recorded yet.</p>
                       ) : (
-                        (job.notes ?? []).map((note) => (
+                        (task.notes ?? []).map((note) => (
                           <div key={note.id} className="rounded bg-white p-2.5">
                             <p className="text-sm leading-5 text-foreground">{note.text}</p>
                             <p className="pt-0.5 text-[11px] font-medium text-muted-foreground">
@@ -205,29 +208,38 @@ export default function ServiceDetailsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {job.services.length === 0 && job.partsUsed.length === 0 && (
+                    {(task.services ?? []).length === 0 && (task.partsUsed ?? []).length === 0 && (
                       <TableRow className="border-border">
                         <TableCell className="px-4 py-3 text-sm text-muted-foreground" colSpan={4}>
                           No services or parts recorded yet.
                         </TableCell>
                       </TableRow>
                     )}
-                    {(job.services ?? []).map((item) => (
-                      <TableRow key={item.id} className="border-border">
-                        <TableCell className="px-4 py-3 text-sm font-medium text-foreground">{item.name}</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">1</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">${item.price.toFixed(2)}</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-sm font-medium text-foreground">${item.price.toFixed(2)}</TableCell>
-                      </TableRow>
-                    ))}
-                    {job.partsUsed.map((p) => (
-                      <TableRow key={p.id} className="border-border">
-                        <TableCell className="px-4 py-3 text-sm font-medium text-foreground">{p.name}</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">{p.qty}</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">${p.unitPrice.toFixed(2)}</TableCell>
-                        <TableCell className="px-4 py-3 text-right text-sm font-medium text-foreground">${p.subtotal.toFixed(2)}</TableCell>
-                      </TableRow>
-                    ))}
+                    {(task.services ?? []).map((item, idx) => {
+                      const matched = services.find((s) => s.name === item.name || s.id === item.id);
+                      const price = typeof item.price === "number" ? item.price : (matched?.basePrice ?? 0);
+                      return (
+                        <TableRow key={item.id ?? `${item.name}-${idx}`} className="border-border">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-foreground">{item.name}</TableCell>
+                          <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">1</TableCell>
+                          <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">${price.toFixed(2)}</TableCell>
+                          <TableCell className="px-4 py-3 text-right text-sm font-medium text-foreground">${price.toFixed(2)}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {(task.partsUsed ?? []).map((p) => {
+                      const qty = p.qty ?? 1;
+                      const unitPrice = typeof p.unitPrice === "number" ? p.unitPrice : 0;
+                      const subtotal = typeof p.subtotal === "number" ? p.subtotal : unitPrice * qty;
+                      return (
+                        <TableRow key={p.id} className="border-border">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-foreground">{p.name}</TableCell>
+                          <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">{qty}</TableCell>
+                          <TableCell className="px-4 py-3 text-right text-sm text-[#424753]">${unitPrice.toFixed(2)}</TableCell>
+                          <TableCell className="px-4 py-3 text-right text-sm font-medium text-foreground">${subtotal.toFixed(2)}</TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </section>
@@ -238,8 +250,8 @@ export default function ServiceDetailsPage() {
                 <h2 className="text-sm font-semibold text-foreground">Assigned Staff</h2>
                 <div className="flex flex-col gap-4">
                   {[
-                    { label: "Service Advisor", name: job.advisor?.name ?? "—" },
-                    { label: "Lead Mechanic", name: job.mechanic?.name ?? "Not assigned" },
+                    { label: "Service Advisor", name: task.advisor?.name ?? "—" },
+                    { label: "Lead Mechanic", name: task.mechanic?.name ?? "Not assigned" },
                   ].map((m) => (
                     <div key={m.label} className="flex items-center gap-3">
                       <span className="flex size-10 items-center justify-center rounded-xl border border-border bg-secondary text-xs font-semibold text-muted-foreground">
@@ -275,7 +287,7 @@ export default function ServiceDetailsPage() {
                 </Link>
               </section>
 
-              {job.status === "completed" && (
+              {task.status === "completed" && (
                 <section className="flex flex-col gap-3 rounded-xl border border-border bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
                   <h2 className="text-sm font-semibold text-foreground">
                     {existingRating ? "Your Review" : "Rate This Service"}

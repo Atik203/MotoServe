@@ -5,11 +5,11 @@ import type {
   Employee,
   Estimate,
   Invoice,
-  JobCard,
   KpiCard,
   Part,
   Rating,
   Service,
+  TaskCard,
   Vehicle,
 } from "@/types";
 
@@ -18,7 +18,7 @@ export type DemoFile =
   | "vehicles"
   | "customers"
   | "employees"
-  | "jobs"
+  | "tasks"
   | "parts"
   | "appointments"
   | "estimates"
@@ -37,7 +37,7 @@ type DemoMap = {
   vehicles: Vehicle[];
   customers: Customer[];
   employees: Employee[];
-  jobs: JobCard[];
+  tasks: TaskCard[];
   parts: Part[];
   appointments: Appointment[];
   estimates: Estimate[];
@@ -52,10 +52,10 @@ type DemoMap = {
       role: string;
       active: number;
       completed: number;
-      avgHoursPerJob: number;
+      avgHoursPerTask?: number;
     }[];
     serviceDistribution: { name: string; pct: number }[];
-    jobsByStatus: { status: string; count: number }[];
+    tasksByStatus: { status: string; count: number }[];
     activityLog: { id: string; user: string; action: string; time: string }[];
   };
   testimonials: {

@@ -2,11 +2,11 @@ import { prisma } from "../../lib/prisma.js";
 import { ApiError } from "../../middleware/error.js";
 import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
-import type { Estimate, JobCard, Prisma } from "../../generated/prisma/client.js";
+import type { Estimate, TaskCard, Prisma } from "../../generated/prisma/client.js";
 import { createWithSequentialId } from "../../lib/ids.js";
-import type { AssignMechanicBody, CreateCustomerBody, CreateEstimateBody, CreateJobCardBody } from "./advisor.types.js";
+import type { AssignMechanicBody, CreateCustomerBody, CreateEstimateBody, CreateTaskCardBody } from "./advisor.types.js";
 
-export async function createJobCard(advisorId: string, body: CreateJobCardBody) {
+export async function createTaskCard(advisorId: string, body: CreateTaskCardBody) {
   if (body.appointmentId) {
     const appointment = await prisma.appointment.findUnique({ where: { id: body.appointmentId } });
     if (!appointment) throw new ApiError(404, "Appointment not found");
@@ -17,7 +17,7 @@ export async function createJobCard(advisorId: string, body: CreateJobCardBody) 
   const serviceLines = body.serviceIds?.length
     ? await prisma.service.findMany({ where: { id: { in: body.serviceIds } } })
     : [];
-  const job = await createWithSequentialId<JobCard>(prisma.jobCard, "JC-", 1040, (id) => ({
+  const task = await createWithSequentialId<TaskCard>(prisma.taskCard, "TC-", 1040, (id) => ({
     data: {
       id,
       vehicleId: body.vehicleId,
@@ -38,17 +38,17 @@ export async function createJobCard(advisorId: string, body: CreateJobCardBody) 
       status: "RECEIVED",
     },
   }));
-  await prisma.jobProgress.createMany({
+  await prisma.taskProgress.createMany({
     data: [
-      { jobCardId: job.id, step: "RECEIVED", label: "Vehicle Received", done: true },
-      { jobCardId: job.id, step: "INSPECTING", label: "Initial Inspection", done: false },
-      { jobCardId: job.id, step: "REPAIRING", label: "Repairing", done: false },
-      { jobCardId: job.id, step: "TESTING", label: "Testing", done: false },
-      { jobCardId: job.id, step: "READY", label: "Ready for Pickup", done: false },
-      { jobCardId: job.id, step: "COMPLETED", label: "Completed", done: false },
+      { taskCardId: task.id, step: "RECEIVED", label: "Vehicle Received", done: true },
+      { taskCardId: task.id, step: "INSPECTING", label: "Initial Inspection", done: false },
+      { taskCardId: task.id, step: "REPAIRING", label: "Repairing", done: false },
+      { taskCardId: task.id, step: "TESTING", label: "Testing", done: false },
+      { taskCardId: task.id, step: "READY", label: "Ready for Pickup", done: false },
+      { taskCardId: task.id, step: "COMPLETED", label: "Completed", done: false },
     ],
   });
-  return job;
+  return task;
 }
 
 export async function createCustomer(body: CreateCustomerBody) {
@@ -76,25 +76,26 @@ export async function assignMechanic(id: string, body: AssignMechanicBody) {
   const mechanic = await prisma.user.findUnique({ where: { id: body.mechanicId } });
   if (!mechanic) throw new ApiError(404, "Mechanic not found");
   if (mechanic.role !== "MECHANIC") throw new ApiError(400, "Selected user is not a mechanic");
-  const data: Prisma.JobCardUncheckedUpdateInput = { mechanicId: body.mechanicId };
+  const data: Prisma.TaskCardUncheckedUpdateInput = { mechanicId: body.mechanicId };
   if (body.station) data.station = body.station;
   if (body.notes) data.assignmentNotes = body.notes;
-  return prisma.jobCard.update({ where: { id }, data });
+  return prisma.taskCard.update({ where: { id }, data });
 }
 
 export async function createEstimate(advisorId: string, role: string, body: CreateEstimateBody) {
-  const job = await prisma.jobCard.findUnique({ where: { id: body.jobId }, select: { customerId: true, status: true, advisorId: true } });
-  if (!job) throw new ApiError(404, "Job not found");
-  if (job.status === "COMPLETED") throw new ApiError(400, "Cannot estimate a completed job");
-  if (role === "ADVISOR" && job.advisorId !== advisorId) {
-    throw new ApiError(403, "You can only create estimates for jobs assigned to you");
+  const targetId = body.taskId;
+  const task = await prisma.taskCard.findUnique({ where: { id: targetId }, select: { customerId: true, status: true, advisorId: true } });
+  if (!task) throw new ApiError(404, "Task not found");
+  if (task.status === "COMPLETED") throw new ApiError(400, "Cannot estimate a completed task");
+  if (role === "ADVISOR" && task.advisorId !== advisorId) {
+    throw new ApiError(403, "You can only create estimates for tasks assigned to you");
   }
   const total = body.items.reduce((sum, i) => sum + i.amount, 0);
   return createWithSequentialId<Estimate>(prisma.estimate, "ES-", 3300, (id) => ({
     data: {
       id,
-      jobCardId: body.jobId,
-      customerId: job.customerId,
+      taskCardId: targetId,
+      customerId: task.customerId,
       advisorId,
       summary: body.summary ?? "",
       internalNotes: body.internalNotes,
@@ -110,3 +111,4 @@ export async function createEstimate(advisorId: string, role: string, body: Crea
     include: { items: true },
   }));
 }
+

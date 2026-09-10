@@ -24,7 +24,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchReports } from "@/store/slices/reportsSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
 import { fetchInvoices } from "@/store/slices/invoicesSlice";
-import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchTasks } from "@/store/slices/tasksSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchRatings } from "@/store/slices/ratingsSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
@@ -33,7 +33,7 @@ import { TableLoading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 import { downloadInvoicePdf } from "@/lib/pdf";
 
-const MAX_ACTIVE_JOBS = 5;
+const MAX_ACTIVE_TASKS = 5;
 const TABLE_PAGE = 4;
 const DONUT_COLORS = ["#004492", "#ffb05f", "#783100", "#e1e3e4"];
 
@@ -130,7 +130,7 @@ export default function WorkloadReportsPage() {
   const reports = useAppSelector((s) => s.reports.data);
   const employees = useAppSelector((s) => s.employees.items);
   const invoices = useAppSelector((s) => s.invoices.items);
-  const jobs = useAppSelector((s) => s.jobs.items);
+  const tasks = useAppSelector((s) => s.tasks.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const ratings = useAppSelector((s) => s.ratings.items);
   const services = useAppSelector((s) => s.services.items);
@@ -145,7 +145,7 @@ export default function WorkloadReportsPage() {
     if (!reports) dispatch(fetchReports());
     if (employees.length === 0) dispatch(fetchEmployees());
     dispatch(fetchInvoices());
-    dispatch(fetchJobs());
+    dispatch(fetchTasks());
     dispatch(fetchVehicles());
     dispatch(fetchRatings());
     if (services.length === 0) dispatch(fetchServices());
@@ -167,10 +167,10 @@ export default function WorkloadReportsPage() {
     .filter((i) => i.payment?.paidAt && new Date(i.payment.paidAt).toDateString() === yesterday)
     .reduce((s, i) => s + i.total, 0);
   const todayDelta = pct(todayIncome, yesterdayIncome);
-  const receivedToday = jobs.filter((j) => new Date(j.createdAt).toDateString() === today).length;
+  const receivedToday = tasks.filter((t) => new Date(t.createdAt).toDateString() === today).length;
 
-  const completedJobs = reports?.jobsByStatus.find((j) => j.status === "completed")?.count ?? 0;
-  const pendingJobs = reports?.activeJobs ?? 0;
+  const completedTasks = reports?.tasksByStatus.find((t) => t.status === "completed")?.count ?? 0;
+  const pendingTasks = reports?.activeTasks ?? 0;
   const totalRevenue = reports?.totalRevenue ?? 0;
 
   const lineData = (() => {
@@ -199,10 +199,10 @@ export default function WorkloadReportsPage() {
   const mechanics = reports.workloadByMechanic;
   const advisors = employees.filter((e) => e.role === "advisor" && e.status === "active").length;
   const activeMechanics = employees.filter((e) => e.role === "mechanic" && e.status === "active").length;
-  const utilizations = mechanics.map((m) => Math.round((m.active / MAX_ACTIVE_JOBS) * 100));
+  const utilizations = mechanics.map((m) => Math.round((m.active / MAX_ACTIVE_TASKS) * 100));
 
   const avgServiceMin = (() => {
-    const completed = jobs.filter((j) => j.status === "completed");
+    const completed = tasks.filter((t) => t.status === "completed");
     if (completed.length === 0) return 0;
     const totalMin = completed.reduce((s, j) => {
       const mins = j.services
@@ -219,9 +219,9 @@ export default function WorkloadReportsPage() {
   const ranking = mechanics
     .map((m, i) => {
       const mechanicId = employees.find((e) => e.name === m.mechanic)?.id;
-      const mechanicJobs = mechanicId ? jobs.filter((j) => j.mechanicId === mechanicId) : [];
-      const rated = mechanicJobs
-        .map((j) => ratings.find((r) => r.jobId === j.id))
+      const mechanicTasks = mechanicId ? tasks.filter((t) => t.mechanicId === mechanicId) : [];
+      const rated = mechanicTasks
+        .map((t) => ratings.find((r) => r.taskId === t.id))
         .filter((r): r is NonNullable<typeof r> => Boolean(r));
       return {
         ...m,
@@ -233,12 +233,12 @@ export default function WorkloadReportsPage() {
 
   const historyRows = invoices
     .map((inv) => {
-      const job = jobs.find((j) => j.id === inv.jobId);
+      const task = tasks.find((t) => t.id === inv.taskId);
       return {
         inv,
-        job,
-        vehicle: job?.vehicle ?? vehicles.find((v) => v.id === inv.vehicleId),
-        customer: job?.customer?.name ?? "Vehicle Owner",
+        task,
+        vehicle: task?.vehicle ?? vehicles.find((v) => v.id === inv.vehicleId),
+        customer: task?.customer?.name ?? "Vehicle Owner",
       };
     })
     .sort((a, b) => new Date(b.inv.issuedAt).getTime() - new Date(a.inv.issuedAt).getTime());
@@ -274,8 +274,8 @@ export default function WorkloadReportsPage() {
         r.inv.id,
         new Date(r.inv.issuedAt).toLocaleDateString(),
         `${r.customer}${r.vehicle ? ` · ${r.vehicle.make} ${r.vehicle.model}` : ""}`,
-        r.inv.items[0]?.description ?? r.job?.services.map((s) => s.name).join(", ") ?? "—",
-        r.job?.mechanic?.name ?? "—",
+        r.inv.items[0]?.description ?? r.task?.services.map((s: { name: string }) => s.name).join(", ") ?? "—",
+        r.task?.mechanic?.name ?? "—",
         `$${r.inv.total.toFixed(2)}`,
         r.inv.status,
       ]);
@@ -415,8 +415,8 @@ export default function WorkloadReportsPage() {
           {[
             { label: "Monthly Revenue", value: money(lastMonth), delta: lastMonthDelta, deltaLabel: "vs last month", icon: <BarChart3 className="size-4" /> },
             { label: "Today's Income", value: money(todayIncome), delta: todayDelta, deltaLabel: "vs yesterday", icon: <Calendar className="size-4" /> },
-            { label: "Completed Jobs", value: String(completedJobs), delta: null, deltaLabel: "this month", icon: <Wrench className="size-4" /> },
-            { label: "Pending Jobs", value: String(pendingJobs), delta: null, deltaLabel: `${receivedToday} since morning`, icon: <Clock className="size-4" /> },
+            { label: "Completed Tasks", value: String(completedTasks), delta: null, deltaLabel: "this month", icon: <Wrench className="size-4" /> },
+            { label: "Pending Tasks", value: String(pendingTasks), delta: null, deltaLabel: `${receivedToday} since morning`, icon: <Clock className="size-4" /> },
           ].map((kpi) => (
             <div
               key={kpi.label}
@@ -528,7 +528,7 @@ export default function WorkloadReportsPage() {
               </tr>
             </thead>
             <tbody>
-              {historyPageRows.map(({ inv, job, vehicle, customer }) => (
+              {historyPageRows.map(({ inv, task, vehicle, customer }) => (
                 <tr key={inv.id} className="border-t border-[#e2e8f0] transition-colors hover:bg-[#f8f9fa]">
                   <td className="px-6 py-3.5 text-sm font-semibold text-[#004492]">{inv.id}</td>
                   <td className="px-6 py-3.5 text-sm text-foreground">
@@ -539,9 +539,9 @@ export default function WorkloadReportsPage() {
                     {vehicle ? <span className="text-muted-foreground"> · {vehicle.year} {vehicle.make} {vehicle.model}</span> : null}
                   </td>
                   <td className="max-w-[220px] truncate px-6 py-3.5 text-sm text-[#424753]">
-                    {inv.items[0]?.description ?? job?.services.map((s) => s.name).join(", ") ?? "—"}
+                    {inv.items[0]?.description ?? task?.services.map((s: { name: string }) => s.name).join(", ") ?? "—"}
                   </td>
-                  <td className="px-6 py-3.5 text-sm text-[#424753]">{job?.mechanic?.name ?? "—"}</td>
+                  <td className="px-6 py-3.5 text-sm text-[#424753]">{task?.mechanic?.name ?? "—"}</td>
                   <td className="px-6 py-3.5 text-right text-sm font-semibold text-foreground">{money(inv.total)}</td>
                   <td className="px-6 py-3.5 text-center">
                     <span
@@ -642,7 +642,7 @@ export default function WorkloadReportsPage() {
               <thead>
                 <tr className="border-b border-[#e2e8f0] text-[11px] font-semibold tracking-[0.55px] text-[#424753] uppercase">
                   <th className="pb-3">Mechanic</th>
-                  <th className="pb-3 text-center">Jobs Completed</th>
+                  <th className="pb-3 text-center">Tasks Completed</th>
                   <th className="pb-3">Workload %</th>
                   <th className="pb-3 text-center">Avg Rating</th>
                 </tr>

@@ -43,7 +43,7 @@ export function UserMenu() {
         )}
       </button>
 
-      <div className="invisible absolute top-[calc(100%+8px)] right-0 z-50 w-56 translate-y-1 rounded-lg border border-border bg-white p-1.5 opacity-0 shadow-md transition-all duration-150 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+      <div className="invisible absolute top-[calc(100%+8px)] right-0 z-50 w-56 translate-y-1 rounded-lg border border-border bg-white p-1.5 opacity-0 shadow-md transition-all duration-150 before:absolute before:-top-3 before:left-0 before:right-0 before:h-3 before:content-[''] group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
         <div className="flex flex-col gap-0.5 px-3 py-2.5">
           <span className="text-sm font-semibold text-foreground">{user.name}</span>
           <span className="text-xs text-muted-foreground">{user.email}</span>

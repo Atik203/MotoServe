@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { createJobCard } from "@/store/slices/jobsSlice";
+import { createTaskCard } from "@/store/slices/tasksSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
@@ -25,7 +25,7 @@ const inputBase =
   "h-10 w-full rounded border border-[#e2e8f0] bg-[#f8f9fa] px-3 text-sm text-[#191c1d] placeholder:text-[#9ca3af] outline-none";
 const selectBase = cn(inputBase, "appearance-none pr-8");
 
-export default function CreateJobCardPage() {
+export default function CreateTaskCardPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const vehicles = useAppSelector((s) => s.vehicles.items);
@@ -79,7 +79,7 @@ export default function CreateJobCardPage() {
     setSubmitting(true);
     try {
       const res = await dispatch(
-        createJobCard({
+        createTaskCard({
           vehicleId,
           customerId,
           issues: issues.trim(),
@@ -89,24 +89,24 @@ export default function CreateJobCardPage() {
           expectedDate: expectedDate ? (expectedTime ? `${expectedDate} ${expectedTime}` : expectedDate) : undefined,
         }),
       ).unwrap();
-      toast.success(`Job card ${res.id} created`);
+      toast.success(`Task card ${res.id} created`);
       router.push("/advisor");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create job card");
+      toast.error(err instanceof Error ? err.message : "Failed to create task card");
       setSubmitting(false);
     }
   };
 
   if ((vehiclesStatus === "idle" || vehiclesStatus === "loading") && vehicles.length === 0) {
-    return <FormLoading label="Loading job card form" />;
+    return <FormLoading label="Loading task card form" />;
   }
 
   return (
     <div className="bg-background min-h-screen p-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <div>
-          <p className="text-[11px] text-muted-foreground">Dashboard › Work Orders › Create Job Card</p>
-          <h1 className="text-4xl font-bold tracking-[-0.72px] text-foreground">Create Job Card</h1>
+          <p className="text-[11px] text-muted-foreground">Dashboard › Work Orders › Create Task Card</p>
+          <h1 className="text-4xl font-bold tracking-[-0.72px] text-foreground">Create Task Card</h1>
         </div>
 
         <div className="flex items-start gap-6">
@@ -190,7 +190,7 @@ export default function CreateJobCardPage() {
             <div className="flex flex-col gap-4">
               <button
                 type="button"
-                onClick={() => router.push(`/advisor/jobs?customer=${customerId}`)}
+                onClick={() => router.push(`/advisor/tasks?customer=${customerId}`)}
                 disabled={!customerId}
                 className="flex w-full items-center justify-center gap-2 rounded border border-[#727784] py-2.5 text-xs font-semibold text-primary disabled:opacity-40"
               >
@@ -375,7 +375,7 @@ export default function CreateJobCardPage() {
                 className="flex items-center gap-2 rounded bg-primary px-4 py-[9px] text-xs font-semibold text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] disabled:opacity-50"
               >
                 <Plus className="size-[13.5px]" />
-                {submitting ? "Creating..." : "Create Job Card"}
+                {submitting ? "Creating..." : "Create Task Card"}
               </button>
             </div>
           </form>

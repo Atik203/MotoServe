@@ -4,27 +4,28 @@ import { safeEmit } from "../../lib/socket.js";
 import { logAudit } from "../../lib/audit.js";
 import { prisma } from "../../lib/prisma.js";
 import {
-  archiveJob,
+  archiveTask,
   bookAppointment,
-  bulkArchiveJobs,
+  bulkArchiveTasks,
   createChatThread,
   createVehicle,
   decideEstimate,
   deleteRating,
   deleteVehicle,
   payInvoice,
-  rateJob,
-  restoreJob,
+  rateTask,
+  restoreTask,
   updateVehicle,
 } from "./owner.service.js";
+
 import type {
   BookAppointmentBody,
-  BulkArchiveJobsBody,
+  BulkArchiveTasksBody,
   CreateThreadBody,
   CreateVehicleBody,
   DecideEstimateBody,
   PayInvoiceBody,
-  RateJobBody,
+  RateTaskBody,
 } from "./owner.types.js";
 
 export async function createVehicleController(req: Request, res: Response): Promise<void> {
@@ -74,9 +75,9 @@ export async function payInvoiceController(req: Request, res: Response): Promise
   res.json({ id: invoice.id, status: "paid" });
 }
 
-export async function rateJobController(req: Request, res: Response): Promise<void> {
+export async function rateTaskController(req: Request, res: Response): Promise<void> {
   if (!req.user) throw new ApiError(401, "Authentication required");
-  const rating = await rateJob(req.params.id as string, req.user.userId, req.body.body as RateJobBody);
+  const rating = await rateTask(req.params.id as string, req.user.userId, req.body.body as RateTaskBody);
   res.status(201).json(rating);
 }
 
@@ -86,24 +87,25 @@ export async function deleteRatingController(req: Request, res: Response): Promi
   res.json({ ok: true });
 }
 
-export async function archiveJobController(req: Request, res: Response): Promise<void> {
+export async function archiveTaskController(req: Request, res: Response): Promise<void> {
   if (!req.user) throw new ApiError(401, "Authentication required");
-  const job = await archiveJob(req.params.id as string, req.user.userId);
-  res.json({ id: job.id, ownerArchivedAt: job.ownerArchivedAt });
+  const task = await archiveTask(req.params.id as string, req.user.userId);
+  res.json({ id: task.id, ownerArchivedAt: task.ownerArchivedAt });
 }
 
-export async function restoreJobController(req: Request, res: Response): Promise<void> {
+export async function restoreTaskController(req: Request, res: Response): Promise<void> {
   if (!req.user) throw new ApiError(401, "Authentication required");
-  const job = await restoreJob(req.params.id as string, req.user.userId);
-  res.json({ id: job.id, ownerArchivedAt: job.ownerArchivedAt });
+  const task = await restoreTask(req.params.id as string, req.user.userId);
+  res.json({ id: task.id, ownerArchivedAt: task.ownerArchivedAt });
 }
 
-export async function bulkArchiveJobsController(req: Request, res: Response): Promise<void> {
+export async function bulkArchiveTasksController(req: Request, res: Response): Promise<void> {
   if (!req.user) throw new ApiError(401, "Authentication required");
-  const result = await bulkArchiveJobs((req.body.body as BulkArchiveJobsBody).ids, req.user.userId);
-  await logAudit(req.user?.name ?? "owner", `Archived ${result.archived} job(s) from history`);
+  const result = await bulkArchiveTasks((req.body.body as BulkArchiveTasksBody).ids, req.user.userId);
+  await logAudit(req.user?.name ?? "owner", `Archived ${result.archived} task(s) from history`);
   res.json(result);
 }
+
 
 export async function createThreadController(req: Request, res: Response): Promise<void> {
   if (!req.user) throw new ApiError(401, "Authentication required");

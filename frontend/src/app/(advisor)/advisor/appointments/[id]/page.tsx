@@ -22,7 +22,7 @@ import { DetailLoading } from "@/components/ui/loading";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
-import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchTasks } from "@/store/slices/tasksSlice";
 import { cn } from "@/lib/utils";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { Button } from "@/components/ui/button";
@@ -37,11 +37,11 @@ export default function AdvisorAppointmentDetailsPage() {
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const services = useAppSelector((s) => s.services.items);
   const customers = useAppSelector((s) => s.customers.items);
-  const jobs = useAppSelector((s) => s.jobs.items);
+  const tasks = useAppSelector((s) => s.tasks.items);
 
   useEffect(() => {
     dispatch(fetchAppointments());
-    dispatch(fetchJobs());
+    dispatch(fetchTasks());
     if (vehicles.length === 0) dispatch(fetchVehicles());
     if (services.length === 0) dispatch(fetchServices());
     if (customers.length === 0) dispatch(fetchCustomers());
@@ -56,7 +56,7 @@ export default function AdvisorAppointmentDetailsPage() {
         .map((id) => services.find((s) => s.id === id))
         .filter((s): s is NonNullable<typeof s> => Boolean(s))
     : [];
-  const linkedJob = appointment ? jobs.find((j) => j.appointmentId === appointment.id) : undefined;
+  const linkedTask = appointment ? tasks.find((j) => j.appointmentId === appointment.id) : undefined;
 
   if (!appointment) {
     if (appointments.length === 0) {
@@ -183,16 +183,16 @@ export default function AdvisorAppointmentDetailsPage() {
                 </div>
               )}
 
-              {linkedJob && (
+              {linkedTask && (
                 <div className="mt-4 flex items-center justify-between rounded-lg bg-[rgba(76,175,80,0.08)] p-4">
                   <p className="text-sm font-semibold text-[#4caf50]">
-                    Converted to job card <span className="font-mono">{linkedJob.id}</span>
+                    Converted to task card <span className="font-mono">{linkedTask.id}</span>
                   </p>
                   <Link
-                    href={`/advisor/estimates/new?job=${linkedJob.id}`}
+                    href={`/advisor/estimates/new?task=${linkedTask.id}`}
                     className="flex items-center text-xs font-semibold text-[#4caf50] hover:underline"
                   >
-                    Manage job <ChevronRight className="size-3.5" />
+                    Manage task <ChevronRight className="size-3.5" />
                   </Link>
                 </div>
               )}

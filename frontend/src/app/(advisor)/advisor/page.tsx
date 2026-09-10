@@ -19,7 +19,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchJobs } from "@/store/slices/jobsSlice";
+import { fetchTasks } from "@/store/slices/tasksSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchAppointments, updateAppointmentStatus } from "@/store/slices/appointmentsSlice";
 import { fetchEstimates } from "@/store/slices/estimatesSlice";
@@ -37,7 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { JobStatus } from "@/types";
+import type { TaskStatus } from "@/types";
 
 const kpiIcons: Record<string, typeof Calendar> = {
   calendar: Calendar,
@@ -48,7 +48,7 @@ const kpiIcons: Record<string, typeof Calendar> = {
   "check-circle": CheckCircle2,
 };
 
-const statusPills: Record<JobStatus, { label: string; className: string }> = {
+const statusPills: Record<TaskStatus, { label: string; className: string }> = {
   received: {
     label: "Received",
     className: "border-[rgba(100,116,139,0.2)] bg-[rgba(100,116,139,0.1)] text-[#64748b]",
@@ -83,18 +83,18 @@ const appointmentStatus: Record<string, { label: string; className: string }> = 
 
 export default function AdvisorDashboardPage() {
   const dispatch = useAppDispatch();
-  const jobs = useAppSelector((s) => s.jobs.items);
+  const tasks = useAppSelector((s) => s.tasks.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const appointments = useAppSelector((s) => s.appointments.items);
   const estimates = useAppSelector((s) => s.estimates.items);
   const threads = useAppSelector((s) => s.chat.threads);
   const services = useAppSelector((s) => s.services.items);
   const customers = useAppSelector((s) => s.customers.items);
-  const jobsStatus = useAppSelector((s) => s.jobs.status);
+  const tasksStatus = useAppSelector((s) => s.tasks.status);
   const appointmentsStatus = useAppSelector((s) => s.appointments.status);
 
   useEffect(() => {
-    dispatch(fetchJobs());
+    dispatch(fetchTasks());
     dispatch(fetchVehicles());
     dispatch(fetchAppointments());
     dispatch(fetchEstimates());
@@ -104,8 +104,8 @@ export default function AdvisorDashboardPage() {
   }, [dispatch]);
 
   const kpis = useMemo(
-    () => buildKpis("advisor", { jobs, vehicles, appointments, estimates, threads }),
-    [jobs, vehicles, appointments, estimates, threads],
+    () => buildKpis("advisor", { tasks, vehicles, appointments, estimates, threads }),
+    [tasks, vehicles, appointments, estimates, threads],
   );
 
   const pendingEstimates = estimates.filter((e) => e.status === "pending");
@@ -121,11 +121,11 @@ export default function AdvisorDashboardPage() {
   const unreadThread = threads.find((t) => t.unread > 0) ?? threads[0] ?? null;
 
   const initialLoading =
-    (jobsStatus === "idle" ||
-      jobsStatus === "loading" ||
+    (tasksStatus === "idle" ||
+      tasksStatus === "loading" ||
       appointmentsStatus === "idle" ||
       appointmentsStatus === "loading") &&
-    jobs.length === 0 &&
+    tasks.length === 0 &&
     appointments.length === 0;
   if (initialLoading) {
     return <DashboardLoading label="Loading advisor dashboard" />;
@@ -145,11 +145,11 @@ export default function AdvisorDashboardPage() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <div className="flex gap-4">
           <Link
-            href="/advisor/job-cards/new"
+            href="/advisor/task-cards/new"
             className="flex items-center gap-2 rounded-lg bg-primary px-4 py-[9px] text-xs font-semibold tracking-[0.24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
           >
             <Plus className="size-[13.5px]" />
-            Create Job Card
+            Create Task Card
           </Link>
           <Link
             href="/advisor/receive"
@@ -159,7 +159,7 @@ export default function AdvisorDashboardPage() {
             Receive Vehicle
           </Link>
           <Link
-            href="/advisor/job-cards/assign"
+            href="/advisor/task-cards/assign"
             className="flex items-center gap-2 rounded-lg border border-[#e5e7eb] bg-white px-4 py-[9px] text-xs font-semibold tracking-[0.24px] text-[#191c1d] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
           >
             <UserCheck className="size-4" />
@@ -192,10 +192,10 @@ export default function AdvisorDashboardPage() {
           <div className="col-span-8 flex flex-col gap-6">
             <section className="w-full overflow-hidden rounded-lg border border-[#e5e7eb] bg-white shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
               <div className="flex items-center justify-between border-b border-[#e5e7eb] bg-[#f8f9fa] px-4 pt-4 pb-[17px]">
-                <h2 className="text-xl font-semibold text-foreground">Job Cards</h2>
+                <h2 className="text-xl font-semibold text-foreground">Task Cards</h2>
                 <button
                   type="button"
-                  aria-label="Job card options"
+                  aria-label="Task card options"
                   className="rounded-sm px-1 pt-1 pb-2.5 text-muted-foreground hover:text-foreground"
                 >
                   <MoreHorizontal className="size-[18px]" />
@@ -223,17 +223,17 @@ export default function AdvisorDashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {jobs.map((job, i) => {
-                    const vehicle = vehicles.find((v) => v.id === job.vehicleId);
-                    const customer = job.customer;
-                    const pill = statusPills[job.status];
+                  {tasks.map((task, i) => {
+                    const vehicle = vehicles.find((v) => v.id === task.vehicleId);
+                    const customer = task.customer;
+                    const pill = statusPills[task.status];
                     return (
                       <TableRow
-                        key={job.id}
+                        key={task.id}
                         className={cn("border-[#e5e7eb] hover:bg-transparent", i % 2 === 1 && "bg-[rgba(243,244,245,0.3)]")}
                       >
                         <TableCell className="px-4 py-5 text-sm font-medium text-[#191c1d]">
-                          #{job.id}
+                          #{task.id}
                         </TableCell>
                         <TableCell className="px-4 py-5 text-sm text-[#191c1d]">
                           {customer?.name ?? "—"}
@@ -257,7 +257,7 @@ export default function AdvisorDashboardPage() {
                         <TableCell className="px-4 py-[18px] text-right">
                           <button
                             type="button"
-                            aria-label={`Options for ${job.id}`}
+                            aria-label={`Options for ${task.id}`}
                             className="inline-flex items-center justify-center pb-[5px] text-muted-foreground hover:text-foreground"
                           >
                             <MoreVertical className="size-[13px]" />
@@ -270,10 +270,10 @@ export default function AdvisorDashboardPage() {
               </Table>
 
               <Link
-                href="/advisor/jobs"
+                href="/advisor/tasks"
                 className="flex w-full items-center justify-center border-t border-[#e5e7eb] bg-[#f8f9fa] px-2 pt-[14.5px] pb-2.5 text-xs font-semibold tracking-[0.24px] text-primary hover:underline"
               >
-                View All Active Jobs
+                View All Active Tasks
               </Link>
             </section>
 
@@ -389,7 +389,7 @@ export default function AdvisorDashboardPage() {
               ) : (
                 pendingEstimates.slice(0, 3).map((estimate) => {
                   const customer = customers.find((c) => c.id === estimate.customerId);
-                  const vehicle = estimate.jobCard && "vehicle" in estimate.jobCard ? estimate.jobCard.vehicle : undefined;
+                  const vehicle = estimate.taskCard && "vehicle" in estimate.taskCard ? estimate.taskCard.vehicle : undefined;
                   return (
                     <div key={estimate.id} className="flex flex-col gap-2.5 rounded border border-[#e5e7eb] p-[13px]">
                       <div className="flex items-center justify-between">

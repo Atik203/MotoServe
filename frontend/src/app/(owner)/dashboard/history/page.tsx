@@ -7,8 +7,8 @@ import { CalendarDays, ChevronDown, Download, Search, Star, UserRound, Wrench, A
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchInvoices } from "@/store/slices/invoicesSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
-import { archiveJob, bulkArchiveJobs, fetchArchivedJobs, fetchJobs, restoreJob } from "@/store/slices/jobsSlice";
-import { deleteRating, fetchRatings, rateJob } from "@/store/slices/ratingsSlice";
+import { archiveTask, bulkArchiveTasks, fetchArchivedTasks, fetchTasks, restoreTask } from "@/store/slices/tasksSlice";
+import { deleteTaskRating, fetchRatings, rateTask } from "@/store/slices/ratingsSlice";
 import { Checkbox } from "@/components/ui/checkbox";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { cn } from "@/lib/utils";
@@ -26,18 +26,18 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
-import type { Invoice, JobCard, Vehicle } from "@/types";
+import type { Invoice, TaskCard, Vehicle } from "@/types";
 
 interface HistoryEntry {
   id: string;
-  job: JobCard;
+  task: TaskCard;
   vehicle: Vehicle;
   invoice: Invoice | null;
   title: string;
   serviceNames: string;
   advisor: string;
   date: string;
-  status: JobCard["status"];
+  status: TaskCard["status"];
   rated: boolean;
   rating?: number;
   review?: string;
@@ -86,15 +86,15 @@ export default function ServiceHistoryPage() {
   const invoices = useAppSelector((s) => s.invoices.items);
   const invoicesStatus = useAppSelector((s) => s.invoices.status);
   const vehicles = useAppSelector((s) => s.vehicles.items);
-  const jobs = useAppSelector((s) => s.jobs.items);
-  const archivedJobs = useAppSelector((s) => s.jobs.archivedItems);
+  const tasks = useAppSelector((s) => s.tasks.items);
+  const archivedTasks = useAppSelector((s) => s.tasks.archivedItems);
   const ratings = useAppSelector((s) => s.ratings.items);
   const [search, setSearch] = useState("");
   const [vehicleFilter, setVehicleFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
   const [ratingFilter, setRatingFilter] = useState<"all" | "rated" | "unrated">("all");
-  const [jobFilter, setJobFilter] = useState("all");
+  const [taskFilter, setTaskFilter] = useState("all");
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [view, setView] = useState<"all" | "archived">("all");
   const [selected, setSelected] = useState<string[]>([]);
@@ -110,46 +110,46 @@ export default function ServiceHistoryPage() {
   useEffect(() => {
     dispatch(fetchInvoices());
     dispatch(fetchVehicles());
-    dispatch(fetchJobs());
-    dispatch(fetchArchivedJobs());
+    dispatch(fetchTasks());
+    dispatch(fetchArchivedTasks());
     dispatch(fetchRatings());
   }, [dispatch]);
 
-  const allJobs = useMemo(() => [...jobs, ...archivedJobs], [jobs, archivedJobs]);
+  const allTasks = useMemo(() => [...tasks, ...archivedTasks], [tasks, archivedTasks]);
 
   const entries = useMemo<HistoryEntry[]>(() => {
     const vehiclesById = new Map(vehicles.map((v) => [v.id, v]));
-    return allJobs
-      .map((job) => {
-        const vehicle = job.vehicle ?? vehiclesById.get(job.vehicleId);
+    return allTasks
+      .map((task) => {
+        const vehicle = task.vehicle ?? vehiclesById.get(task.vehicleId);
         if (!vehicle) return null;
-        const invoice = invoices.find((i) => i.jobId === job.id) ?? null;
-        const rating = ratings.find((r) => r.jobId === job.id);
-        const serviceNames = job.services.map((s) => s.name).join(", ");
+        const invoice = invoices.find((i) => i.taskId === task.id) ?? null;
+        const rating = ratings.find((r) => r.taskId === task.id);
+        const serviceNames = task.services.map((s) => s.name).join(", ");
         return {
-          id: job.id,
-          job,
+          id: task.id,
+          task,
           vehicle,
           invoice,
-          title: job.services[0]?.name ?? "Vehicle Service",
+          title: task.services[0]?.name ?? "Vehicle Service",
           serviceNames,
-          advisor: job.advisor?.name ?? "—",
-          date: new Date(job.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-          status: job.status,
+          advisor: task.advisor?.name ?? "—",
+          date: new Date(task.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+          status: task.status,
           rated: Boolean(rating),
           rating: rating?.score,
           review: rating?.review,
           ratedAt: rating?.date ? new Date(rating.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : undefined,
-          archived: Boolean(job.ownerArchivedAt),
-          rateable: job.status === "completed" || job.status === "ready",
+          archived: Boolean(task.ownerArchivedAt),
+          rateable: task.status === "completed" || task.status === "ready",
         } as HistoryEntry;
       })
       .filter((e): e is HistoryEntry => e !== null)
-      .sort((a, b) => new Date(b.job.createdAt).getTime() - new Date(a.job.createdAt).getTime());
-  }, [allJobs, vehicles, invoices, ratings]);
+      .sort((a, b) => new Date(b.task.createdAt).getTime() - new Date(a.task.createdAt).getTime());
+  }, [allTasks, vehicles, invoices, ratings]);
 
   const years = useMemo(() => {
-    const set = new Set(entries.map((e) => new Date(e.job.createdAt).getFullYear()));
+    const set = new Set(entries.map((e) => new Date(e.task.createdAt).getFullYear()));
     return [...set].sort((a, b) => b - a);
   }, [entries]);
 
@@ -175,18 +175,18 @@ export default function ServiceHistoryPage() {
       const matchStatus =
         statusFilter === "all" ||
         (statusFilter === "paid" ? e.invoice?.status === "paid" : e.invoice?.status !== "paid");
-      const matchYear = yearFilter === "all" || new Date(e.job.createdAt).getFullYear() === Number(yearFilter);
+      const matchYear = yearFilter === "all" || new Date(e.task.createdAt).getFullYear() === Number(yearFilter);
       const matchRating =
         ratingFilter === "all" || (ratingFilter === "rated" ? e.rated : !e.rated);
-      const matchJob = jobFilter === "all" || e.status === jobFilter;
-      return matchSearch && matchVehicle && matchStatus && matchYear && matchRating && matchJob;
+      const matchTask = taskFilter === "all" || e.status === taskFilter;
+      return matchSearch && matchVehicle && matchStatus && matchYear && matchRating && matchTask;
     });
     return list.sort((a, b) =>
       sort === "newest"
-        ? new Date(b.job.createdAt).getTime() - new Date(a.job.createdAt).getTime()
-        : new Date(a.job.createdAt).getTime() - new Date(b.job.createdAt).getTime(),
+        ? new Date(b.task.createdAt).getTime() - new Date(a.task.createdAt).getTime()
+        : new Date(a.task.createdAt).getTime() - new Date(b.task.createdAt).getTime(),
     );
-  }, [visibleEntries, search, vehicleFilter, statusFilter, yearFilter, ratingFilter, jobFilter, sort]);
+  }, [visibleEntries, search, vehicleFilter, statusFilter, yearFilter, ratingFilter, taskFilter, sort]);
 
   const hasActiveFilters =
     search.trim() !== "" ||
@@ -194,7 +194,7 @@ export default function ServiceHistoryPage() {
     statusFilter !== "all" ||
     yearFilter !== "all" ||
     ratingFilter !== "all" ||
-    jobFilter !== "all" ||
+    taskFilter !== "all" ||
     sort !== "newest";
 
   const clearFilters = () => {
@@ -203,7 +203,7 @@ export default function ServiceHistoryPage() {
     setStatusFilter("all");
     setYearFilter("all");
     setRatingFilter("all");
-    setJobFilter("all");
+    setTaskFilter("all");
     setSort("newest");
   };
 
@@ -219,7 +219,7 @@ export default function ServiceHistoryPage() {
     if (selected.length === 0) return;
     setArchiving(true);
     try {
-      await dispatch(bulkArchiveJobs(selected)).unwrap();
+      await dispatch(bulkArchiveTasks(selected)).unwrap();
       toast.success(`${selected.length} ${selected.length === 1 ? "entry" : "entries"} archived`);
       setSelected([]);
       setConfirmBulk(false);
@@ -232,7 +232,7 @@ export default function ServiceHistoryPage() {
 
   const archiveSingle = async (entry: HistoryEntry) => {
     try {
-      await dispatch(archiveJob(entry.job.id)).unwrap();
+      await dispatch(archiveTask(entry.task.id)).unwrap();
       toast.success("Entry archived — find it under Archived");
       setSelected((prev) => prev.filter((s) => s !== entry.id));
     } catch (err) {
@@ -242,7 +242,7 @@ export default function ServiceHistoryPage() {
 
   const restoreSingle = async (entry: HistoryEntry) => {
     try {
-      await dispatch(restoreJob(entry.job.id)).unwrap();
+      await dispatch(restoreTask(entry.task.id)).unwrap();
       toast.success("Entry restored to history");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to restore");
@@ -253,7 +253,7 @@ export default function ServiceHistoryPage() {
     if (!deleteFor) return;
     setDeletingReview(true);
     try {
-      await dispatch(deleteRating(deleteFor.job.id)).unwrap();
+      await dispatch(deleteTaskRating(deleteFor.task.id)).unwrap();
       toast.success("Review removed");
       setDeleteFor(null);
     } catch (err) {
@@ -274,8 +274,8 @@ export default function ServiceHistoryPage() {
     setSubmitting(true);
     try {
       await dispatch(
-        rateJob({
-          jobId: ratingFor.job.id,
+        rateTask({
+          taskId: ratingFor.task.id,
           score,
           review: review.trim(),
           serviceName: ratingFor.title,
@@ -420,13 +420,13 @@ export default function ServiceHistoryPage() {
           </div>
           <div className="relative">
             <select
-              value={jobFilter}
-              onChange={(e) => setJobFilter(e.target.value)}
+              value={taskFilter}
+              onChange={(e) => setTaskFilter(e.target.value)}
               className="h-[38px] appearance-none rounded-xl border border-[#c2c6d5] bg-[#f8f9fa] pl-[17px] pr-[38px] text-left text-sm text-foreground outline-none"
             >
-              <option value="all">Job: All</option>
-              <option value="completed">Job: Completed</option>
-              <option value="ready">Job: Ready</option>
+              <option value="all">Task: All</option>
+              <option value="completed">Task: Completed</option>
+              <option value="ready">Task: Ready</option>
             </select>
             <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-3 -translate-y-1/2 text-muted-foreground" />
           </div>
@@ -506,8 +506,8 @@ export default function ServiceHistoryPage() {
                         <div>
                           <h2 className="text-xl font-semibold text-foreground">{entry.title}</h2>
                           <p className="text-sm text-[#424753]">
-                            Reg: <span className="font-medium text-foreground">{entry.vehicle.regNo}</span> • Job:{" "}
-                            <span className="font-medium text-foreground">{entry.job.id}</span>
+                            Reg: <span className="font-medium text-foreground">{entry.vehicle.regNo}</span> • Task:{" "}
+                            <span className="font-medium text-foreground">{entry.task.id}</span>
                             {entry.invoice ? (
                               <>
                                 {" "}• Inv: <span className="font-medium text-foreground">{entry.invoice.id}</span>
@@ -562,7 +562,7 @@ export default function ServiceHistoryPage() {
                               </Button>
                             )}
                             <Button size="sm" variant="outline" asChild className="rounded-xl px-[17px] py-[9px] text-xs font-semibold">
-                              <Link href={`/dashboard/services/${entry.job.id}`}>View Details</Link>
+                              <Link href={`/dashboard/services/${entry.task.id}`}>View Details</Link>
                             </Button>
                             {!entry.archived && (
                               <>
@@ -592,7 +592,7 @@ export default function ServiceHistoryPage() {
                           </div>
                           <div className="flex gap-2">
                             <Button variant="outline" size="sm" asChild className="rounded-xl px-[17px] py-[9px] text-xs font-semibold">
-                              <Link href={`/dashboard/services/${entry.job.id}`}>View Details</Link>
+                              <Link href={`/dashboard/services/${entry.task.id}`}>View Details</Link>
                             </Button>
                             {entry.rateable && !entry.archived && (
                               <Button size="sm" onClick={() => openRate(entry)} className="rounded-xl bg-[#8b5000] px-4 py-[8.5px] text-xs font-semibold text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
@@ -637,7 +637,7 @@ export default function ServiceHistoryPage() {
               {ratingFor?.rated ? "Edit Your Review" : "Rate Your Service"}
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              {ratingFor?.title} • {ratingFor?.job?.id}
+              {ratingFor?.title} • {ratingFor?.task?.id}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-5">
@@ -691,7 +691,7 @@ export default function ServiceHistoryPage() {
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-foreground">Remove your review?</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              {deleteFor?.title} • {deleteFor?.job?.id} — your score and review will be permanently removed.
+              {deleteFor?.title} • {deleteFor?.task?.id} — your score and review will be permanently removed.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

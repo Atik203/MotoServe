@@ -3,13 +3,13 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 interface UiState {
   sidebarCollapsed: boolean;
   mobileNavOpen: boolean;
-  activeJobId: string | null;
+  activeTaskId: string | null;
 }
 
 const initialState: UiState = {
   sidebarCollapsed: false,
   mobileNavOpen: false,
-  activeJobId: null,
+  activeTaskId: null,
 };
 
 const uiSlice = createSlice({
@@ -22,11 +22,11 @@ const uiSlice = createSlice({
     setMobileNavOpen(state, action: PayloadAction<boolean>) {
       state.mobileNavOpen = action.payload;
     },
-    setActiveJobId(state, action: PayloadAction<string | null>) {
-      state.activeJobId = action.payload;
+    setActiveTaskId(state, action: PayloadAction<string | null>) {
+      state.activeTaskId = action.payload;
     },
   },
 });
 
-export const { toggleSidebar, setMobileNavOpen, setActiveJobId } = uiSlice.actions;
+export const { toggleSidebar, setMobileNavOpen, setActiveTaskId } = uiSlice.actions;
 export default uiSlice.reducer;
