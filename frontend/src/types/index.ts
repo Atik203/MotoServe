@@ -141,6 +141,7 @@ export interface TaskCard {
   accessories?: string | null;
   ownerArchivedAt?: string | null;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Part {
