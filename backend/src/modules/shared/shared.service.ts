@@ -39,8 +39,8 @@ export function listTasks(role?: string, userId?: string) {
     },
     include: {
       vehicle: true,
-      customer: { select: { id: true, name: true } },
-      advisor: { select: { id: true, name: true } },
+      customer: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+      advisor: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
       mechanic: { select: { id: true, name: true, avatar: true } },
       mechanics: { select: { id: true, name: true, avatar: true, specialization: true, station: true } },
       appointment: true,
@@ -57,8 +57,8 @@ export function findTaskById(id: string) {
     where: { id },
     include: {
       vehicle: true,
-      customer: { select: { id: true, name: true } },
-      advisor: { select: { id: true, name: true } },
+      customer: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+      advisor: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
       mechanic: { select: { id: true, name: true, avatar: true } },
       mechanics: { select: { id: true, name: true, avatar: true, specialization: true, station: true } },
       appointment: true,
@@ -76,8 +76,8 @@ export function listArchivedTasks(userId: string) {
     where: { customerId: userId, ownerArchivedAt: { not: null } },
     include: {
       vehicle: true,
-      customer: { select: { id: true, name: true } },
-      advisor: { select: { id: true, name: true } },
+      customer: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+      advisor: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
       mechanic: { select: { id: true, name: true, avatar: true } },
       mechanics: { select: { id: true, name: true, avatar: true, specialization: true, station: true } },
       appointment: true,

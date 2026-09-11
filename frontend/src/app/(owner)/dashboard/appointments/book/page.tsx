@@ -3,30 +3,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { HelpCircle, Plus, Search } from "lucide-react";
+import { HelpCircle, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchVehicles, selectVehicle } from "@/store/slices/vehiclesSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
 import { addAppointment } from "@/store/slices/appointmentsSlice";
 import { AddVehicleCard, VehicleCard } from "@/components/roles/owner/VehicleCard";
-import { ServiceCard } from "@/components/roles/owner/ServiceCard";
 import { MonthCalendar } from "@/components/roles/owner/MonthCalendar";
+import { ServicePicker } from "@/components/roles/shared/ServicePicker";
 import { Button } from "@/components/ui/button";
 import { DetailLoading } from "@/components/ui/loading";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import type { ServiceCategory } from "@/types";
 
-const FILTERS: { label: string; value: ServiceCategory | "all" }[] = [
-  { label: "All", value: "all" },
-  { label: "Maintenance", value: "maintenance" },
-  { label: "Repairs", value: "repairs" },
-  { label: "Inspections", value: "inspections" },
-];
+
 
 const TIME_SLOTS = [
   "08:00 AM",
@@ -61,8 +54,6 @@ export default function BookAppointmentPage() {
   const selectedVehicleId = useAppSelector((s) => s.vehicles.selectedVehicleId);
 
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
-  const [filter, setFilter] = useState<ServiceCategory | "all">("all");
-  const [search, setSearch] = useState("");
   const [customRequest, setCustomRequest] = useState("");
   const [customOpen, setCustomOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -76,13 +67,7 @@ export default function BookAppointmentPage() {
     dispatch(fetchServices());
   }, [dispatch]);
 
-  const filteredServices = useMemo(() => {
-    return services.filter((s) => {
-      const matchFilter = filter === "all" || s.category === filter;
-      const matchSearch = s.name.toLowerCase().includes(search.toLowerCase());
-      return matchFilter && matchSearch;
-    });
-  }, [services, filter, search]);
+
 
   const serviceCost = useMemo(
     () =>
@@ -194,42 +179,13 @@ export default function BookAppointmentPage() {
             <Card className="rounded-xl border-border shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]">
               <CardContent className="flex flex-col gap-4 p-[21px]">
                 <SectionTitle>Choose Services</SectionTitle>
-                <div className="relative">
-                  <Search className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search services..."
-                    className="h-[38px] rounded-lg pl-[37px]"
-                  />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {FILTERS.map((f) => (
-                    <button
-                      key={f.value}
-                      type="button"
-                      onClick={() => setFilter(f.value)}
-                      className={cn(
-                        "rounded-full px-[13px] py-[7px] text-xs font-medium transition-colors",
-                        filter === f.value
-                          ? "bg-primary-soft text-primary ring-1 ring-primary"
-                          : "border border-input bg-white text-[#4b5563] hover:border-primary/50",
-                      )}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
-                <div className="grid grid-cols-2 gap-x-[16px] gap-y-[16px]">
-                  {filteredServices.map((s) => (
-                    <ServiceCard
-                      key={s.id}
-                      service={s}
-                      selected={selectedServices.includes(s.id)}
-                      onToggle={() => toggleService(s.id)}
-                    />
-                  ))}
-                </div>
+                <ServicePicker
+                  services={services}
+                  selectedIds={selectedServices}
+                  onToggle={toggleService}
+                  maxHeight="max-h-80"
+                  showTotal
+                />
                 {customOpen ? (
                   <div className="flex flex-col gap-2 rounded-lg border border-dashed border-primary/40 bg-[#eff6ff] p-4">
                     <div className="flex items-center justify-between">

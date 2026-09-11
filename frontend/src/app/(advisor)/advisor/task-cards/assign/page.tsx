@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Car, Check, Clock, Filter, Info, Search, UserCheck, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -42,19 +42,27 @@ const availabilityFor = (workload: number) => {
   return { label: "Available Now", className: "bg-[rgba(76,175,80,0.1)] text-[#4caf50]" };
 };
 
-export default function AssignMechanicPage() {
+function AssignMechanicContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlTaskId = searchParams.get("task");
   const dispatch = useAppDispatch();
   const tasks = useAppSelector((s) => s.tasks.items);
   const tasksStatus = useAppSelector((s) => s.tasks.status);
   const employees = useAppSelector((s) => s.employees.items);
   const employeesStatus = useAppSelector((s) => s.employees.status);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [taskId, setTaskId] = useState("");
+  const [taskId, setTaskId] = useState(urlTaskId ?? "");
   const [search, setSearch] = useState("");
   const [availableOnly, setAvailableOnly] = useState(false);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (urlTaskId) {
+      setTaskId(urlTaskId);
+    }
+  }, [urlTaskId]);
 
   useEffect(() => {
     dispatch(fetchEmployees());
@@ -485,5 +493,13 @@ export default function AssignMechanicPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AssignMechanicPage() {
+  return (
+    <Suspense fallback={<DetailLoading label="Loading assignment" />}>
+      <AssignMechanicContent />
+    </Suspense>
   );
 }

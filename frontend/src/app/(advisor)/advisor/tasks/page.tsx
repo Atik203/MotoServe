@@ -149,7 +149,11 @@ function AdvisorTasksPage() {
                     key={task.id}
                     className={cn("border-[#e5e7eb] hover:bg-[#f8fafc]", i % 2 === 1 && "bg-[rgba(243,244,245,0.3)]")}
                   >
-                    <TableCell className="px-4 py-5 text-sm font-medium text-[#191c1d]">#{task.id}</TableCell>
+                    <TableCell className="px-4 py-5 text-sm font-semibold">
+                      <Link href={`/advisor/tasks/${task.id}`} className="text-primary hover:underline">
+                        #{task.id}
+                      </Link>
+                    </TableCell>
                     <TableCell className="px-4 py-5 text-sm text-[#191c1d]">{task.customer?.name ?? "—"}</TableCell>
                     <TableCell className="px-4 py-[13px]">
                       <p className="text-xs text-[#64748b]">
@@ -167,10 +171,16 @@ function AdvisorTasksPage() {
                     </TableCell>
                     <TableCell className="px-4 py-[18px] text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        <Link
+                          href={`/advisor/tasks/${task.id}`}
+                          className="rounded-md px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-[#eff6ff]"
+                        >
+                          View
+                        </Link>
                         {!task.mechanicId && (!task.mechanics || task.mechanics.length === 0) && task.status !== "completed" && task.status !== "ready" && (
                           <Link
-                            href="/advisor/task-cards/assign"
-                            className="rounded-md px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-[#eff6ff]"
+                            href={`/advisor/task-cards/assign?task=${task.id}`}
+                            className="rounded-md px-2.5 py-1.5 text-xs font-semibold text-[#424753] hover:bg-[#f3f4f5]"
                           >
                             Assign
                           </Link>
@@ -178,7 +188,7 @@ function AdvisorTasksPage() {
                         {task.status !== "completed" && (
                           <Link
                             href={`/advisor/estimates/new?task=${task.id}`}
-                            className="rounded-md px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-[#eff6ff]"
+                            className="rounded-md px-2.5 py-1.5 text-xs font-semibold text-[#424753] hover:bg-[#f3f4f5]"
                           >
                             Estimate
                           </Link>

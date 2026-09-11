@@ -133,8 +133,8 @@ export interface TaskCard {
   partsUsed: PartUsed[];
   photos: string[];
   vehicle?: Vehicle;
-  customer?: { id: string; name: string };
-  advisor?: { id: string; name: string };
+  customer?: { id: string; name: string; phone?: string | null; email?: string | null; avatar?: string | null };
+  advisor?: { id: string; name: string; phone?: string | null; email?: string | null; avatar?: string | null };
   mechanic?: { id: string; name: string; avatar?: string };
   mechanics?: { id: string; name: string; avatar?: string | null; specialization?: string | null; station?: string | null }[];
   appointmentId?: string | null;
