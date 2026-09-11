@@ -82,7 +82,7 @@ export function deactivateEmployee(id: string) {
 }
 
 export async function getReportData(): Promise<ReportDto> {
-  const [stats, tasksByStatus, mechanics, activityLog, taskCards] = await Promise.all([
+  const [stats, tasksByStatus, mechanics, activityLog, taskCards, allInvoices, ratingsStats] = await Promise.all([
     getDashboardStats(),
     prisma.taskCard.groupBy({ by: ["status"], _count: true }),
     prisma.user.findMany({
@@ -91,6 +91,23 @@ export async function getReportData(): Promise<ReportDto> {
     }),
     listAuditLogs(),
     prisma.taskCard.findMany({ select: { mechanicId: true, mechanicIds: true, status: true, services: true } }),
+    prisma.invoice.findMany({
+      include: {
+        vehicle: { select: { id: true, make: true, model: true, year: true, regNo: true } },
+        task: {
+          select: {
+            id: true,
+            status: true,
+            customer: { select: { id: true, name: true } },
+            mechanic: { select: { id: true, name: true } },
+            mechanics: { select: { id: true, name: true } },
+            services: true,
+          },
+        },
+      },
+      orderBy: { issuedAt: "desc" },
+    }),
+    prisma.rating.aggregate({ _avg: { score: true }, _count: true }),
   ]);
 
   const completedByMechanic: Record<string, number> = {};
@@ -133,6 +150,56 @@ export async function getReportData(): Promise<ReportDto> {
 
   const mappedStatus = tasksByStatus.map((j) => ({ status: j.status.toLowerCase(), count: j._count }));
 
+  const paidInvoices = allInvoices.filter((i) => i.status === "PAID");
+  const unpaidInvoices = allInvoices.filter((i) => i.status !== "PAID");
+  const totalPaid = paidInvoices.reduce((s, i) => s + i.total, 0);
+  const totalPending = unpaidInvoices.reduce((s, i) => s + i.total, 0);
+  const laborRevenue = allInvoices.reduce((s, i) => s + i.laborTotal, 0);
+  const partsRevenue = allInvoices.reduce((s, i) => s + i.partsTotal, 0);
+  const taxRevenue = allInvoices.reduce((s, i) => s + i.tax, 0);
+
+  const incomeSummary = {
+    totalRevenue: Math.round(totalPaid * 100) / 100,
+    pendingRevenue: Math.round(totalPending * 100) / 100,
+    laborRevenue: Math.round(laborRevenue * 100) / 100,
+    partsRevenue: Math.round(partsRevenue * 100) / 100,
+    taxRevenue: Math.round(taxRevenue * 100) / 100,
+    paidCount: paidInvoices.length,
+    unpaidCount: unpaidInvoices.length,
+  };
+
+  const serviceHistory = allInvoices.slice(0, 50).map((inv) => {
+    const taskServices = Array.isArray(inv.task?.services) ? (inv.task?.services as { name?: string }[]) : [];
+    const serviceName = taskServices.length > 0
+      ? taskServices.map((s) => s.name).filter(Boolean).join(", ")
+      : Array.isArray(inv.items) && (inv.items as { description?: string }[])[0]?.description
+        ? (inv.items as { description?: string }[])[0].description!
+        : "Vehicle Service";
+
+    const mechanicName = inv.task?.mechanics && inv.task.mechanics.length > 0
+      ? inv.task.mechanics.map((m: { name: string }) => m.name).join(", ")
+      : inv.task?.mechanic?.name ?? "Unassigned";
+
+    return {
+      id: inv.id,
+      taskId: inv.taskId,
+      date: inv.issuedAt.toISOString(),
+      customer: inv.task?.customer?.name ?? "Vehicle Owner",
+      vehicle: inv.vehicle ? `${inv.vehicle.year} ${inv.vehicle.make} ${inv.vehicle.model}` : "Vehicle",
+      regNo: inv.vehicle?.regNo ?? "—",
+      service: serviceName,
+      mechanic: mechanicName,
+      status: inv.status.toLowerCase(),
+      total: Math.round(inv.total * 100) / 100,
+    };
+  });
+
+  const performanceSummary = {
+    completedTasks: tasksByStatus.find((j) => j.status === "COMPLETED")?._count ?? 0,
+    avgRating: ratingsStats._avg.score ? Number(ratingsStats._avg.score.toFixed(1)) : 5.0,
+    totalRatingsCount: ratingsStats._count,
+  };
+
   return {
     ...stats,
     activeTasks: stats.activeTasks,
@@ -146,6 +213,9 @@ export async function getReportData(): Promise<ReportDto> {
     })),
     serviceDistribution,
     activityLog: activityLog.map((a) => ({ id: a.id, user: a.user, action: a.action, time: a.time })),
+    incomeSummary,
+    serviceHistory,
+    performanceSummary,
   };
 }
 

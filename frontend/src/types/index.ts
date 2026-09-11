@@ -269,6 +269,29 @@ export interface KpiCard {
   icon: string;
 }
 
+export interface IncomeSummary {
+  totalRevenue: number;
+  pendingRevenue: number;
+  laborRevenue: number;
+  partsRevenue: number;
+  taxRevenue: number;
+  paidCount: number;
+  unpaidCount: number;
+}
+
+export interface ServiceHistoryReportItem {
+  id: string;
+  taskId: string;
+  date: string;
+  customer: string;
+  vehicle: string;
+  regNo: string;
+  service: string;
+  mechanic: string;
+  status: string;
+  total: number;
+}
+
 export interface ReportsData {
   totalRevenue: number;
   activeTasks: number;
@@ -285,6 +308,13 @@ export interface ReportsData {
   }[];
   serviceDistribution: { name: string; pct: number }[];
   activityLog: { id: string; user: string; action: string; time: string }[];
+  incomeSummary?: IncomeSummary;
+  serviceHistory?: ServiceHistoryReportItem[];
+  performanceSummary?: {
+    completedTasks: number;
+    avgRating: number;
+    totalRatingsCount: number;
+  };
 }
 
 

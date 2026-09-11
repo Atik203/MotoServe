@@ -53,16 +53,15 @@ function AssignMechanicContent() {
   const employeesStatus = useAppSelector((s) => s.employees.status);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [taskId, setTaskId] = useState(urlTaskId ?? "");
+  const [prevUrlTaskId, setPrevUrlTaskId] = useState(urlTaskId);
+  if (urlTaskId !== prevUrlTaskId) {
+    setPrevUrlTaskId(urlTaskId);
+    setTaskId(urlTaskId ?? "");
+  }
   const [search, setSearch] = useState("");
   const [availableOnly, setAvailableOnly] = useState(false);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (urlTaskId) {
-      setTaskId(urlTaskId);
-    }
-  }, [urlTaskId]);
 
   useEffect(() => {
     dispatch(fetchEmployees());

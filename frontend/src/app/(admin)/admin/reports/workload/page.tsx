@@ -10,10 +10,10 @@ import {
   ChevronDown,
   Clock,
   Download,
+  FileDown,
   Filter,
   Headset,
   MoreVertical,
-  Printer,
   RefreshCw,
   Search,
   Star,
@@ -31,7 +31,8 @@ import { fetchServices } from "@/store/slices/servicesSlice";
 import { Button } from "@/components/ui/button";
 import { TableLoading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
-import { downloadInvoicePdf } from "@/lib/pdf";
+import { downloadAdminReportPdf, downloadInvoicePdf } from "@/lib/pdf";
+import type { ReportsData } from "@/types";
 
 const MAX_ACTIVE_TASKS = 5;
 const TABLE_PAGE = 4;
@@ -134,6 +135,7 @@ export default function WorkloadReportsPage() {
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const ratings = useAppSelector((s) => s.ratings.items);
   const services = useAppSelector((s) => s.services.items);
+  const user = useAppSelector((s) => s.auth.user);
 
   const [range, setRange] = useState<"daily" | "weekly" | "monthly">("monthly");
   const [search, setSearch] = useState("");
@@ -267,27 +269,46 @@ export default function WorkloadReportsPage() {
     toast.success("Reports refreshed");
   };
 
-  const exportCsv = () => {
-    const lines: string[][] = [["Invoice", "Date", "Customer / Vehicle", "Service Type", "Mechanic", "Total", "Status"]];
-    for (const r of historyRows) {
-      lines.push([
-        r.inv.id,
-        new Date(r.inv.issuedAt).toLocaleDateString(),
-        `${r.customer}${r.vehicle ? ` · ${r.vehicle.make} ${r.vehicle.model}` : ""}`,
-        r.inv.items[0]?.description ?? r.task?.services.map((s: { name: string }) => s.name).join(", ") ?? "—",
-        r.task?.mechanic?.name ?? "—",
-        `$${r.inv.total.toFixed(2)}`,
-        r.inv.status,
-      ]);
-    }
-    const csv = lines.map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "reports.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Report exported");
+  const handleGenerateReportPdf = () => {
+    if (!reports) return;
+
+    const reportPayload: ReportsData = {
+      ...reports,
+      incomeSummary: reports.incomeSummary ?? {
+        totalRevenue: reports.totalRevenue ?? 0,
+        pendingRevenue: invoices.filter((i) => i.status !== "paid").reduce((s, i) => s + i.total, 0),
+        laborRevenue: laborTotal,
+        partsRevenue: partsTotal,
+        taxRevenue: taxTotal,
+        paidCount: paidInvoices.length,
+        unpaidCount: invoices.length - paidInvoices.length,
+      },
+      serviceHistory: reports.serviceHistory && reports.serviceHistory.length > 0
+        ? reports.serviceHistory
+        : historyRows.map((r) => ({
+            id: r.inv.id,
+            taskId: r.inv.taskId,
+            date: r.inv.issuedAt,
+            customer: r.customer,
+            vehicle: r.vehicle ? `${r.vehicle.year} ${r.vehicle.make} ${r.vehicle.model}` : "Vehicle",
+            regNo: r.vehicle?.regNo ?? "—",
+            service: r.inv.items[0]?.description ?? r.task?.services.map((s: { name: string }) => s.name).join(", ") ?? "Vehicle Service",
+            mechanic: r.task?.mechanic?.name ?? (r.task?.mechanics && r.task.mechanics.length > 0 ? r.task.mechanics.map((m: { name: string }) => m.name).join(", ") : "Unassigned"),
+            status: r.inv.status,
+            total: r.inv.total,
+          })),
+      performanceSummary: reports.performanceSummary ?? {
+        completedTasks: completedTasks,
+        avgRating: ratings.length > 0 ? Number((ratings.reduce((s, r) => s + r.score, 0) / ratings.length).toFixed(1)) : 5.0,
+        totalRatingsCount: ratings.length,
+      },
+    };
+
+    downloadAdminReportPdf(reportPayload, {
+      generatedBy: user?.name ?? "Administrator",
+      range: range === "daily" ? "Daily" : range === "weekly" ? "Weekly" : "Monthly",
+    });
+    toast.success("Admin Report PDF downloaded");
   };
 
   return (
@@ -310,18 +331,9 @@ export default function WorkloadReportsPage() {
               <RefreshCw className="size-3.5" />
               Refresh
             </Button>
-            <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-1.5 rounded-md border-[#e2e8f0] bg-white px-[17px] py-[9px] text-sm font-medium text-foreground shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-              <Printer className="size-3.5" />
-              Print
-            </Button>
-            <Button variant="outline" size="sm" onClick={exportCsv} className="gap-1.5 rounded-md border-[#e2e8f0] bg-white px-[17px] py-[9px] text-sm font-medium text-foreground shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-              <Download className="size-3.5" />
-              Export
-              <ChevronDown className="size-3" />
-            </Button>
-            <Button size="sm" onClick={exportCsv} className="gap-1.5 rounded-md bg-[#004492] px-[16px] py-[9px] text-sm font-semibold text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] hover:bg-[#004492]/90">
-              <BarChart3 className="size-4" />
-              Generate Custom Report
+            <Button size="sm" onClick={handleGenerateReportPdf} className="gap-2 rounded-md bg-[#004492] px-5 py-[9px] text-sm font-semibold text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] hover:bg-[#004492]/90">
+              <FileDown className="size-4" />
+              Generate Report
             </Button>
           </div>
         </div>
