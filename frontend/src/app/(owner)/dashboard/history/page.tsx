@@ -57,14 +57,8 @@ function Stars({
 }) {
   return (
     <div className="flex gap-1">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <button
-          key={i}
-          type="button"
-          disabled={!onSelect}
-          onClick={() => onSelect?.(i)}
-          className={cn(!onSelect && "cursor-default")}
-        >
+      {[1, 2, 3, 4, 5].map((i) => {
+        const star = (
           <Star
             className={cn(
               size,
@@ -75,8 +69,25 @@ function Stars({
                   : "fill-amber-400/50 text-amber-400",
             )}
           />
-        </button>
-      ))}
+        );
+        if (onSelect) {
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onSelect(i)}
+              className="cursor-pointer transition-transform hover:scale-110"
+            >
+              {star}
+            </button>
+          );
+        }
+        return (
+          <span key={i} className="inline-flex">
+            {star}
+          </span>
+        );
+      })}
     </div>
   );
 }
