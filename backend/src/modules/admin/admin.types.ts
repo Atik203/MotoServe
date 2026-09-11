@@ -5,6 +5,7 @@ export interface CreateServiceBody {
   durationMins: number;
   description?: string;
   active?: boolean;
+  marketing?: Record<string, any>;
 }
 
 export interface VerifyCustomerBody {
