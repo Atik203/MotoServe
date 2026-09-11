@@ -14,9 +14,11 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAppDispatch } from "@/store/hooks";
+import Image from "next/image";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createEmployee } from "@/store/slices/employeesSlice";
 import { uploadDocument } from "@/store/slices/authSlice";
+
 
 const DEPARTMENTS = ["Service Advisory", "Customer Relations", "Workshop Operations"];
 const BRANCHES = ["Main HQ (Downtown)", "Main Bay / Station 01", "North Yard", "South Hub"];
@@ -55,6 +57,8 @@ interface AttachedDoc {
 export default function AddAdvisorPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const employees = useAppSelector((s) => s.employees.items);
+  const generatedId = `EMP-2026-${String(employees.length + 1).padStart(3, "0")}`;
   const [form, setForm] = useState({
     fullName: "",
     nid: "",
@@ -251,7 +255,7 @@ export default function AddAdvisorPage() {
                     className="relative flex size-24 items-center justify-center overflow-hidden rounded-[12px] border border-dashed border-[#c2c6d5] bg-[#edeeef] transition-colors hover:border-primary disabled:opacity-60"
                   >
                     {avatarUrl ? (
-                      <img src={avatarUrl} alt="Advisor avatar" className="size-full object-cover" />
+                      <Image src={avatarUrl} alt="Advisor avatar" fill unoptimized className="object-cover" />
                     ) : (
                       <UserPlus className="size-7 text-[#424753]" />
                     )}
@@ -269,7 +273,7 @@ export default function AddAdvisorPage() {
                   </label>
                   <label className="flex flex-col gap-1">
                     <span className={fieldLabel}>Employee ID</span>
-                    <Input value="EMP-2026-089" readOnly className={idInputBase} />
+                    <Input value={generatedId} readOnly className={idInputBase} />
                   </label>
                   <label className="flex flex-col gap-1">
                     <span className={fieldLabel}>National ID (NID) / SSN</span>
@@ -481,7 +485,7 @@ export default function AddAdvisorPage() {
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white">
                           {doc.preview ? (
-                            <img src={doc.preview} alt={doc.name} className="size-full object-cover" />
+                            <Image src={doc.preview} alt={doc.name} fill unoptimized className="object-cover" />
                           ) : (
                             <FileText className="size-5 text-primary" />
                           )}
@@ -524,8 +528,8 @@ export default function AddAdvisorPage() {
               <div className="relative h-16 bg-gradient-to-r from-[#004492] to-[#005bbf]" />
               <div className="px-[25px] pb-[25px]">
                 <div className="relative -mt-10 flex items-end gap-3">
-                  <span className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[rgba(0,68,146,0.1)] text-xl font-bold text-[#004492]">
-                    {avatarUrl ? <img src={avatarUrl} alt="" className="size-full object-cover" /> : initials(form.fullName || "New Advisor")}
+                  <span className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[rgba(0,68,146,0.1)] text-xl font-bold text-[#004492] relative">
+                    {avatarUrl ? <Image src={avatarUrl} alt="" fill unoptimized className="object-cover" /> : initials(form.fullName || "New Advisor")}
                   </span>
                   <div className="pb-1">
                     <p className="text-base font-semibold text-foreground">{form.fullName || "New Advisor"}</p>
@@ -535,7 +539,7 @@ export default function AddAdvisorPage() {
                 <div className="flex flex-col gap-2.5 border-t border-[#e2e8f0] pt-4 text-sm">
                   <div className="flex justify-between">
                     <span className="text-[#424753]">ID</span>
-                    <span className="font-medium text-foreground">EMP-2026-089</span>
+                    <span className="font-medium text-foreground">{generatedId}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#424753]">Status</span>

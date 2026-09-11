@@ -7,18 +7,21 @@ import { toast } from "sonner";
 import {
   ChevronLeft,
   ChevronRight,
-  Download,
   ExternalLink,
   Eye,
   FileText,
   Headset,
+  Mail,
   Pencil,
+  Phone,
   Plus,
+  RefreshCw,
   Search,
   Trash2,
   TrendingUp,
   Users,
   Wrench,
+  X,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { deleteEmployee, fetchEmployees, updateEmployee } from "@/store/slices/employeesSlice";
@@ -28,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { TableLoading } from "@/components/ui/loading";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -46,29 +50,37 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const EXISTING_AVATARS = new Set(["/images/avatars/alex-turner.png"]);
-
 const PAGE_SIZE = 8;
 
 type Tab = "all" | "mechanic" | "advisor";
 
 function EmployeeAvatar({ employee }: { employee: Employee }) {
-  const [broken, setBroken] = useState(!EXISTING_AVATARS.has(employee.avatar));
-  if (broken) {
+  const [broken, setBroken] = useState(false);
+
+  const initials = employee.name
+    .split(" ")
+    .map((n) => n[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  if (!employee.avatar || broken) {
     return (
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[rgba(120,49,0,0.2)] bg-[rgba(158,67,0,0.3)] text-xs font-bold tracking-[0.24px] text-[#783100] uppercase">
-        {employee.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-[#eff6ff] text-xs font-bold text-primary">
+        {initials || "EM"}
       </span>
     );
   }
+
   return (
-    <span className="block size-10 shrink-0 overflow-hidden rounded-xl border border-[#e2e8f0]">
+    <span className="relative block size-10 shrink-0 overflow-hidden rounded-xl border border-[#e2e8f0]">
       <Image
         src={employee.avatar}
         alt={employee.name}
-        width={40}
-        height={40}
-        className="size-full object-cover"
+        fill
+        unoptimized
+        className="object-cover"
         onError={() => setBroken(true)}
       />
     </span>
@@ -79,26 +91,41 @@ export default function EmployeeManagementPage() {
   const dispatch = useAppDispatch();
   const employees = useAppSelector((s) => s.employees.items);
   const employeesStatus = useAppSelector((s) => s.employees.status);
+
   const [tab, setTab] = useState<Tab>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [dialog, setDialog] = useState<{ mode: "view" | "edit"; employee: Employee } | null>(null);
   const [deleting, setDeleting] = useState<Employee | null>(null);
   const [saving, setSaving] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (employees.length === 0) dispatch(fetchEmployees());
   }, [dispatch, employees.length]);
+
+  const refresh = () => {
+    dispatch(fetchEmployees());
+    toast.success("Employee roster refreshed");
+  };
 
   const mechanics = employees.filter((e) => e.role === "mechanic");
   const advisors = employees.filter((e) => e.role === "advisor");
 
   const rows = employees.filter((e) => {
     const matchTab = tab === "all" || e.role === tab;
+    const matchStatus = statusFilter === "all" || e.status === statusFilter;
+    const q = search.trim().toLowerCase();
     const matchSearch =
-      e.name.toLowerCase().includes(search.toLowerCase()) ||
-      e.id.toUpperCase().includes(search.toUpperCase());
-    return matchTab && matchSearch;
+      !q ||
+      e.name.toLowerCase().includes(q) ||
+      e.id.toLowerCase().includes(q) ||
+      e.email.toLowerCase().includes(q) ||
+      e.phone.toLowerCase().includes(q) ||
+      (e.specialization && e.specialization.toLowerCase().includes(q)) ||
+      (e.station && e.station.toLowerCase().includes(q));
+    return matchTab && matchStatus && matchSearch;
   });
 
   const activeCount = employees.filter((e) => e.status === "active").length;
@@ -133,22 +160,31 @@ export default function EmployeeManagementPage() {
 
   const roleLabel = (e: Employee) => (e.role === "advisor" ? "Service Advisor" : "Mechanic");
 
-  const exportCsv = () => {
-    const header = ["ID", "Name", "Email", "Phone", "Role", "Specialization", "Status"];
-    const lines = rows.map((e) => [e.id, e.name, e.email, e.phone, roleLabel(e), e.specialization ?? "", e.status]);
-    const csv = [header, ...lines]
-      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
-      .join("\n");
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "employees.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Employees exported");
+  const handleToggleStatus = async (emp: Employee) => {
+    setTogglingId(emp.id);
+    const newStatus: "active" | "inactive" = emp.status === "active" ? "inactive" : "active";
+    try {
+      await dispatch(
+        updateEmployee({
+          id: emp.id,
+          data: { status: newStatus },
+        }),
+      ).unwrap();
+      toast.success(`${emp.name} marked ${newStatus}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Status update failed");
+    } finally {
+      setTogglingId(null);
+    }
   };
 
-  const handleSave = async (data: { name: string; phone: string; station?: string; specialization?: string; status: "active" | "inactive" }) => {
+  const handleSave = async (data: {
+    name: string;
+    phone: string;
+    station?: string;
+    specialization?: string;
+    status: "active" | "inactive";
+  }) => {
     if (!dialog) return;
     setSaving(true);
     try {
@@ -164,8 +200,7 @@ export default function EmployeeManagementPage() {
           },
         }),
       ).unwrap();
-      toast.success("Employee updated");
-      setDialog(null);
+      toast.success("Employee profile updated");
       setDialog(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Update failed");
@@ -189,191 +224,283 @@ export default function EmployeeManagementPage() {
   };
 
   if ((employeesStatus === "idle" || employeesStatus === "loading") && employees.length === 0) {
-    return <TableLoading label="Loading employees" />;
+    return <TableLoading label="Loading employees roster" />;
   }
 
   return (
     <div className="bg-background min-h-screen p-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+        {/* Breadcrumb & Header */}
         <div className="flex flex-col gap-1">
           <p className="text-[11px] font-medium text-[#424753]">
-            Dashboard
+            <Link href="/admin/dashboard" className="hover:text-primary">
+              Dashboard
+            </Link>
             <span className="mx-1.5 text-[#cbd5e1]">›</span>
             <span className="font-semibold text-primary">Employees</span>
           </p>
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold tracking-[-0.24px] text-foreground">Employee Management</h1>
-            <div className="flex gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-[-0.72px] text-foreground">Employee Management</h1>
+              <p className="text-xs text-muted-foreground pt-0.5">
+                Manage workshop advisors, technicians, stations, and profile credentials.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={exportCsv}
-                className="gap-1 rounded px-[17px] py-[9px] text-xs font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
+                onClick={refresh}
+                className="gap-1.5 rounded-md border-[#e2e8f0] bg-white px-3.5 py-2 text-xs font-semibold text-foreground shadow-[0_1px_1px_rgba(0,0,0,0.05)] hover:bg-secondary"
               >
-                <Download className="size-3" />
-                Export
+                <RefreshCw className="size-3.5" />
+                Refresh
               </Button>
-              <Button asChild size="sm" className="gap-1 rounded px-4 py-[9px] text-xs font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <Button
+                asChild
+                size="sm"
+                className="gap-1.5 rounded-md bg-[#004492] px-4 py-2 text-xs font-semibold tracking-[0.24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] hover:bg-[#004492]/90"
+              >
                 <Link href="/admin/employees/advisors/new">
-                  <Plus className="size-3" />
-                  Advisor
+                  <Plus className="size-3.5" />
+                  Add Advisor
                 </Link>
               </Button>
-              <Button asChild size="sm" className="gap-1 rounded px-4 py-[9px] text-xs font-semibold tracking-[0.24px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <Button
+                asChild
+                size="sm"
+                className="gap-1.5 rounded-md bg-[#004492] px-4 py-2 text-xs font-semibold tracking-[0.24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] hover:bg-[#004492]/90"
+              >
                 <Link href="/admin/employees/mechanics/new">
-                  <Plus className="size-3" />
-                  Mechanic
+                  <Plus className="size-3.5" />
+                  Add Mechanic
                 </Link>
               </Button>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
+        {/* Executive KPI Cards */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {kpis.map((kpi) => (
-            <div key={kpi.label} className="flex h-32 flex-col justify-between rounded-lg border border-[#e2e8f0] bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+            <div
+              key={kpi.label}
+              className="flex h-32 flex-col justify-between rounded-xl border border-[#e2e8f0] bg-white p-5 shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
+            >
               <div className="flex items-start justify-between">
                 <span className="text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">{kpi.label}</span>
-                <kpi.icon className="size-[18px] text-muted-foreground" />
+                <kpi.icon className="size-5 text-[#004492]" />
               </div>
               <div className="flex items-end justify-between">
                 <span className="text-4xl font-bold tracking-[-0.72px] text-foreground">{kpi.value}</span>
                 {kpi.delta ? (
-                  <span className={cn("flex items-center gap-1 rounded-xl p-1 text-[11px] font-medium", kpi.delta.className)}>
-                    <TrendingUp className="size-[11px]" />
+                  <span className={cn("flex items-center gap-1 rounded-xl px-2 py-0.5 text-xs font-semibold", kpi.delta.className)}>
+                    <TrendingUp className="size-3" />
                     {kpi.delta.text}
                   </span>
                 ) : (
-                  <span className="pb-1 text-sm text-[#424753]">{kpi.sub}</span>
+                  <span className="pb-1 text-xs text-muted-foreground">{kpi.sub}</span>
                 )}
               </div>
             </div>
           ))}
         </div>
 
-        <div className="overflow-hidden rounded-lg border border-[#e2e8f0] bg-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-          <div className="flex items-center justify-between border-b border-[#e2e8f0] px-4 pt-4 pb-[17px]">
-            <div className="flex items-center rounded border border-[#e2e8f0] bg-[#f3f4f5] p-[5px]">
+        {/* Filter Controls & Table Card */}
+        <div className="overflow-hidden rounded-xl border border-[#e2e8f0] bg-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e2e8f0] p-4">
+            {/* Dynamic Role Tabs with counts */}
+            <div className="flex items-center gap-1 rounded-lg border border-[#e2e8f0] bg-[#f3f4f5] p-1">
               {(
                 [
-                  { key: "all", label: "All Employees" },
-                  { key: "mechanic", label: "Mechanics" },
-                  { key: "advisor", label: "Advisors" },
-                ] as { key: Tab; label: string }[]
+                  { key: "all", label: "All Employees", count: employees.length },
+                  { key: "mechanic", label: "Mechanics", count: mechanics.length },
+                  { key: "advisor", label: "Advisors", count: advisors.length },
+                ] as const
               ).map((t) => (
                 <button
                   key={t.key}
                   type="button"
-                  onClick={() => setTab(t.key)}
+                  onClick={() => {
+                    setTab(t.key);
+                    setPage(1);
+                  }}
                   className={cn(
-                    "rounded-md px-4 py-[9px] text-xs font-semibold tracking-[0.24px] transition-colors",
+                    "flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-semibold tracking-[0.24px] transition-colors",
                     tab === t.key
-                      ? "border border-[#e2e8f0] bg-white text-primary shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
+                      ? "bg-white text-primary shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
                       : "text-[#424753] hover:text-foreground",
                   )}
                 >
-                  {t.label}
+                  <span>{t.label}</span>
+                  <span
+                    className={cn(
+                      "rounded-full px-1.5 py-0.2 text-[10px]",
+                      tab === t.key ? "bg-[#eff6ff] text-primary" : "bg-[#e5e7eb] text-[#64748b]",
+                    )}
+                  >
+                    {t.count}
+                  </span>
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-2">
-            <div className="relative w-64">
-              <Search className="absolute top-1/2 left-2 size-[15px] -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, ID..."
-                className="h-[38px] rounded pl-[33px] text-sm"
-              />
-            </div>
+
+            {/* Status & Search Controls */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span>Status:</span>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value as typeof statusFilter);
+                    setPage(1);
+                  }}
+                  className="h-9 rounded-md border border-[#e2e8f0] bg-white px-2.5 text-xs font-medium text-foreground outline-none focus:border-primary"
+                >
+                  <option value="all">All ({employees.length})</option>
+                  <option value="active">Active ({activeCount})</option>
+                  <option value="inactive">Inactive ({employees.length - activeCount})</option>
+                </select>
+              </div>
+
+              <div className="relative w-64">
+                <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Search by name, ID, phone..."
+                  className="h-9 rounded-md border-[#e2e8f0] bg-white pl-9 pr-8 text-xs placeholder:text-muted-foreground focus:border-primary"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                    className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
+          {/* Table */}
           <Table>
             <TableHeader>
-              <TableRow className="bg-background hover:bg-background">
-                <TableHead className="px-4 py-4 text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Employee</TableHead>
-                <TableHead className="px-4 py-4 text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Contact</TableHead>
-                <TableHead className="px-4 py-4 text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Role</TableHead>
-                <TableHead className="px-4 py-4 text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Status</TableHead>
-                <TableHead className="px-4 py-4 text-right text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Actions</TableHead>
+              <TableRow className="bg-[#f8f9fa] border-b border-[#e2e8f0]">
+                <TableHead className="px-5 py-3.5 text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Employee</TableHead>
+                <TableHead className="px-5 py-3.5 text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Contact</TableHead>
+                <TableHead className="px-5 py-3.5 text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Role & Station</TableHead>
+                <TableHead className="px-5 py-3.5 text-center text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Status</TableHead>
+                <TableHead className="px-5 py-3.5 text-right text-xs font-semibold tracking-[0.6px] text-[#424753] uppercase">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pageRows.map((employee) => (
-                <TableRow key={employee.id} className="border-t border-border transition-colors hover:bg-background">
-                  <TableCell className="px-4 py-[17px]">
-                    <div className="flex items-center gap-4">
+                <TableRow key={employee.id} className="border-t border-[#e2e8f0] transition-colors hover:bg-[#f8f9fa]">
+                  <TableCell className="px-5 py-3.5">
+                    <div className="flex items-center gap-3">
                       <EmployeeAvatar employee={employee} />
                       <div>
-                        <p className="text-xs font-semibold tracking-[0.24px] text-foreground">{employee.name}</p>
-                        <p className="text-[11px] font-medium text-[#424753]">{employee.id.toUpperCase()}</p>
+                        <p className={cn("text-xs font-bold text-foreground", employee.status !== "active" && "text-muted-foreground")}>
+                          {employee.name}
+                        </p>
+                        <p className="text-[11px] font-mono text-muted-foreground">{employee.id.toUpperCase()}</p>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="px-4 py-[17px]">
-                    <p className="text-sm text-foreground">{employee.email}</p>
-                    <p className="text-[11px] font-medium text-[#424753]">{employee.phone}</p>
+                  <TableCell className="px-5 py-3.5">
+                    <div className="flex flex-col gap-0.5 text-xs">
+                      <a href={`mailto:${employee.email}`} className="flex items-center gap-1 text-foreground hover:text-primary hover:underline">
+                        <Mail className="size-3 text-muted-foreground" />
+                        <span>{employee.email}</span>
+                      </a>
+                      <a href={`tel:${employee.phone}`} className="flex items-center gap-1 text-muted-foreground hover:text-primary">
+                        <Phone className="size-3" />
+                        <span>{employee.phone}</span>
+                      </a>
+                    </div>
                   </TableCell>
-                  <TableCell className="px-4 py-[17px]">
-                    <p className="text-sm text-foreground">{roleLabel(employee)}</p>
-                    {employee.specialization && <p className="text-[11px] font-medium text-[#424753]">{employee.specialization}</p>}
+                  <TableCell className="px-5 py-3.5">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs font-semibold text-foreground">{roleLabel(employee)}</span>
+                      {employee.station ? (
+                        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                          <Wrench className="size-2.5 text-[#004492]" />
+                          {employee.station}
+                        </span>
+                      ) : employee.specialization ? (
+                        <span className="text-[11px] text-muted-foreground">{employee.specialization}</span>
+                      ) : null}
+                    </div>
                   </TableCell>
-                  <TableCell className="px-4 py-[17px]">
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1.5 rounded-xl border px-[9px] py-[5px] text-[11px] font-medium",
-                        employee.status === "active"
-                          ? "border-[rgba(76,175,80,0.2)] bg-[rgba(76,175,80,0.1)] text-[#4caf50]"
-                          : "border-[#e2e8f0] bg-secondary text-muted-foreground",
-                      )}
-                    >
-                      <span className={cn("size-1.5 rounded-full", employee.status === "active" ? "bg-[#4caf50]" : "bg-muted-foreground")} />
-                      {employee.status === "active" ? "Active" : "Inactive"}
-                    </span>
+                  <TableCell className="px-5 py-3.5 text-center">
+                    <div className="inline-flex items-center gap-2">
+                      <Switch
+                        checked={employee.status === "active"}
+                        disabled={togglingId === employee.id}
+                        onCheckedChange={() => void handleToggleStatus(employee)}
+                        aria-label={`Toggle active status for ${employee.name}`}
+                      />
+                      <span
+                        className={cn(
+                          "text-xs font-semibold",
+                          employee.status === "active" ? "text-[#4caf50]" : "text-muted-foreground",
+                        )}
+                      >
+                        {employee.status === "active" ? "Active" : "Inactive"}
+                      </span>
+                    </div>
                   </TableCell>
-                  <TableCell className="px-4 py-[17px]">
+                  <TableCell className="px-5 py-3.5 text-right">
                     <div className="flex justify-end gap-1">
                       <button
                         type="button"
                         onClick={() => setDialog({ mode: "view", employee })}
-                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-[#f3f4f5] hover:text-foreground"
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-[#eff6ff] hover:text-[#004492]"
                         aria-label={`View ${employee.name}`}
+                        title="View details"
                       >
-                        <Eye className="size-[15px]" />
+                        <Eye className="size-4" />
                       </button>
                       <button
                         type="button"
                         onClick={() => setDialog({ mode: "edit", employee })}
-                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-[#f3f4f5] hover:text-foreground"
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-[#eff6ff] hover:text-[#004492]"
                         aria-label={`Edit ${employee.name}`}
+                        title="Edit profile"
                       >
-                        <Pencil className="size-[15px]" />
+                        <Pencil className="size-4" />
                       </button>
                       <button
                         type="button"
                         onClick={() => setDeleting(employee)}
-                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-[#f3f4f5] hover:text-destructive"
-                        aria-label={`Delete ${employee.name}`}
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-rose-50 hover:text-rose-600"
+                        aria-label={`Deactivate ${employee.name}`}
+                        title="Deactivate employee"
                       >
-                        <Trash2 className="size-[15px]" />
+                        <Trash2 className="size-4" />
                       </button>
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
               {pageRows.length === 0 && (
-                <TableRow className="border-t border-border">
+                <TableRow className="border-t border-[#e2e8f0]">
                   <TableCell colSpan={5} className="py-16 text-center text-sm text-muted-foreground">
-                    No employees match your filters.
+                    No employees match your search or filter criteria.
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
 
-          <div className="flex items-center justify-between border-t border-[#e2e8f0] px-4 pt-[17px] pb-4">
-            <p className="text-[11px] font-medium text-[#424753]">
+          {/* Pagination Bar */}
+          <div className="flex items-center justify-between border-t border-[#e2e8f0] px-5 py-3.5 text-xs font-medium text-[#424753]">
+            <p>
               Showing {rows.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1} to{" "}
               {Math.min(safePage * PAGE_SIZE, rows.length)} of {rows.length} entries
             </p>
@@ -382,10 +509,10 @@ export default function EmployeeManagementPage() {
                 type="button"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={safePage <= 1}
-                className="rounded border border-[#e2e8f0] bg-white p-[9px] text-[#424753] transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded border border-[#e2e8f0] bg-white p-2 text-[#424753] transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Previous page"
               >
-                <ChevronLeft className="size-3" />
+                <ChevronLeft className="size-3.5" />
               </button>
               {pageNumbers.map((label) => (
                 <button
@@ -393,10 +520,10 @@ export default function EmployeeManagementPage() {
                   type="button"
                   onClick={() => setPage(label)}
                   className={cn(
-                    "flex size-8 items-center justify-center rounded text-xs font-semibold tracking-[0.24px]",
+                    "flex size-7 items-center justify-center rounded text-xs font-semibold tracking-[0.24px] transition-colors",
                     safePage === label
-                      ? "bg-primary text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
-                      : "border border-[#e2e8f0] bg-white text-[#191c1d] transition-colors hover:text-primary",
+                      ? "bg-[#004492] text-white shadow-sm"
+                      : "border border-[#e2e8f0] bg-white text-[#424753] hover:bg-secondary",
                   )}
                 >
                   {label}
@@ -406,16 +533,17 @@ export default function EmployeeManagementPage() {
                 type="button"
                 onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
                 disabled={safePage >= pageCount}
-                className="rounded border border-[#e2e8f0] bg-white p-[9px] text-[#424753] transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded border border-[#e2e8f0] bg-white p-2 text-[#424753] transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Next page"
               >
-                <ChevronRight className="size-3" />
+                <ChevronRight className="size-3.5" />
               </button>
             </div>
           </div>
         </div>
       </div>
 
+      {/* View & Edit Profile Dialog */}
       <EmployeeDialog
         key={dialog ? `${dialog.employee.id}-${dialog.mode}` : "closed"}
         dialog={dialog}
@@ -424,21 +552,22 @@ export default function EmployeeManagementPage() {
         onSave={handleSave}
       />
 
+      {/* Deactivate Confirmation Dialog */}
       <Dialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
-        <DialogContent className="max-w-sm rounded-xl">
+        <DialogContent className="max-w-md rounded-xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-foreground">Deactivate {deleting?.name}?</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              The employee account will be set to inactive and will no longer be able to log in. This can be undone by
-              reactivating the account.
+              The employee account will be set to inactive and will no longer be assigned to workshop stations or tasks.
+              This can be undone at any time by toggling their status back to active.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleting(null)} className="rounded-lg">
+            <Button variant="outline" onClick={() => setDeleting(null)} className="rounded-lg text-xs">
               Cancel
             </Button>
-            <Button variant="destructive" onClick={() => void handleDelete()} disabled={saving} className="rounded-lg">
-              {saving ? "Deactivating..." : "Deactivate"}
+            <Button variant="destructive" onClick={() => void handleDelete()} disabled={saving} className="rounded-lg text-xs">
+              {saving ? "Deactivating..." : "Deactivate Employee"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -481,46 +610,77 @@ function EmployeeDialog({
   }, [dispatch, employee?.documents, urls]);
 
   const rawDocs = employee?.documents ?? [];
-  const resolvedDocs = rawDocs.map((d) => ({
-    name: d.name,
-    kind: d.kind,
-    url: urls[d.key] || d.url || (d.key?.startsWith("http") || d.key?.startsWith("data:") ? d.key : ""),
-  })).filter((d) => Boolean(d.url));
+  const resolvedDocs = rawDocs
+    .map((d) => ({
+      name: d.name,
+      kind: d.kind,
+      url: urls[d.key] || d.url || (d.key?.startsWith("http") || d.key?.startsWith("data:") ? d.key : ""),
+    }))
+    .filter((d) => Boolean(d.url));
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    onSave({ name: name.trim(), phone: phone.trim(), station: station.trim() || undefined, specialization: specialization.trim() || undefined, status });
+    onSave({
+      name: name.trim(),
+      phone: phone.trim(),
+      station: station.trim() || undefined,
+      specialization: specialization.trim() || undefined,
+      status,
+    });
   };
 
   return (
     <Dialog open={dialog !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-xl rounded-xl">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-foreground">
-            {mode === "view" ? employee?.name : `Edit ${employee?.name}`}
-          </DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">
-            {employee?.role === "advisor" ? "Service Advisor" : "Mechanic"} • {employee?.id.toUpperCase()}
-          </DialogDescription>
+          <div className="flex items-center gap-3">
+            {employee && <EmployeeAvatar employee={employee} />}
+            <div>
+              <DialogTitle className="text-lg font-bold text-foreground">
+                {mode === "view" ? employee?.name : `Edit ${employee?.name}`}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
+                {employee?.role === "advisor" ? "Service Advisor" : "Mechanic"} • {employee?.id.toUpperCase()}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
-        <form onSubmit={submit} className="flex flex-col gap-4">
+        <form onSubmit={submit} className="flex flex-col gap-4 pt-2">
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <Label className="text-xs font-semibold text-foreground">Full Name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} readOnly={mode === "view"} className="h-10 rounded-lg border-border bg-white" />
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                readOnly={mode === "view"}
+                className="h-9 rounded-md border-[#e2e8f0] bg-white text-xs"
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label className="text-xs font-semibold text-foreground">Phone</Label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} readOnly={mode === "view"} className="h-10 rounded-lg border-border bg-white" />
+              <Input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                readOnly={mode === "view"}
+                className="h-9 rounded-md border-[#e2e8f0] bg-white text-xs"
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label className="text-xs font-semibold text-foreground">Email</Label>
-              <Input value={employee?.email ?? ""} readOnly className="h-10 rounded-lg border-border bg-[#f3f4f5] text-muted-foreground" />
+              <Input
+                value={employee?.email ?? ""}
+                readOnly
+                className="h-9 rounded-md border-[#e2e8f0] bg-[#f8f9fa] text-xs text-muted-foreground"
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label className="text-xs font-semibold text-foreground">National ID (NID)</Label>
-              <Input value={employee?.nid || "—"} readOnly className="h-10 rounded-lg border-border bg-[#f3f4f5] text-muted-foreground" />
+              <Input
+                value={employee?.nid || "—"}
+                readOnly
+                className="h-9 rounded-md border-[#e2e8f0] bg-[#f8f9fa] text-xs text-muted-foreground"
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label className="text-xs font-semibold text-foreground">Status</Label>
@@ -528,30 +688,42 @@ function EmployeeDialog({
                 value={status}
                 onChange={(e) => setStatus(e.target.value as "active" | "inactive")}
                 disabled={mode === "view"}
-                className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-foreground outline-none focus:border-primary disabled:bg-[#f3f4f5]"
+                className="h-9 w-full rounded-md border border-[#e2e8f0] bg-white px-3 text-xs text-foreground outline-none focus:border-primary disabled:bg-[#f8f9fa]"
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-semibold text-foreground">Station</Label>
-              <Input value={station} onChange={(e) => setStation(e.target.value)} readOnly={mode === "view"} className="h-10 rounded-lg border-border bg-white" />
+              <Label className="text-xs font-semibold text-foreground">Workshop Station</Label>
+              <Input
+                value={station}
+                onChange={(e) => setStation(e.target.value)}
+                readOnly={mode === "view"}
+                placeholder="e.g. Main Bay / Station 01"
+                className="h-9 rounded-md border-[#e2e8f0] bg-white text-xs"
+              />
             </div>
             {employee?.role === "mechanic" && (
               <div className="col-span-2 flex flex-col gap-1.5">
                 <Label className="text-xs font-semibold text-foreground">Specialization</Label>
-                <Input value={specialization} onChange={(e) => setSpecialization(e.target.value)} readOnly={mode === "view"} className="h-10 rounded-lg border-border bg-white" />
+                <Input
+                  value={specialization}
+                  onChange={(e) => setSpecialization(e.target.value)}
+                  readOnly={mode === "view"}
+                  placeholder="e.g. Diagnostics & Hybrid Powertrains"
+                  className="h-9 rounded-md border-[#e2e8f0] bg-white text-xs"
+                />
               </div>
             )}
           </div>
 
           {/* Attached Documents Gallery in View Mode */}
           {mode === "view" && (
-            <div className="flex flex-col gap-2.5 border-t border-border pt-3">
+            <div className="flex flex-col gap-2.5 border-t border-[#e2e8f0] pt-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <FileText className="size-4 text-primary" />
+                  <FileText className="size-4 text-[#004492]" />
                   Verification & Attached Documents
                 </span>
                 <span className="text-[11px] text-muted-foreground">
@@ -569,14 +741,14 @@ function EmployeeDialog({
                     return (
                       <div
                         key={`${doc.name}-${idx}`}
-                        className="flex items-center justify-between gap-2 rounded-lg border border-border bg-[#f8f9fa] p-2.5"
+                        className="flex items-center justify-between gap-2 rounded-lg border border-[#e2e8f0] bg-[#f8f9fa] p-2.5"
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                          <div className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded border border-border bg-white">
+                          <div className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded border border-[#e2e8f0] bg-white">
                             {isImg ? (
-                              <img src={doc.url} alt={doc.name} className="size-full object-cover" />
+                              <Image src={doc.url} alt={doc.name} fill unoptimized className="object-cover" />
                             ) : (
-                              <FileText className="size-4 text-primary" />
+                              <FileText className="size-4 text-[#004492]" />
                             )}
                           </div>
                           <div className="flex flex-col min-w-0 flex-1">
@@ -598,7 +770,7 @@ function EmployeeDialog({
                   })}
                 </div>
               ) : (
-                <div className="rounded-lg border border-dashed border-border bg-[#f8f9fa] py-4 text-center text-xs text-muted-foreground">
+                <div className="rounded-lg border border-dashed border-[#e2e8f0] bg-[#f8f9fa] py-4 text-center text-xs text-muted-foreground">
                   No verification documents attached to this profile.
                 </div>
               )}
@@ -606,11 +778,11 @@ function EmployeeDialog({
           )}
 
           <DialogFooter className="pt-2">
-            <Button type="button" variant="outline" onClick={onClose} className="rounded-lg">
+            <Button type="button" variant="outline" onClick={onClose} className="rounded-md text-xs">
               {mode === "view" ? "Close" : "Cancel"}
             </Button>
             {mode === "edit" && (
-              <Button type="submit" disabled={saving} className="rounded-lg">
+              <Button type="submit" disabled={saving} className="rounded-md bg-[#004492] text-xs text-white">
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
             )}

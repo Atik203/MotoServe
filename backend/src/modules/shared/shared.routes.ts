@@ -22,6 +22,7 @@ import {
   markThreadReadController,
   sendMessage,
   updateAppointmentController,
+  deleteAppointmentController,
 } from "./shared.controller.js";
 
 import { sendMessageSchema, updateAppointmentSchema } from "./shared.validation.js";
@@ -37,6 +38,7 @@ router.get("/vehicles", requireAuth, getVehicles);
 router.get("/appointments", requireAuth, getAppointments);
 router.get("/appointments/:id", requireAuth, getAppointment);
 router.patch("/appointments/:id", requireAuth, requireRole("owner", "advisor", "admin"), validate(updateAppointmentSchema), updateAppointmentController);
+router.delete("/appointments/:id", requireAuth, requireRole("advisor", "admin"), deleteAppointmentController);
 
 router.get("/tasks", requireAuth, getTasks);
 

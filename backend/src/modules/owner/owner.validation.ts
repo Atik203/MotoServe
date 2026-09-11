@@ -35,6 +35,7 @@ export const updateVehicleSchema = z.object({
 
 export const bookAppointmentSchema = z.object({
   body: z.object({
+    ownerId: z.string().optional(),
     vehicleId: z.string(),
     serviceIds: z.array(z.string()),
     date: z.string(),

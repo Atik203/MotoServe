@@ -18,7 +18,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAppDispatch } from "@/store/hooks";
+import Image from "next/image";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createEmployee } from "@/store/slices/employeesSlice";
 import { uploadDocument } from "@/store/slices/authSlice";
 
@@ -75,6 +76,8 @@ interface AttachedDoc {
 export default function AddMechanicPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const employees = useAppSelector((s) => s.employees.items);
+  const generatedId = `EMP-MEC-2026-${String(employees.filter((e) => e.role === "mechanic").length + 1).padStart(3, "0")}`;
   const [form, setForm] = useState({
     fullName: "",
     nid: "",
@@ -304,7 +307,7 @@ export default function AddMechanicPage() {
                     className="relative flex size-24 items-center justify-center overflow-hidden rounded-[12px] border border-dashed border-[#c2c6d5] bg-[#edeeef] transition-colors hover:border-primary disabled:opacity-60"
                   >
                     {avatarUrl ? (
-                      <img src={avatarUrl} alt="Mechanic avatar" className="size-full object-cover" />
+                      <Image src={avatarUrl} alt="Mechanic avatar" fill unoptimized className="object-cover" />
                     ) : (
                       <UserPlus className="size-7 text-[#424753]" />
                     )}
@@ -322,7 +325,7 @@ export default function AddMechanicPage() {
                   </label>
                   <label className="flex flex-col gap-1">
                     <span className={fieldLabel}>Employee ID</span>
-                    <Input value="EMP-MEC-2026-001" readOnly className={idInputBase} />
+                    <Input value={generatedId} readOnly className={idInputBase} />
                   </label>
                   <label className="flex flex-col gap-1">
                     <span className={fieldLabel}>National ID (NID) / SSN</span>
@@ -530,7 +533,7 @@ export default function AddMechanicPage() {
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white">
                           {doc.preview ? (
-                            <img src={doc.preview} alt={doc.name} className="size-full object-cover" />
+                            <Image src={doc.preview} alt={doc.name} fill unoptimized className="object-cover" />
                           ) : (
                             <FileText className="size-5 text-primary" />
                           )}
@@ -645,12 +648,12 @@ export default function AddMechanicPage() {
               <p className="pb-4 text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Profile Preview</p>
               <div className="flex items-center gap-4 pb-4">
                 <span className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#e2e8f0] bg-[rgba(0,68,146,0.1)] text-xl font-bold text-[#004492]">
-                  {avatarUrl ? <img src={avatarUrl} alt="" className="size-full object-cover" /> : initials(form.fullName || "New Mechanic")}
+                  {avatarUrl ? <Image src={avatarUrl} alt="" fill unoptimized className="object-cover" /> : initials(form.fullName || "New Mechanic")}
                   <span className="absolute right-0.5 bottom-0.5 size-3 rounded-full border-2 border-white bg-[#4caf50]" />
                 </span>
                 <div>
                   <p className="text-base font-semibold text-foreground">{form.fullName || "New Mechanic"}</p>
-                  <p className="text-xs text-muted-foreground">EMP-MEC-2026-001</p>
+                  <p className="text-xs text-muted-foreground">{generatedId}</p>
                   {specialization && (
                     <span className="mt-1 inline-block rounded bg-[rgba(0,68,146,0.1)] px-2 py-0.5 text-[11px] font-semibold text-[#004492]">
                       {specialization}

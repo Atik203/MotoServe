@@ -19,6 +19,7 @@ import {
   mapCustomerStatus,
   markThreadRead,
   updateAppointment,
+  deleteAppointment,
 } from "./shared.service.js";
 import { safeEmit } from "../../lib/socket.js";
 import { prisma } from "../../lib/prisma.js";
@@ -109,15 +110,26 @@ export async function getAppointment(req: Request, res: Response): Promise<void>
 }
 
 export async function updateAppointmentController(req: Request, res: Response): Promise<void> {
-  const { status } = req.body.body as { status: string };
+  const { status, date, time, notes } = (req.body.body || req.body) as {
+    status?: string;
+    date?: string;
+    time?: string;
+    notes?: string;
+  };
   const appointment = await updateAppointment(
     req.params.id as string,
-    status,
+    { status, date, time, notes },
     req.user?.role,
     req.user?.userId,
   );
   res.json({ ...appointment, status: appointment.status.toLowerCase() });
 }
+
+export async function deleteAppointmentController(req: Request, res: Response): Promise<void> {
+  await deleteAppointment(req.params.id as string);
+  res.status(204).end();
+}
+
 
 export async function getEmployees(req: Request, res: Response): Promise<void> {
   const role = req.query.role as string | undefined;

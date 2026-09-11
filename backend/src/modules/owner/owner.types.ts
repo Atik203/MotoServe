@@ -14,6 +14,7 @@ export interface CreateVehicleBody {
 }
 
 export interface BookAppointmentBody {
+  ownerId?: string;
   vehicleId: string;
   serviceIds: string[];
   date: string;

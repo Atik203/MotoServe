@@ -20,7 +20,7 @@ export const fetchAppointments = createAsyncThunk("appointments/fetchAll", async
 
 export const addAppointment = createAsyncThunk(
   "appointments/create",
-  async (data: { vehicleId: string; serviceIds: string[]; date: string; time: string; notes?: string }) => {
+  async (data: { vehicleId: string; serviceIds: string[]; date: string; time: string; notes?: string; ownerId?: string }) => {
     return await api.post<Appointment>("/appointments", data);
   },
 );
@@ -31,6 +31,18 @@ export const updateAppointmentStatus = createAsyncThunk(
     return await api.patch<Appointment>(`/appointments/${id}`, { status });
   },
 );
+
+export const updateAppointment = createAsyncThunk(
+  "appointments/update",
+  async ({ id, data }: { id: string; data: Partial<Pick<Appointment, "status" | "date" | "time" | "notes">> }) => {
+    return await api.patch<Appointment>(`/appointments/${id}`, data);
+  },
+);
+
+export const deleteAppointment = createAsyncThunk("appointments/delete", async (id: string) => {
+  await api.delete(`/appointments/${id}`);
+  return id;
+});
 
 const appointmentsSlice = createSlice({
   name: "appointments",
@@ -55,8 +67,18 @@ const appointmentsSlice = createSlice({
       .addCase(updateAppointmentStatus.fulfilled, (state, action) => {
         const appt = state.items.find((a) => a.id === action.payload.id);
         if (appt) appt.status = action.payload.status;
+      })
+      .addCase(updateAppointment.fulfilled, (state, action) => {
+        const idx = state.items.findIndex((a) => a.id === action.payload.id);
+        if (idx !== -1) {
+          state.items[idx] = { ...state.items[idx], ...action.payload };
+        }
+      })
+      .addCase(deleteAppointment.fulfilled, (state, action) => {
+        state.items = state.items.filter((a) => a.id !== action.payload);
       });
   },
 });
 
 export default appointmentsSlice.reducer;
+

@@ -32,7 +32,7 @@ router.post("/vehicles", requireAuth, requireRole("owner", "advisor", "admin"), 
 router.patch("/vehicles/:id", requireAuth, requireRole("owner"), validate(updateVehicleSchema), updateVehicleController);
 router.delete("/vehicles/:id", requireAuth, requireRole("owner"), deleteVehicleController);
 
-router.post("/appointments", requireAuth, requireRole("owner"), validate(bookAppointmentSchema), bookAppointmentController);
+router.post("/appointments", requireAuth, requireRole("owner", "advisor", "admin"), validate(bookAppointmentSchema), bookAppointmentController);
 
 router.patch("/estimates/:id/decide", requireAuth, requireRole("owner"), validate(decideEstimateSchema), decideEstimateController);
 

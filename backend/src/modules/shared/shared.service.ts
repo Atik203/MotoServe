@@ -113,7 +113,7 @@ export function findAppointmentById(id: string) {
 
 export async function updateAppointment(
   id: string,
-  status: string,
+  data: { status?: string; date?: string; time?: string; notes?: string },
   role: string | undefined,
   userId: string | undefined,
 ) {
@@ -121,10 +121,29 @@ export async function updateAppointment(
   if (!appointment) throw new ApiError(404, "Appointment not found");
   if (role === "OWNER") {
     if (appointment.ownerId !== userId) throw new ApiError(403, "Insufficient permissions");
-    if (status !== "cancelled") throw new ApiError(403, "Owners can only cancel appointments");
+    if (data.status && data.status !== "cancelled") throw new ApiError(403, "Owners can only cancel appointments");
   }
-  return prisma.appointment.update({ where: { id }, data: { status: status.toUpperCase() as never } });
+  return prisma.appointment.update({
+    where: { id },
+    data: {
+      ...(data.status ? { status: data.status.toUpperCase() as never } : {}),
+      ...(data.date ? { date: data.date } : {}),
+      ...(data.time ? { time: data.time } : {}),
+      ...(data.notes !== undefined ? { notes: data.notes } : {}),
+    },
+    include: {
+      vehicle: true,
+      owner: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+    },
+  });
 }
+
+export async function deleteAppointment(id: string) {
+  const appointment = await prisma.appointment.findUnique({ where: { id } });
+  if (!appointment) throw new ApiError(404, "Appointment not found");
+  return prisma.appointment.delete({ where: { id } });
+}
+
 
 export function listEmployees(role?: string) {
   return prisma.user.findMany({
