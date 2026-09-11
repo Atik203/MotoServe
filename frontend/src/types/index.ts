@@ -121,6 +121,7 @@ export interface TaskCard {
   customerId: string;
   advisorId: string;
   mechanicId: string | null;
+  mechanicIds?: string[];
   station: string | null;
   assignmentNotes?: string | null;
   priority: TaskPriority;
@@ -134,7 +135,8 @@ export interface TaskCard {
   vehicle?: Vehicle;
   customer?: { id: string; name: string };
   advisor?: { id: string; name: string };
-  mechanic?: { id: string; name: string };
+  mechanic?: { id: string; name: string; avatar?: string };
+  mechanics?: { id: string; name: string; avatar?: string | null; specialization?: string | null; station?: string | null }[];
   appointmentId?: string | null;
   appointment?: Appointment | null;
   expectedDate?: string | null;

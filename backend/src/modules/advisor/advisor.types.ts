@@ -11,7 +11,13 @@ export interface CreateTaskCardBody {
   appointmentId?: string;
   serviceIds?: string[];
   expectedDate?: string;
+  mechanicId?: string;
+  mechanicIds?: string[];
+  assignmentNotes?: string;
+  notes?: string;
 }
+
+export type CreateTaskBody = CreateTaskCardBody;
 
 export interface CreateCustomerBody {
   name: string;
@@ -27,7 +33,8 @@ export interface CreateCustomerBody {
 }
 
 export interface AssignMechanicBody {
-  mechanicId: string;
+  mechanicId?: string;
+  mechanicIds?: string[];
   station?: string;
   notes?: string;
 }

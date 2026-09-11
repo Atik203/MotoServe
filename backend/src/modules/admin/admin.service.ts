@@ -90,22 +90,24 @@ export async function getReportData(): Promise<ReportDto> {
       include: { _count: { select: { taskCardsAssigned: true } } },
     }),
     listAuditLogs(),
-    prisma.taskCard.findMany({ select: { mechanicId: true, status: true, services: true } }),
+    prisma.taskCard.findMany({ select: { mechanicId: true, mechanicIds: true, status: true, services: true } }),
   ]);
 
-  const completedByMechanic = taskCards
-    .filter((j) => j.status === "COMPLETED" && j.mechanicId)
-    .reduce<Record<string, number>>((map, j) => {
-      map[j.mechanicId!] = (map[j.mechanicId!] ?? 0) + 1;
-      return map;
-    }, {});
+  const completedByMechanic: Record<string, number> = {};
+  const activeByMechanic: Record<string, number> = {};
 
-  const activeByMechanic = taskCards
-    .filter((j) => j.mechanicId && j.status !== "COMPLETED" && j.status !== "READY")
-    .reduce<Record<string, number>>((map, j) => {
-      map[j.mechanicId!] = (map[j.mechanicId!] ?? 0) + 1;
-      return map;
-    }, {});
+  for (const j of taskCards) {
+    const assigned = j.mechanicIds?.length ? j.mechanicIds : (j.mechanicId ? [j.mechanicId] : []);
+    if (j.status === "COMPLETED") {
+      for (const mId of assigned) {
+        completedByMechanic[mId] = (completedByMechanic[mId] ?? 0) + 1;
+      }
+    } else if (j.status !== "READY") {
+      for (const mId of assigned) {
+        activeByMechanic[mId] = (activeByMechanic[mId] ?? 0) + 1;
+      }
+    }
+  }
 
   const serviceCount = new Map<string, number>();
   for (const task of taskCards) {

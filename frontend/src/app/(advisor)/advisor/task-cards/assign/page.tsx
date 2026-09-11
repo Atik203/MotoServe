@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Car, Check, Clock, Filter, Info, Search, UserCheck } from "lucide-react";
+import { Car, Check, Clock, Filter, Info, Search, UserCheck, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchTasks, assignMechanic } from "@/store/slices/tasksSlice";
@@ -49,7 +49,7 @@ export default function AssignMechanicPage() {
   const tasksStatus = useAppSelector((s) => s.tasks.status);
   const employees = useAppSelector((s) => s.employees.items);
   const employeesStatus = useAppSelector((s) => s.employees.status);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [taskId, setTaskId] = useState("");
   const [search, setSearch] = useState("");
   const [availableOnly, setAvailableOnly] = useState(false);
@@ -62,7 +62,10 @@ export default function AssignMechanicPage() {
   }, [dispatch]);
 
   const assignableTasks = tasks.filter((t) => !["completed", "ready"].includes(t.status));
-  const defaultTask = assignableTasks.find((t) => !t.mechanicId) ?? assignableTasks[0] ?? null;
+  const defaultTask =
+    assignableTasks.find((t) => !t.mechanicId && (!t.mechanics || t.mechanics.length === 0)) ??
+    assignableTasks[0] ??
+    null;
   const task: TaskCard | null =
     (taskId ? tasks.find((t) => t.id === taskId) ?? null : null) ?? defaultTask;
 
@@ -74,8 +77,14 @@ export default function AssignMechanicPage() {
   const workloadOf = useMemo(() => {
     const counts = new Map<string, number>();
     for (const t of tasks) {
-      if (t.mechanicId && t.status !== "completed" && t.status !== "ready") {
-        counts.set(t.mechanicId, (counts.get(t.mechanicId) ?? 0) + 1);
+      if (t.status !== "completed" && t.status !== "ready") {
+        if (t.mechanicIds && t.mechanicIds.length > 0) {
+          for (const mId of t.mechanicIds) {
+            counts.set(mId, (counts.get(mId) ?? 0) + 1);
+          }
+        } else if (t.mechanicId) {
+          counts.set(t.mechanicId, (counts.get(t.mechanicId) ?? 0) + 1);
+        }
       }
     }
     return (m: Employee) => counts.get(m.id) ?? 0;
@@ -84,25 +93,38 @@ export default function AssignMechanicPage() {
   const filteredMechanics = useMemo(() => {
     const query = search.trim().toLowerCase();
     return mechanics.filter(
-      (m) => (!query || m.name.toLowerCase().includes(query)) && (!availableOnly || workloadOf(m) < WORKLOAD_LIMIT),
+      (m) =>
+        (!query ||
+          m.name.toLowerCase().includes(query) ||
+          (m.specialization ?? "").toLowerCase().includes(query)) &&
+        (!availableOnly || workloadOf(m) < WORKLOAD_LIMIT),
     );
   }, [mechanics, search, availableOnly, workloadOf]);
 
-  const selectedMechanic = mechanics.find((m) => m.id === selectedId) ?? null;
+  const selectedMechanics = useMemo(
+    () => mechanics.filter((m) => selectedIds.includes(m.id)),
+    [mechanics, selectedIds],
+  );
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
 
   const handleConfirm = async () => {
-    if (!selectedMechanic || !task) return;
+    if (selectedMechanics.length === 0 || !task) return;
     setSubmitting(true);
     try {
       await dispatch(
         assignMechanic({
           id: task.id,
-          mechanicId: selectedMechanic.id,
+          mechanicIds: selectedIds,
+          mechanicId: selectedIds[0],
           notes: notes.trim() || undefined,
         }),
       ).unwrap();
-      toast.success(`Assigned ${selectedMechanic.name} to task ${task.id}`);
-      router.push("/advisor");
+      const names = selectedMechanics.map((m) => m.name).join(", ");
+      toast.success(`Assigned ${names} to task #${task.id}`);
+      router.push("/advisor/tasks");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Assignment failed");
     } finally {
@@ -128,7 +150,7 @@ export default function AssignMechanicPage() {
           <nav className="flex items-center gap-2 text-xs font-semibold text-[#727784]">
             <span>Dashboard</span>
             <span>›</span>
-            <span>Task Cards</span>
+            <span>Tasks</span>
             <span>›</span>
             <span className="text-foreground">Assign Mechanic</span>
           </nav>
@@ -139,7 +161,7 @@ export default function AssignMechanicPage() {
               value={task?.id ?? ""}
               onChange={(e) => {
                 setTaskId(e.target.value);
-                setSelectedId(null);
+                setSelectedIds([]);
               }}
               className="rounded border border-[#e5e7eb] bg-white px-3 py-1.5 text-sm font-medium text-foreground outline-none"
             >
@@ -233,15 +255,23 @@ export default function AssignMechanicPage() {
 
             <section className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-foreground">Available Mechanics</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-semibold text-foreground">Available Mechanics</h2>
+                  {selectedIds.length > 0 && (
+                    <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                      {selectedIds.length} selected
+                    </span>
+                  )}
+                </div>
+
                 <div className="flex items-center gap-2">
                   <div className="relative">
                     <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-[#727784]" />
                     <Input
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search names..."
-                      className="h-[38px] w-48 rounded-lg border-[#e5e7eb] pl-[30px] text-[13px]"
+                      placeholder="Search names, skills..."
+                      className="h-[38px] w-52 rounded-lg border-[#e5e7eb] pl-[30px] text-[13px]"
                     />
                   </div>
                   <Button
@@ -263,20 +293,21 @@ export default function AssignMechanicPage() {
                 {filteredMechanics.map((m) => {
                   const workload = workloadOf(m);
                   const unavailable = workload >= WORKLOAD_LIMIT;
-                  const selected = m.id === selectedId;
+                  const selected = selectedIds.includes(m.id);
                   const fillPct = Math.min((workload / WORKLOAD_LIMIT) * 100, 100);
                   const fillColor = fillColorFor(workload);
                   const availability = availabilityFor(workload);
+
                   return (
                     <button
                       key={m.id}
                       type="button"
                       disabled={unavailable}
-                      onClick={() => setSelectedId(selected ? null : m.id)}
+                      onClick={() => toggleSelect(m.id)}
                       className={cn(
                         "relative flex flex-col gap-3.5 rounded-lg border bg-white p-[18px] text-left shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors",
                         selected
-                          ? "border-2 border-primary p-[17px]"
+                          ? "border-2 border-primary p-[17px] bg-[#f8fbff]"
                           : "border-[#e5e7eb] hover:border-primary/40",
                         unavailable && "opacity-60",
                       )}
@@ -290,11 +321,7 @@ export default function AssignMechanicPage() {
                       <div className="flex items-center gap-3.5">
                         <div className="relative shrink-0">
                           <Avatar className="size-12 rounded-xl after:rounded-xl">
-                            <AvatarImage
-                              src={m.avatar}
-                              alt={m.name}
-                              className="rounded-xl"
-                            />
+                            <AvatarImage src={m.avatar} alt={m.name} className="rounded-xl object-cover" />
                             <AvatarFallback className="rounded-xl bg-[#eff6ff] text-sm font-semibold text-primary">
                               {initials(m.name)}
                             </AvatarFallback>
@@ -307,10 +334,11 @@ export default function AssignMechanicPage() {
                           />
                         </div>
                         <div className="flex min-w-0 flex-col gap-0.5">
-                          <span className="truncate text-xl font-semibold text-foreground">{m.name}</span>
+                          <span className="truncate text-base font-semibold text-foreground">{m.name}</span>
                           <span className="truncate text-xs text-[#727784]">
                             ID: {m.id}
                             {m.specialization ? ` • ${m.specialization}` : ""}
+                            {m.station ? ` • ${m.station}` : ""}
                           </span>
                         </div>
                       </div>
@@ -348,96 +376,66 @@ export default function AssignMechanicPage() {
 
           <div className="col-span-4 flex flex-col gap-6 lg:sticky lg:top-22">
             <section className="overflow-hidden rounded-[12px] border border-[#e2e8f0] bg-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-              <div className="relative h-16 bg-gradient-to-r from-[#004492] to-[#005bbf]">
-                {!selectedMechanic && (
-                  <span className="absolute bottom-3 left-4 text-xs font-semibold tracking-[0.55px] text-[#c8d8ff] uppercase">
-                    Selected Mechanic
-                  </span>
+              <div className="relative h-14 bg-gradient-to-r from-[#004492] to-[#005bbf] flex items-center justify-between px-4">
+                <span className="text-xs font-semibold tracking-[0.55px] text-[#c8d8ff] uppercase">
+                  {selectedMechanics.length > 0
+                    ? `Assigned Mechanics (${selectedMechanics.length})`
+                    : "Mechanic Selection"}
+                </span>
+                {selectedMechanics.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedIds([])}
+                    className="text-[11px] font-semibold text-white/80 hover:text-white underline"
+                  >
+                    Clear all
+                  </button>
                 )}
               </div>
-              <div className="px-[25px] pb-[25px]">
-                {selectedMechanic ? (
-                  <>
-                    <div className="relative -mt-10 flex items-end gap-3">
-                      <div className="relative shrink-0">
-                        <Avatar className="size-20 rounded-2xl border-4 border-white after:rounded-2xl">
-                          <AvatarImage src={selectedMechanic.avatar} alt={selectedMechanic.name} className="rounded-2xl" />
-                          <AvatarFallback className="rounded-2xl bg-[rgba(0,68,146,0.1)] text-xl font-bold text-[#004492]">
-                            {initials(selectedMechanic.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span
-                          className={cn(
-                            "absolute right-1.5 bottom-1.5 size-3.5 rounded-full ring-2 ring-white",
-                            workloadOf(selectedMechanic) >= WORKLOAD_LIMIT
-                              ? "bg-[#ba1a1a]"
-                              : workloadOf(selectedMechanic) >= 2
-                                ? "bg-[#ffc107]"
-                                : "bg-[#4caf50]",
-                          )}
-                        />
-                      </div>
-                      <div className="flex flex-1 items-end justify-between gap-2 pb-1">
-                        <div>
-                          <p className="text-lg font-semibold text-foreground">{selectedMechanic.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {selectedMechanic.specialization ?? "Mechanic"}
-                          </p>
+
+              <div className="p-4">
+                {selectedMechanics.length > 0 ? (
+                  <div className="flex flex-col gap-3">
+                    {selectedMechanics.map((m) => (
+                      <div
+                        key={m.id}
+                        className="flex items-center justify-between gap-2.5 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] p-2.5"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Avatar className="size-9 shrink-0 rounded-lg">
+                            <AvatarImage src={m.avatar} alt={m.name} className="rounded-lg object-cover" />
+                            <AvatarFallback className="rounded-lg bg-primary/10 text-xs font-semibold text-primary">
+                              {initials(m.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-col">
+                            <p className="truncate text-xs font-semibold text-foreground">{m.name}</p>
+                            <p className="truncate text-[10px] text-muted-foreground">
+                              {m.specialization ?? "Mechanic"} • {workloadOf(m)}/{WORKLOAD_LIMIT} tasks
+                            </p>
+                          </div>
                         </div>
-                        <span
-                          className={cn(
-                            "mb-0.5 shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                            availabilityFor(workloadOf(selectedMechanic)).className,
-                          )}
+
+                        <button
+                          type="button"
+                          onClick={() => toggleSelect(m.id)}
+                          className="flex size-6 items-center justify-center rounded-full text-[#727784] hover:bg-[#e2e8f0] hover:text-[#ba1a1a]"
+                          aria-label={`Remove ${m.name}`}
                         >
-                          {availabilityFor(workloadOf(selectedMechanic)).label}
-                        </span>
+                          <X className="size-3.5" />
+                        </button>
                       </div>
-                    </div>
-                    <div className="mt-4 flex flex-col gap-2.5 border-t border-[#e2e8f0] pt-4 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-[#424753]">ID</span>
-                        <span className="font-medium text-foreground">{selectedMechanic.id.toUpperCase()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#424753]">Branch</span>
-                        <span className="font-medium text-foreground">{selectedMechanic.station ?? "—"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#424753]">Status</span>
-                        <span className="flex items-center gap-1.5 rounded-xl bg-[rgba(76,175,80,0.1)] px-2 py-0.5 text-[11px] font-semibold text-[#4caf50]">
-                          <span className="size-1.5 rounded-full bg-[#4caf50]" />
-                          On Shift
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[#424753]">Current Workload</span>
-                        <div className="flex items-center gap-2">
-                          <span className="rounded bg-[#edeeef] px-1.5 py-0.5 text-[11px] font-semibold text-foreground">
-                            {workloadOf(selectedMechanic)}/{WORKLOAD_LIMIT}
-                          </span>
-                          <span className="h-1.5 w-16 overflow-hidden rounded-full bg-[#edeeef]">
-                            <span
-                              className="block h-full rounded-full"
-                              style={{
-                                width: `${Math.min((workloadOf(selectedMechanic) / WORKLOAD_LIMIT) * 100, 100)}%`,
-                                backgroundColor: fillColorFor(workloadOf(selectedMechanic)),
-                              }}
-                            />
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </>
+                    ))}
+                  </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-3 pt-10 pb-4 text-center">
+                  <div className="flex flex-col items-center gap-3 py-8 text-center">
                     <span className="flex size-12 items-center justify-center rounded-full bg-[rgba(0,68,146,0.1)]">
-                      <UserCheck className="size-6 text-[#004492]" />
+                      <Users className="size-6 text-[#004492]" />
                     </span>
                     <div>
-                      <p className="text-sm font-semibold text-foreground">No mechanic selected</p>
+                      <p className="text-sm font-semibold text-foreground">No mechanics selected</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
-                        Pick a mechanic from the list to preview their profile here.
+                        Click one or more mechanics from the list to assign them to this task.
                       </p>
                     </div>
                   </div>
@@ -446,11 +444,13 @@ export default function AssignMechanicPage() {
             </section>
 
             <section className="flex flex-col gap-3 rounded-[12px] border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-              <h2 className="border-b border-[#e2e8f0] pb-[9px] text-xl font-semibold text-foreground">Assignment Notes</h2>
+              <h2 className="border-b border-[#e2e8f0] pb-[9px] text-xl font-semibold text-foreground">
+                Assignment Notes
+              </h2>
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add internal notes about this assignment..."
+                placeholder="Add internal instructions or notes for the assigned mechanic(s)..."
                 className="mt-3 min-h-24 rounded-[4px] border-[#e2e8f0] text-[13px]"
               />
             </section>
@@ -458,7 +458,7 @@ export default function AssignMechanicPage() {
             <section className="rounded-[12px] border border-[#e2e8f0] bg-[rgba(0,68,146,0.05)] p-[17px]">
               <p className="flex items-start gap-2 text-sm leading-5 text-[#424753]">
                 <Info className="mt-0.5 size-4 shrink-0 text-[#004492]" />
-                The mechanic will be notified instantly. Once assigned, they can update repair progress and log parts as the task moves through the workshop.
+                All assigned mechanics will be notified. Once assigned, they can collaboratively update repair progress, log parts, and perform testing.
               </p>
             </section>
 
@@ -470,11 +470,15 @@ export default function AssignMechanicPage() {
               <Button
                 type="button"
                 onClick={() => void handleConfirm()}
-                disabled={!selectedMechanic || submitting}
+                disabled={selectedMechanics.length === 0 || submitting}
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-[4px] bg-[#004492] text-xs font-semibold tracking-[0.24px] text-white hover:bg-[#004492]/90"
               >
                 <UserCheck className="size-4" />
-                {submitting ? "Assigning..." : "Confirm Assignment"}
+                {submitting
+                  ? "Assigning..."
+                  : selectedMechanics.length > 1
+                    ? `Confirm Assignment (${selectedMechanics.length} Mechanics)`
+                    : "Confirm Assignment"}
               </Button>
             </section>
           </div>

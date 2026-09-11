@@ -203,10 +203,10 @@ export default function ReceiveVehiclePage() {
           expectedDate: expectedDate || undefined,
         }),
       ).unwrap();
-      toast.success(`Task card ${res.id} created`);
+      toast.success(`Task ${res.id} created`);
       router.push("/advisor/task-cards/assign");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create task card");
+      toast.error(err instanceof Error ? err.message : "Failed to create task");
     } finally {
       setSubmitting(false);
     }
@@ -242,7 +242,7 @@ export default function ReceiveVehiclePage() {
           </div>
           <button type="button" onClick={() => void createCard()} disabled={submitting} className={primaryBtn}>
             <Plus className="size-[13.5px]" />
-            {submitting ? "Creating..." : "Create Task Card"}
+            {submitting ? "Creating..." : "Create Task"}
           </button>
         </div>
 
@@ -597,7 +597,7 @@ export default function ReceiveVehiclePage() {
               </button>
               <button type="button" onClick={() => void createCard()} disabled={submitting} className={primaryBtn}>
                 <Plus className="size-[13.5px]" />
-                {submitting ? "Creating..." : "Create Task Card"}
+                {submitting ? "Creating..." : "Create Task"}
               </button>
             </div>
           </section>

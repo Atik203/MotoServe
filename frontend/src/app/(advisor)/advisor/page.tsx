@@ -145,11 +145,11 @@ export default function AdvisorDashboardPage() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <div className="flex gap-4">
           <Link
-            href="/advisor/task-cards/new"
+            href="/advisor/tasks/new"
             className="flex items-center gap-2 rounded-lg bg-primary px-4 py-[9px] text-xs font-semibold tracking-[0.24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
           >
             <Plus className="size-[13.5px]" />
-            Create Task Card
+            Create Task
           </Link>
           <Link
             href="/advisor/receive"
@@ -192,10 +192,10 @@ export default function AdvisorDashboardPage() {
           <div className="col-span-8 flex flex-col gap-6">
             <section className="w-full overflow-hidden rounded-lg border border-[#e5e7eb] bg-white shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
               <div className="flex items-center justify-between border-b border-[#e5e7eb] bg-[#f8f9fa] px-4 pt-4 pb-[17px]">
-                <h2 className="text-xl font-semibold text-foreground">Task Cards</h2>
+                <h2 className="text-xl font-semibold text-foreground">Active Tasks</h2>
                 <button
                   type="button"
-                  aria-label="Task card options"
+                  aria-label="Task options"
                   className="rounded-sm px-1 pt-1 pb-2.5 text-muted-foreground hover:text-foreground"
                 >
                   <MoreHorizontal className="size-[18px]" />

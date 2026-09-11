@@ -28,7 +28,15 @@ export default function MechanicHistoryPage() {
     if (vehicles.length === 0) dispatch(fetchVehicles());
   }, [dispatch, vehicles.length]);
 
-  const completed = tasks.filter((j) => ["completed", "ready"].includes(j.status) && (user ? j.mechanicId === user.id : true));
+  const completed = tasks.filter(
+    (j) =>
+      ["completed", "ready"].includes(j.status) &&
+      (user
+        ? j.mechanicId === user.id ||
+          j.mechanicIds?.includes(user.id) ||
+          j.mechanics?.some((m) => m.id === user.id)
+        : true),
+  );
 
   if ((tasksStatus === "idle" || tasksStatus === "loading") && tasks.length === 0) {
     return <TableLoading label="Loading task history" />;

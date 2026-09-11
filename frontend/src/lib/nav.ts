@@ -66,7 +66,7 @@ export const roleNav: Record<Role, RoleNavConfig> = {
       { label: "Dashboard", href: "/advisor", icon: LayoutDashboard },
       { label: "Appointments", href: "/advisor/appointments", icon: CalendarDays },
       { label: "Receive Vehicle", href: "/advisor/receive", icon: Truck },
-      { label: "Create Task Card", href: "/advisor/task-cards/new", icon: FileText },
+      { label: "Create Task", href: "/advisor/tasks/new", icon: FileText },
       { label: "Assign Mechanic", href: "/advisor/task-cards/assign", icon: Users },
       { label: "Send Estimate", href: "/advisor/estimates/new", icon: FileCheck },
       { label: "Communication Center", href: "/advisor/chat", icon: MessageSquare },

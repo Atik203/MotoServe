@@ -14,6 +14,26 @@ export async function createTaskCard(advisorId: string, body: CreateTaskCardBody
       throw new ApiError(400, "Appointment belongs to a different vehicle");
     }
   }
+
+  const resolvedMechanicIds: string[] = Array.isArray(body.mechanicIds) && body.mechanicIds.length > 0
+    ? body.mechanicIds.filter(Boolean)
+    : body.mechanicId
+      ? [body.mechanicId]
+      : [];
+
+  if (resolvedMechanicIds.length > 0) {
+    const mechanics = await prisma.user.findMany({
+      where: { id: { in: resolvedMechanicIds } },
+    });
+    if (mechanics.length !== resolvedMechanicIds.length) {
+      throw new ApiError(404, "One or more selected mechanics not found");
+    }
+    const nonMechanic = mechanics.find((m) => m.role !== "MECHANIC");
+    if (nonMechanic) {
+      throw new ApiError(400, `User ${nonMechanic.name} is not a mechanic`);
+    }
+  }
+
   const serviceLines = body.serviceIds?.length
     ? await prisma.service.findMany({ where: { id: { in: body.serviceIds } } })
     : [];
@@ -26,12 +46,18 @@ export async function createTaskCard(advisorId: string, body: CreateTaskCardBody
       issues: body.issues,
       priority: (body.priority ?? "medium").toUpperCase() as never,
       station: body.station,
+      assignmentNotes: body.assignmentNotes ?? body.notes,
       mileage: body.mileage,
       fuelLevel: body.fuelLevel,
       keysReceived: body.keysReceived,
       accessories: body.accessories,
       appointmentId: body.appointmentId,
       expectedDate: body.expectedDate,
+      mechanicId: resolvedMechanicIds[0] ?? null,
+      mechanicIds: resolvedMechanicIds,
+      mechanics: resolvedMechanicIds.length
+        ? { connect: resolvedMechanicIds.map((mId) => ({ id: mId })) }
+        : undefined,
       services: serviceLines.length
         ? (serviceLines.map((s) => ({ id: s.id, name: s.name, price: s.basePrice })) as unknown as Prisma.InputJsonValue)
         : undefined,
@@ -50,6 +76,8 @@ export async function createTaskCard(advisorId: string, body: CreateTaskCardBody
   });
   return task;
 }
+
+export const createTask = createTaskCard;
 
 export async function createCustomer(body: CreateCustomerBody) {
   const passwordHash = await bcrypt.hash(randomBytes(32).toString("hex"), 10);
@@ -73,13 +101,46 @@ export async function createCustomer(body: CreateCustomerBody) {
 }
 
 export async function assignMechanic(id: string, body: AssignMechanicBody) {
-  const mechanic = await prisma.user.findUnique({ where: { id: body.mechanicId } });
-  if (!mechanic) throw new ApiError(404, "Mechanic not found");
-  if (mechanic.role !== "MECHANIC") throw new ApiError(400, "Selected user is not a mechanic");
-  const data: Prisma.TaskCardUncheckedUpdateInput = { mechanicId: body.mechanicId };
+  const existing = await prisma.taskCard.findUnique({ where: { id } });
+  if (!existing) throw new ApiError(404, "Task not found");
+
+  const resolvedMechanicIds: string[] = Array.isArray(body.mechanicIds)
+    ? body.mechanicIds.filter(Boolean)
+    : body.mechanicId
+      ? [body.mechanicId]
+      : [];
+
+  if (resolvedMechanicIds.length > 0) {
+    const mechanics = await prisma.user.findMany({
+      where: { id: { in: resolvedMechanicIds } },
+    });
+    if (mechanics.length !== resolvedMechanicIds.length) {
+      throw new ApiError(404, "One or more selected mechanics not found");
+    }
+    const nonMechanic = mechanics.find((m) => m.role !== "MECHANIC");
+    if (nonMechanic) {
+      throw new ApiError(400, `User ${nonMechanic.name} is not a mechanic`);
+    }
+  }
+
+  const data: Prisma.TaskCardUncheckedUpdateInput = {
+    mechanicId: resolvedMechanicIds[0] ?? null,
+    mechanicIds: resolvedMechanicIds,
+    mechanics: {
+      set: resolvedMechanicIds.map((mId) => ({ id: mId })),
+    },
+  };
   if (body.station) data.station = body.station;
   if (body.notes) data.assignmentNotes = body.notes;
-  return prisma.taskCard.update({ where: { id }, data });
+
+  return prisma.taskCard.update({
+    where: { id },
+    data,
+    include: {
+      mechanics: { select: { id: true, name: true, avatar: true, specialization: true, station: true } },
+      mechanic: { select: { id: true, name: true, avatar: true } },
+    },
+  });
 }
 
 export async function createEstimate(advisorId: string, role: string, body: CreateEstimateBody) {

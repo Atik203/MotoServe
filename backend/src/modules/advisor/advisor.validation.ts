@@ -14,8 +14,14 @@ export const createTaskCardSchema = z.object({
     appointmentId: z.string().optional(),
     serviceIds: z.array(z.string()).optional(),
     expectedDate: z.string().optional(),
+    mechanicId: z.string().optional(),
+    mechanicIds: z.array(z.string()).optional(),
+    assignmentNotes: z.string().optional(),
+    notes: z.string().optional(),
   }),
 });
+
+export const createTaskSchema = createTaskCardSchema;
 
 export const createCustomerSchema = z.object({
   body: z.object({
@@ -34,7 +40,8 @@ export const createCustomerSchema = z.object({
 
 export const assignMechanicSchema = z.object({
   body: z.object({
-    mechanicId: z.string(),
+    mechanicId: z.string().optional(),
+    mechanicIds: z.array(z.string()).optional(),
     station: z.string().optional(),
     notes: z.string().optional(),
   }),

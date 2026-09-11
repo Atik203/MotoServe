@@ -74,10 +74,10 @@ function AdvisorTasksPage() {
           <div className="flex items-center justify-between gap-4">
             <h1 className="text-4xl font-bold tracking-[-0.72px] text-foreground">All Tasks</h1>
             <div className="flex items-center gap-2">
-              <Link href="/advisor/task-cards/new">
+              <Link href="/advisor/tasks/new">
                 <Button className="h-10 gap-2 rounded-lg text-sm font-semibold">
                   <FilePlus2 className="size-4" />
-                  Create Task Card
+                  Create Task
                 </Button>
               </Link>
               <Link href="/advisor/task-cards/assign">
@@ -160,10 +160,14 @@ function AdvisorTasksPage() {
                     <TableCell className="px-4 py-5">
                       <StatusBadge status={task.status} />
                     </TableCell>
-                    <TableCell className="px-4 py-5 text-sm text-[#191c1d]">{task.mechanic?.name ?? "—"}</TableCell>
+                    <TableCell className="px-4 py-5 text-sm text-[#191c1d]">
+                      {task.mechanics && task.mechanics.length > 0
+                        ? task.mechanics.map((m) => m.name).join(", ")
+                        : task.mechanic?.name ?? "—"}
+                    </TableCell>
                     <TableCell className="px-4 py-[18px] text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        {!task.mechanicId && task.status !== "completed" && task.status !== "ready" && (
+                        {!task.mechanicId && (!task.mechanics || task.mechanics.length === 0) && task.status !== "completed" && task.status !== "ready" && (
                           <Link
                             href="/advisor/task-cards/assign"
                             className="rounded-md px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-[#eff6ff]"

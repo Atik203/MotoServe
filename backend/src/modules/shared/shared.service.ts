@@ -25,7 +25,15 @@ export function listTasks(role?: string, userId?: string) {
   const normalized = role?.toLowerCase();
   return prisma.taskCard.findMany({
     where: {
-      mechanicId: normalized === "mechanic" ? userId : undefined,
+      ...(normalized === "mechanic" && userId
+        ? {
+            OR: [
+              { mechanicId: userId },
+              { mechanicIds: { has: userId } },
+              { mechanics: { some: { id: userId } } },
+            ],
+          }
+        : {}),
       customerId: normalized === "owner" ? userId : undefined,
       ownerArchivedAt: normalized === "owner" ? null : undefined,
     },
@@ -33,7 +41,8 @@ export function listTasks(role?: string, userId?: string) {
       vehicle: true,
       customer: { select: { id: true, name: true } },
       advisor: { select: { id: true, name: true } },
-      mechanic: { select: { id: true, name: true } },
+      mechanic: { select: { id: true, name: true, avatar: true } },
+      mechanics: { select: { id: true, name: true, avatar: true, specialization: true, station: true } },
       appointment: true,
       progress: { orderBy: { id: "asc" } },
       notes: { orderBy: { id: "desc" } },
@@ -50,7 +59,8 @@ export function findTaskById(id: string) {
       vehicle: true,
       customer: { select: { id: true, name: true } },
       advisor: { select: { id: true, name: true } },
-      mechanic: { select: { id: true, name: true } },
+      mechanic: { select: { id: true, name: true, avatar: true } },
+      mechanics: { select: { id: true, name: true, avatar: true, specialization: true, station: true } },
       appointment: true,
       progress: { orderBy: { id: "asc" } },
       notes: { orderBy: { id: "desc" } },
@@ -68,7 +78,8 @@ export function listArchivedTasks(userId: string) {
       vehicle: true,
       customer: { select: { id: true, name: true } },
       advisor: { select: { id: true, name: true } },
-      mechanic: { select: { id: true, name: true } },
+      mechanic: { select: { id: true, name: true, avatar: true } },
+      mechanics: { select: { id: true, name: true, avatar: true, specialization: true, station: true } },
       appointment: true,
       progress: { orderBy: { id: "asc" } },
       notes: { orderBy: { id: "desc" } },

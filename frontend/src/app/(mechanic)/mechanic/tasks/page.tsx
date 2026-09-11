@@ -21,7 +21,13 @@ export default function MechanicTasksPage() {
     if (vehicles.length === 0) dispatch(fetchVehicles());
   }, [dispatch, vehicles.length]);
 
-  const assigned = tasks.filter((t) => (user ? t.mechanicId === user.id : !["completed", "ready"].includes(t.status)));
+  const assigned = tasks.filter((t) =>
+    user
+      ? t.mechanicId === user.id ||
+        t.mechanicIds?.includes(user.id) ||
+        t.mechanics?.some((m) => m.id === user.id)
+      : !["completed", "ready"].includes(t.status),
+  );
   const current = assigned.filter((t) => !["completed", "ready"].includes(t.status));
 
   if ((tasksStatus === "idle" || tasksStatus === "loading") && tasks.length === 0) {

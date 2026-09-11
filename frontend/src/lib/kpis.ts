@@ -46,7 +46,14 @@ export function buildKpis(role: KpiRole, ctx: KpiContext): KpiCard[] {
   const unpaidInvoices = invoices.filter((i) => i.status !== "paid");
   const unpaidTotal = unpaidInvoices.reduce((sum, i) => sum + i.total, 0);
   const upcomingAppointments = appointments.filter((a) => a.status !== "cancelled");
-  const assignedTasks = userId ? tasks.filter((t) => t.mechanicId === userId) : tasks;
+  const assignedTasks = userId
+    ? tasks.filter(
+        (t) =>
+          t.mechanicId === userId ||
+          t.mechanicIds?.includes(userId) ||
+          t.mechanics?.some((m) => m.id === userId),
+      )
+    : tasks;
 
   const nextAppointment = upcomingAppointments[0];
   const nextAppointmentDate = nextAppointment
@@ -165,7 +172,7 @@ export function buildKpis(role: KpiRole, ctx: KpiContext): KpiCard[] {
           id: "kpi-102",
           label: "Active Tasks",
           value: String(activeTasks.length).padStart(2, "0"),
-          delta: `${tasks.filter((t) => !t.mechanicId).length} awaiting mechanic`,
+          delta: `${tasks.filter((t) => !t.mechanicId && (!t.mechanics || t.mechanics.length === 0)).length} awaiting mechanic`,
           trend: "flat",
           icon: "wrench",
         },

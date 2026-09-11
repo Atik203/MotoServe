@@ -252,7 +252,7 @@ function buildActiveNotifications({
     }
   } else if (role === "advisor") {
     for (const task of tasks) {
-      if (!task.mechanicId && task.status !== "completed") {
+      if (!task.mechanicId && (!task.mechanics || task.mechanics.length === 0) && task.status !== "completed") {
         list.push({
           id: `adv-task-${task.id}`,
           type: "task",
@@ -287,7 +287,13 @@ function buildActiveNotifications({
     }
   } else if (role === "mechanic") {
     for (const task of tasks) {
-      if (task.mechanicId === userId && task.status !== "completed") {
+      if (
+        Boolean(userId) &&
+        (task.mechanicId === userId ||
+          Boolean(userId && task.mechanicIds?.includes(userId)) ||
+          task.mechanics?.some((m) => m.id === userId)) &&
+        task.status !== "completed"
+      ) {
         list.push({
           id: `mech-task-${task.id}`,
           type: "task",

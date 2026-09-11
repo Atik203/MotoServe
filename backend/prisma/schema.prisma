@@ -113,6 +113,7 @@ model User {
   appointments     Appointment[]
   taskCardsAdvised TaskCard[]   @relation("AdvisorTasks")
   taskCardsAssigned TaskCard[]  @relation("MechanicTasks")
+  tasksAssignedMulti TaskCard[] @relation("TaskAssignedMechanics")
   taskCardsCustomer TaskCard[]  @relation("CustomerTasks")
   threadsOwned     ChatThread[] @relation("OwnerThreads")
   threadsAdvised ChatThread[] @relation("AdvisorThreads")
@@ -188,6 +189,8 @@ model TaskCard {
   advisor        User       @relation("AdvisorTasks", fields: [advisorId], references: [id])
   mechanicId     String?
   mechanic       User?      @relation("MechanicTasks", fields: [mechanicId], references: [id])
+  mechanicIds    String[]   @default([])
+  mechanics      User[]     @relation("TaskAssignedMechanics")
   station        String?
   assignmentNotes String?
   priority       TaskPriority @default(MEDIUM)

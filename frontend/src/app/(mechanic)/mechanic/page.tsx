@@ -70,7 +70,14 @@ export default function MechanicDashboardPage() {
   const mechanicId = user?.id;
 
   const assignedTasks = useMemo(
-    () => tasks.filter((j) => (mechanicId ? j.mechanicId === mechanicId : j.mechanicId === null || j.status === "repairing")),
+    () =>
+      tasks.filter((j) =>
+        mechanicId
+          ? j.mechanicId === mechanicId ||
+            j.mechanicIds?.includes(mechanicId) ||
+            j.mechanics?.some((m) => m.id === mechanicId)
+          : j.mechanicId === null || j.status === "repairing",
+      ),
     [tasks, mechanicId],
   );
 
