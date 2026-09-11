@@ -81,23 +81,71 @@ export function deactivateEmployee(id: string) {
   return prisma.user.update({ where: { id }, data: { status: "INACTIVE" }, select: employeeSelect });
 }
 
-export async function getReportData(): Promise<ReportDto> {
+export interface ReportFilterOptions {
+  from?: string;
+  to?: string;
+  station?: string;
+  mechanicId?: string;
+  service?: string;
+  status?: string;
+}
+
+export async function getReportData(filters?: ReportFilterOptions): Promise<ReportDto> {
+  const invoiceWhere: Record<string, any> = {};
+  if (filters?.from || filters?.to) {
+    invoiceWhere.issuedAt = {
+      ...(filters.from ? { gte: new Date(filters.from) } : {}),
+      ...(filters.to ? { lte: new Date(filters.to) } : {}),
+    };
+  }
+  if (filters?.status) {
+    invoiceWhere.status = filters.status.toUpperCase();
+  }
+  if (filters?.station || filters?.mechanicId) {
+    invoiceWhere.task = {
+      ...(filters.station ? { station: { contains: filters.station, mode: "insensitive" } } : {}),
+      ...(filters.mechanicId ? { OR: [{ mechanicId: filters.mechanicId }, { mechanicIds: { has: filters.mechanicId } }] } : {}),
+    };
+  }
+
+  const taskWhere: Record<string, any> = {};
+  if (filters?.from || filters?.to) {
+    taskWhere.createdAt = {
+      ...(filters.from ? { gte: new Date(filters.from) } : {}),
+      ...(filters.to ? { lte: new Date(filters.to) } : {}),
+    };
+  }
+  if (filters?.station) {
+    taskWhere.station = { contains: filters.station, mode: "insensitive" };
+  }
+  if (filters?.mechanicId) {
+    taskWhere.OR = [{ mechanicId: filters.mechanicId }, { mechanicIds: { has: filters.mechanicId } }];
+  }
+  if (filters?.status) {
+    taskWhere.status = filters.status.toUpperCase();
+  }
+
   const [stats, tasksByStatus, mechanics, activityLog, taskCards, allInvoices, ratingsStats] = await Promise.all([
     getDashboardStats(),
-    prisma.taskCard.groupBy({ by: ["status"], _count: true }),
+    prisma.taskCard.groupBy({ by: ["status"], where: Object.keys(taskWhere).length ? taskWhere : undefined, _count: true }),
     prisma.user.findMany({
       where: { role: "MECHANIC" },
       include: { _count: { select: { taskCardsAssigned: true } } },
     }),
     listAuditLogs(),
-    prisma.taskCard.findMany({ select: { mechanicId: true, mechanicIds: true, status: true, services: true } }),
+    prisma.taskCard.findMany({
+      where: Object.keys(taskWhere).length ? taskWhere : undefined,
+      select: { mechanicId: true, mechanicIds: true, status: true, services: true },
+    }),
     prisma.invoice.findMany({
+      where: Object.keys(invoiceWhere).length ? invoiceWhere : undefined,
       include: {
         vehicle: { select: { id: true, make: true, model: true, year: true, regNo: true } },
         task: {
           select: {
             id: true,
             status: true,
+            station: true,
             customer: { select: { id: true, name: true } },
             mechanic: { select: { id: true, name: true } },
             mechanics: { select: { id: true, name: true } },
