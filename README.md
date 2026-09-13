@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="frontend/public/images/hero-car.png" alt="MotoServe" width="100" />
-
 # MotoServe
 
 ### Vehicle Workshop & Servicing Management System
@@ -36,24 +34,24 @@ Customers book appointments, track repairs, and pay online — advisors receive 
 
 MotoServe is a full-stack vehicle workshop management platform connecting four user roles in real-time:
 
-| Role | What They Do |
-|---|---|
-| **Owner** | Register vehicles, book appointments, approve estimates, track repairs, pay & download invoices, rate service |
-| **Advisor** | Receive vehicles, create job cards, assign mechanics, send cost estimates, chat with owners |
-| **Mechanic** | View assigned tasks, update repair progress, log parts used, mark jobs complete |
-| **Admin** | Manage services & pricing, manage employees, view reports & analytics, verify owner accounts |
-| **Guest** | Browse services, pricing, and workshop info |
+| Role         | What They Do                                                                                                  |
+| ------------ | ------------------------------------------------------------------------------------------------------------- |
+| **Owner**    | Register vehicles, book appointments, approve estimates, track repairs, pay & download invoices, rate service |
+| **Advisor**  | Receive vehicles, create job cards, assign mechanics, send cost estimates, chat with owners                   |
+| **Mechanic** | View assigned tasks, update repair progress, log parts used, mark jobs complete                               |
+| **Admin**    | Manage services & pricing, manage employees, view reports & analytics, verify owner accounts                  |
+| **Guest**    | Browse services, pricing, and workshop info                                                                   |
 
 ## Tech Stack
 
-| Layer | Stack |
-|---|---|
+| Layer        | Stack                                                                                             |
+| ------------ | ------------------------------------------------------------------------------------------------- |
 | **Frontend** | Next.js 16 (App Router, Turbopack) · React 19 · Tailwind CSS v4 · shadcn/ui · Redux Toolkit · Zod |
-| **Backend** | Express 5 · Prisma 7 · PostgreSQL · Zod · JWT · Socket.io |
-| **Payments** | Stripe Checkout (card) |
-| **Storage** | AWS S3 (presigned URLs) |
-| **Deploy** | Vercel (frontend + backend) |
-| **Tooling** | TypeScript strict · npm · Node 24 LTS |
+| **Backend**  | Express 5 · Prisma 7 · PostgreSQL · Zod · JWT · Socket.io                                         |
+| **Payments** | Stripe Checkout (card)                                                                            |
+| **Storage**  | AWS S3 (presigned URLs)                                                                           |
+| **Deploy**   | Vercel (frontend + backend)                                                                       |
+| **Tooling**  | TypeScript strict · npm · Node 24 LTS                                                             |
 
 ## Quick Start
 
@@ -117,25 +115,25 @@ motoserve/
 
 ## Scripts
 
-| Command | Frontend | Backend | Root |
-|---|---|---|---|
-| **Dev** | `npm run dev` | `npm run dev` | `npm run dev` (both) |
-| **Build** | `npm run build` | `npm run build` | — |
-| **Start** | `npm run start` | `npm run start` | — |
-| **Lint** | `npm run lint` | — | — |
-| **Typecheck** | `npm run typecheck` | `npm run typecheck` | `npm run typecheck` (both) |
-| **DB Generate** | — | `npm run db:generate` | `npm run build` |
-| **DB Push** | — | `npm run db:push` | — |
-| **DB Seed** | — | `npm run db:seed` | — |
+| Command         | Frontend            | Backend               | Root                       |
+| --------------- | ------------------- | --------------------- | -------------------------- |
+| **Dev**         | `npm run dev`       | `npm run dev`         | `npm run dev` (both)       |
+| **Build**       | `npm run build`     | `npm run build`       | —                          |
+| **Start**       | `npm run start`     | `npm run start`       | —                          |
+| **Lint**        | `npm run lint`      | —                     | —                          |
+| **Typecheck**   | `npm run typecheck` | `npm run typecheck`   | `npm run typecheck` (both) |
+| **DB Generate** | —                   | `npm run db:generate` | `npm run build`            |
+| **DB Push**     | —                   | `npm run db:push`     | —                          |
+| **DB Seed**     | —                   | `npm run db:seed`     | —                          |
 
 ## Demo Accounts
 
-| Role | Email | Password |
-|---|---|---|
-| Admin | `admin@motorserve.com` | `admin123` |
-| Owner | `john.doe@example.com` | `password123` |
-| Advisor | `sarah.jenkins@motorserve.com` | `password123` |
-| Mechanic | `alex.turner@motorserve.com` | `password123` |
+| Role     | Email                          | Password      |
+| -------- | ------------------------------ | ------------- |
+| Admin    | `admin@motorserve.com`         | `admin123`    |
+| Owner    | `john.doe@example.com`         | `password123` |
+| Advisor  | `sarah.jenkins@motorserve.com` | `password123` |
+| Mechanic | `alex.turner@motorserve.com`   | `password123` |
 
 ## Features
 
@@ -150,14 +148,14 @@ motoserve/
 
 ## Documentation
 
-| File | Description |
-|---|---|
-| [`blueprint.md`](blueprint.md) | Screen list, Figma node IDs, design tokens, database schema, roadmap |
-| [`AGENTS.md`](AGENTS.md) | Coding conventions and context rules for AI agents |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to contribute, PR process, code style |
-| [`SECURITY.md`](SECURITY.md) | Vulnerability reporting policy |
-| [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) | Community guidelines |
-| [`CHANGELOG.md`](CHANGELOG.md) | Release history and notable changes |
+| File                                       | Description                                                          |
+| ------------------------------------------ | -------------------------------------------------------------------- |
+| [`blueprint.md`](blueprint.md)             | Screen list, Figma node IDs, design tokens, database schema, roadmap |
+| [`AGENTS.md`](AGENTS.md)                   | Coding conventions and context rules for AI agents                   |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md)       | How to contribute, PR process, code style                            |
+| [`SECURITY.md`](SECURITY.md)               | Vulnerability reporting policy                                       |
+| [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) | Community guidelines                                                 |
+| [`CHANGELOG.md`](CHANGELOG.md)             | Release history and notable changes                                  |
 
 ## Contributing
 
