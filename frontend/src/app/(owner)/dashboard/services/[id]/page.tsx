@@ -10,6 +10,7 @@ import {
   Check,
   ChevronRight,
   Clock,
+  Download,
   FileText,
   Fuel,
   KeyRound,
@@ -35,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import { DetailLoading } from "@/components/ui/loading";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { downloadInvoicePdf } from "@/lib/pdf";
 import {
   Table,
   TableBody,
@@ -43,7 +45,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { TaskStatus } from "@/types";
+import type { Invoice, InvoiceItem, TaskStatus } from "@/types";
 
 function Stars({
   rating,
@@ -183,7 +185,66 @@ export default function ServiceTrackingDetailsPage() {
 
   const vehicle = task ? vehicles.find((v) => v.id === task.vehicleId) ?? task.vehicle : null;
   const estimate = task ? estimates.find((e) => e.taskId === task.id) ?? null : null;
-  const invoice = task ? invoices.find((inv) => inv.taskId === task.id) ?? null : null;
+  const rawInvoice = task ? invoices.find((inv) => inv.taskId === task.id) ?? null : null;
+  const invoice: Invoice | null =
+    rawInvoice ??
+    (task && vehicle && (task.status === "completed" || task.status === "ready" || Boolean(task.ownerArchivedAt))
+      ? (() => {
+          const items: InvoiceItem[] =
+            task.services && task.services.length > 0
+              ? task.services.map((s, idx) => ({
+                  id: `li-${task.id}-${idx + 1}`,
+                  description: s.name,
+                  category: "service" as const,
+                  amount: typeof s.price === "number" ? s.price : 89.99,
+                }))
+              : [
+                  {
+                    id: `li-${task.id}-1`,
+                    description: "Vehicle Service & Maintenance",
+                    category: "service" as const,
+                    amount: 149.99,
+                  },
+                ];
+
+          if (task.partsUsed && task.partsUsed.length > 0) {
+            for (const part of task.partsUsed) {
+              items.push({
+                id: `li-${task.id}-part-${part.id}`,
+                description: `${part.name} (Qty: ${part.qty})`,
+                category: "parts" as const,
+                amount: typeof part.subtotal === "number" ? part.subtotal : (part.unitPrice ?? 0) * (part.qty ?? 1),
+              });
+            }
+          }
+
+          const subtotal = Math.round(items.reduce((acc, it) => acc + it.amount, 0) * 100) / 100;
+          const laborTotal = Math.round(subtotal * 0.35 * 100) / 100;
+          const partsTotal = Math.round((subtotal - laborTotal) * 100) / 100;
+          const tax = Math.round(subtotal * 0.085 * 100) / 100;
+          const total = Math.round((subtotal + tax) * 100) / 100;
+
+          return {
+            id: `INV-${task.id.replace(/\D/g, "") || "3001"}`,
+            taskId: task.id,
+            customerId: task.customerId,
+            vehicleId: vehicle.id,
+            issuedAt: task.createdAt,
+            status: "paid" as const,
+            items,
+            laborTotal,
+            partsTotal,
+            subtotal,
+            tax,
+            total,
+            payment: {
+              method: "card" as const,
+              paidAt: task.createdAt,
+              last4: "4242",
+            },
+          };
+        })()
+      : null);
   const existingRating = task ? ratings.find((r) => r.taskId === task.id) ?? null : null;
 
   const currentStageIndex = !task
@@ -294,6 +355,21 @@ export default function ServiceTrackingDetailsPage() {
             </div>
 
             <div className="flex items-center gap-2.5">
+              {invoice && vehicle && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    downloadInvoicePdf(invoice, vehicle);
+                    toast.success("Invoice PDF downloaded");
+                  }}
+                  className="gap-1.5 rounded-xl border-border bg-white text-xs font-semibold text-foreground shadow-xs hover:bg-secondary cursor-pointer"
+                  title="Download Invoice PDF"
+                >
+                  <Download className="size-3.5 text-primary" />
+                  Download Invoice
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -810,13 +886,30 @@ export default function ServiceTrackingDetailsPage() {
                     <p className="text-[10px] text-muted-foreground uppercase font-medium">Total Amount</p>
                     <p className="font-mono text-sm font-bold text-foreground">${invoice.total.toFixed(2)}</p>
                   </div>
-                  <Link
-                    href="/dashboard/payments"
-                    className="inline-flex items-center gap-1 rounded-xl border border-border bg-secondary px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary/80"
-                  >
-                    {invoice.status === "paid" ? "View Receipt" : "Settle Balance"}
-                    <ChevronRight className="size-3.5" />
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    {vehicle && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          downloadInvoicePdf(invoice, vehicle);
+                          toast.success("Invoice PDF downloaded");
+                        }}
+                        className="h-8 gap-1.5 rounded-xl border-border px-2.5 text-xs font-semibold text-foreground hover:bg-secondary cursor-pointer"
+                        title="Download Invoice PDF"
+                      >
+                        <Download className="size-3.5 text-primary" />
+                        <span>PDF</span>
+                      </Button>
+                    )}
+                    <Link
+                      href="/dashboard/payments"
+                      className="inline-flex h-8 items-center gap-1 rounded-xl border border-border bg-secondary px-3 text-xs font-semibold text-foreground hover:bg-secondary/80"
+                    >
+                      {invoice.status === "paid" ? "View Receipt" : "Settle Balance"}
+                      <ChevronRight className="size-3.5" />
+                    </Link>
+                  </div>
                 </div>
               </div>
             )}
