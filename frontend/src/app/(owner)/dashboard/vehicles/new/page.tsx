@@ -37,9 +37,22 @@ export default function RegisterVehiclePage() {
   return (
     <div className="bg-background min-h-screen p-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <div>
-          <p className="text-[11px] text-muted-foreground">Dashboard › Vehicles › Register</p>
-          <h1 className="text-2xl font-semibold tracking-[-0.24px] text-foreground">Register New Vehicle</h1>
+        <div className="flex flex-col gap-1">
+          <nav className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+            <Link href="/dashboard" className="hover:text-foreground">
+              Dashboard
+            </Link>
+            <span>›</span>
+            <Link href="/dashboard/vehicles" className="hover:text-foreground">
+              My Vehicles
+            </Link>
+            <span>›</span>
+            <span className="text-foreground">Register New Vehicle</span>
+          </nav>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Register New Vehicle</h1>
+          <p className="text-sm text-muted-foreground">
+            Add your car to track maintenance milestones, estimates, and repair timelines.
+          </p>
         </div>
 
         <div className="grid grid-cols-12 items-start gap-6">
