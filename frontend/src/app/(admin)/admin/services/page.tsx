@@ -77,7 +77,7 @@ export default function ServicesPage() {
   const [category, setCategory] = useState<ServiceCategory | "all">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [sortBy, setSortBy] = useState<"name-asc" | "name-desc" | "price-asc" | "price-desc" | "duration-asc" | "duration-desc">("name-asc");
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [page, setPage] = useState(0);
 
   // Modals

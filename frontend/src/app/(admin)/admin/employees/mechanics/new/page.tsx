@@ -7,7 +7,6 @@ import {
   Eye,
   EyeOff,
   FileText,
-  Info,
   Trash2,
   Upload,
   User as UserIcon,

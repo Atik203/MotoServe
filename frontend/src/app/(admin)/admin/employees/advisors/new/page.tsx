@@ -8,7 +8,6 @@ import {
   EyeOff,
   FileText,
   Headset,
-  Info,
   Trash2,
   Upload,
   User as UserIcon,

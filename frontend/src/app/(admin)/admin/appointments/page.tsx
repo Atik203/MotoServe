@@ -105,7 +105,7 @@ export default function AdminAppointmentsPage() {
   const [timeframeFilter, setTimeframeFilter] = useState<"all" | "today" | "tomorrow" | "this-week" | "past-due">("all");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"date-asc" | "date-desc" | "status">("date-asc");
-  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+  const [viewMode, setViewMode] = useState<"cards" | "table">("table");
   const [page, setPage] = useState(1);
 
   // Dialog States
