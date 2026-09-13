@@ -8,6 +8,7 @@ export const createServiceSchema = z.object({
     durationMins: z.number().int().positive(),
     description: z.string().optional(),
     active: z.boolean().optional(),
+    marketing: z.record(z.string(), z.any()).optional(),
   }),
 });
 

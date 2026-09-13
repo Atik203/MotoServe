@@ -1,19 +1,44 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
-import { Car, Check, Clock, Filter, Info, Search, UserCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  Car,
+  Check,
+  CheckCircle2,
+  Clock,
+  ExternalLink,
+  Filter,
+  Gauge,
+  Info,
+  RefreshCw,
+  Search,
+  Sparkles,
+  User,
+  UserCheck,
+  Users,
+  Wrench,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchTasks, assignMechanic } from "@/store/slices/tasksSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
-import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
+import { fetchStations } from "@/store/slices/stationsSlice";
+import { fetchVehicles } from "@/store/slices/vehiclesSlice";
+import { fetchCustomers } from "@/store/slices/customersSlice";
+import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DetailLoading } from "@/components/ui/loading";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
 import type { Employee, TaskCard } from "@/types";
 
 const WORKLOAD_LIMIT = 5;
@@ -26,460 +51,592 @@ const initials = (name: string) =>
     .join("")
     .toUpperCase();
 
-const fillColorFor = (workload: number) => {
-  if (workload >= 4) return "#ba1a1a";
-  if (workload >= 2) return "#ffc107";
-  return "#4caf50";
-};
-
-const availabilityFor = (workload: number) => {
-  if (workload >= WORKLOAD_LIMIT) {
-    return { label: "Unavailable", className: "bg-[rgba(186,26,26,0.1)] text-[#ba1a1a]" };
-  }
-  if (workload >= 2) {
-    return { label: "Busy (in 30m)", className: "bg-[rgba(255,193,7,0.1)] text-[#6a3c00]" };
-  }
-  return { label: "Available Now", className: "bg-[rgba(76,175,80,0.1)] text-[#4caf50]" };
-};
-
-export default function AssignMechanicPage() {
+function AssignMechanicContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlTaskId = searchParams.get("task");
   const dispatch = useAppDispatch();
+
   const tasks = useAppSelector((s) => s.tasks.items);
   const tasksStatus = useAppSelector((s) => s.tasks.status);
   const employees = useAppSelector((s) => s.employees.items);
-  const employeesStatus = useAppSelector((s) => s.employees.status);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [taskId, setTaskId] = useState("");
-  const [search, setSearch] = useState("");
-  const [availableOnly, setAvailableOnly] = useState(false);
+  const vehicles = useAppSelector((s) => s.vehicles.items);
+  const customers = useAppSelector((s) => s.customers.items);
+  const stations = useAppSelector((s) => s.stations.items);
+
+  const [selectedTaskId, setSelectedTaskId] = useState<string>(urlTaskId ?? "");
+  const [selectedMechanicIds, setSelectedMechanicIds] = useState<string[]>([]);
+  const [stationBay, setStationBay] = useState("");
+  const [mechanicSearch, setMechanicSearch] = useState("");
+  const [taskSearch, setTaskSearch] = useState("");
+  const [unassignedOnly, setUnassignedOnly] = useState(false);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     dispatch(fetchEmployees());
     dispatch(fetchTasks());
+    dispatch(fetchVehicles());
+    dispatch(fetchCustomers());
+    dispatch(fetchStations());
   }, [dispatch]);
 
-  const assignableTasks = tasks.filter((t) => !["completed", "ready"].includes(t.status));
-  const defaultTask = assignableTasks.find((t) => !t.mechanicId) ?? assignableTasks[0] ?? null;
-  const task: TaskCard | null =
-    (taskId ? tasks.find((t) => t.id === taskId) ?? null : null) ?? defaultTask;
+  useEffect(() => {
+    if (!stationBay && stations.length > 0) {
+      setStationBay(stations[0].name);
+    }
+  }, [stations, stationBay]);
+
+  // Active workshop tasks eligible for assignment
+  const activeTasks = useMemo(() => {
+    return tasks.filter((t) => !["completed", "ready"].includes(t.status));
+  }, [tasks]);
+
+  // Set default selected task if none
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (urlTaskId) {
+        setSelectedTaskId(urlTaskId);
+      } else if (!selectedTaskId && activeTasks.length > 0) {
+        const firstUnassigned = activeTasks.find(
+          (t) => !t.mechanicId && (!t.mechanics || t.mechanics.length === 0),
+        );
+        setSelectedTaskId(firstUnassigned ? firstUnassigned.id : activeTasks[0].id);
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [urlTaskId, activeTasks, selectedTaskId]);
+
+  const currentTask: TaskCard | null = useMemo(() => {
+    if (!selectedTaskId) return activeTasks[0] ?? null;
+    return tasks.find((t) => t.id === selectedTaskId) ?? activeTasks[0] ?? null;
+  }, [tasks, selectedTaskId, activeTasks]);
+
+  // When current task changes, sync pre-existing mechanics and station
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (currentTask) {
+        if (currentTask.station) setStationBay(currentTask.station);
+        if (currentTask.mechanicIds && currentTask.mechanicIds.length > 0) {
+          setSelectedMechanicIds(currentTask.mechanicIds);
+        } else if (currentTask.mechanicId) {
+          setSelectedMechanicIds([currentTask.mechanicId]);
+        } else {
+          setSelectedMechanicIds([]);
+        }
+        if (currentTask.assignmentNotes) setNotes(currentTask.assignmentNotes);
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [currentTask]);
 
   const mechanics = useMemo(
-    () => employees.filter((e) => e.role === "mechanic"),
+    () => employees.filter((e) => e.role === "mechanic" && e.status === "active"),
     [employees],
   );
 
   const workloadOf = useMemo(() => {
     const counts = new Map<string, number>();
     for (const t of tasks) {
-      if (t.mechanicId && t.status !== "completed" && t.status !== "ready") {
-        counts.set(t.mechanicId, (counts.get(t.mechanicId) ?? 0) + 1);
+      if (t.status !== "completed" && t.status !== "ready") {
+        if (t.mechanicIds && t.mechanicIds.length > 0) {
+          for (const mId of t.mechanicIds) counts.set(mId, (counts.get(mId) ?? 0) + 1);
+        } else if (t.mechanicId) {
+          counts.set(t.mechanicId, (counts.get(t.mechanicId) ?? 0) + 1);
+        }
       }
     }
-    return (m: Employee) => counts.get(m.id) ?? 0;
+    return (id: string) => counts.get(id) ?? 0;
   }, [tasks]);
 
+  // Filtered mechanics
   const filteredMechanics = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const q = mechanicSearch.trim().toLowerCase();
     return mechanics.filter(
-      (m) => (!query || m.name.toLowerCase().includes(query)) && (!availableOnly || workloadOf(m) < WORKLOAD_LIMIT),
+      (m) =>
+        !q ||
+        m.name.toLowerCase().includes(q) ||
+        (m.specialization ?? "").toLowerCase().includes(q) ||
+        (m.station ?? "").toLowerCase().includes(q),
     );
-  }, [mechanics, search, availableOnly, workloadOf]);
+  }, [mechanics, mechanicSearch]);
 
-  const selectedMechanic = mechanics.find((m) => m.id === selectedId) ?? null;
+  // Filtered task queue
+  const filteredTasks = useMemo(() => {
+    const q = taskSearch.trim().toLowerCase();
+    return activeTasks.filter((t) => {
+      const v = vehicles.find((item) => item.id === t.vehicleId) ?? t.vehicle;
+      const c = customers.find((item) => item.id === t.customerId) ?? t.customer;
+      const hasMechanic = Boolean(t.mechanicId || (t.mechanics && t.mechanics.length > 0));
 
-  const handleConfirm = async () => {
-    if (!selectedMechanic || !task) return;
+      const matchesUnassigned = !unassignedOnly || !hasMechanic;
+      const matchesSearch =
+        !q ||
+        t.id.toLowerCase().includes(q) ||
+        (v?.regNo ?? "").toLowerCase().includes(q) ||
+        (v?.make ?? "").toLowerCase().includes(q) ||
+        (v?.model ?? "").toLowerCase().includes(q) ||
+        (c?.name ?? "").toLowerCase().includes(q);
+
+      return matchesUnassigned && matchesSearch;
+    });
+  }, [activeTasks, vehicles, customers, taskSearch, unassignedOnly]);
+
+  const toggleSelectMechanic = (id: string) => {
+    setSelectedMechanicIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        dispatch(fetchEmployees()).unwrap(),
+        dispatch(fetchTasks()).unwrap(),
+        dispatch(fetchVehicles()).unwrap(),
+      ]);
+      toast.success("Roster updated");
+    } catch {
+      toast.error("Failed to refresh");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleConfirmAssignment = async () => {
+    if (!currentTask) {
+      toast.error("Please select a task card");
+      return;
+    }
+    if (selectedMechanicIds.length === 0) {
+      toast.error("Please select at least one certified technician");
+      return;
+    }
+
     setSubmitting(true);
     try {
       await dispatch(
         assignMechanic({
-          id: task.id,
-          mechanicId: selectedMechanic.id,
+          id: currentTask.id,
+          mechanicIds: selectedMechanicIds,
+          mechanicId: selectedMechanicIds[0],
+          station: stationBay,
           notes: notes.trim() || undefined,
         }),
       ).unwrap();
-      toast.success(`Assigned ${selectedMechanic.name} to task ${task.id}`);
-      router.push("/advisor");
+
+      const assignedNames = mechanics
+        .filter((m) => selectedMechanicIds.includes(m.id))
+        .map((m) => m.name)
+        .join(", ");
+
+      toast.success(`Assigned ${assignedNames} to task #${currentTask.id}`);
+      router.push(`/advisor/tasks/${currentTask.id}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Assignment failed");
+      toast.error(err instanceof Error ? err.message : "Assignment dispatch failed");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const assignLoading =
-    (tasksStatus === "idle" ||
-      tasksStatus === "loading" ||
-      employeesStatus === "idle" ||
-      employeesStatus === "loading") &&
-    tasks.length === 0 &&
-    employees.length === 0;
-  if (assignLoading) {
-    return <DetailLoading label="Loading assign mechanic" />;
+  const loading = (tasksStatus === "idle" || tasksStatus === "loading") && tasks.length === 0;
+
+  if (loading) {
+    return <DetailLoading label="Loading mechanic assignment workspace..." />;
   }
 
+  const currentVehicle = currentTask
+    ? vehicles.find((v) => v.id === currentTask.vehicleId) ?? currentTask.vehicle
+    : null;
+  const currentCustomer = currentTask
+    ? customers.find((c) => c.id === currentTask.customerId) ?? currentTask.customer
+    : null;
+
   return (
-    <div className="bg-background min-h-screen p-8">
+    <div className="min-h-screen bg-[#f9fafb] p-6 md:p-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <nav className="flex items-center gap-2 text-xs font-semibold text-[#727784]">
-            <span>Dashboard</span>
-            <span>›</span>
-            <span>Task Cards</span>
-            <span>›</span>
-            <span className="text-foreground">Assign Mechanic</span>
-          </nav>
-          <h1 className="text-4xl font-bold text-foreground">Assign Mechanic</h1>
-          <div className="flex items-center gap-3 pt-1">
-            <label className="text-sm text-[#424753]">Task:</label>
-            <select
-              value={task?.id ?? ""}
-              onChange={(e) => {
-                setTaskId(e.target.value);
-                setSelectedId(null);
-              }}
-              className="rounded border border-[#e5e7eb] bg-white px-3 py-1.5 text-sm font-medium text-foreground outline-none"
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
+          <div>
+            <nav className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+              <Link href="/advisor" className="hover:text-foreground">
+                Advisor
+              </Link>
+              <span>›</span>
+              <Link href="/advisor/tasks" className="hover:text-foreground">
+                Workshop Tasks
+              </Link>
+              <span>›</span>
+              <span className="text-[#0052cc]">Assign Mechanics</span>
+            </nav>
+            <div className="mt-1 flex items-center gap-2">
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                Technician & Bay Allocation Desk
+              </h1>
+              <span className="rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                Capacity & Dispatch
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Dispatch active repair tasks to available certified mechanics, balance workloads, and designate service stations.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="gap-1.5 rounded-xl border-border bg-white text-xs font-semibold text-foreground shadow-2xs hover:bg-secondary cursor-pointer"
             >
-              {assignableTasks.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.id} — {t.vehicle ? `${t.vehicle.year} ${t.vehicle.make} ${t.vehicle.model}` : "Vehicle"} ({t.status})
-                </option>
-              ))}
-            </select>
+              <RefreshCw className={cn("size-3.5 text-primary", isRefreshing && "animate-spin")} />
+              Refresh
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="gap-1.5 rounded-xl border-border bg-white text-xs font-semibold text-foreground shadow-2xs hover:bg-secondary"
+            >
+              <Link href="/advisor/tasks">
+                <ArrowLeft className="size-3.5" />
+                All Tasks
+              </Link>
+            </Button>
           </div>
         </div>
 
+        {/* 12-Column Responsive Workspace */}
         <div className="grid grid-cols-12 items-start gap-6">
-          <div className="col-span-8 flex flex-col gap-6">
-            <section className="relative overflow-hidden rounded-lg border border-[#e5e7eb] bg-white p-[17px] shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
-              <span className="absolute -top-16 -right-16 size-32 rounded-full bg-[rgba(0,82,204,0.06)]" />
+          {/* Left Column (5 cols): Tasks Queue */}
+          <div className="col-span-12 lg:col-span-5 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+                Active Workshop Tasks ({activeTasks.length})
+              </h2>
+              <button
+                type="button"
+                onClick={() => setUnassignedOnly((prev) => !prev)}
+                className={cn(
+                  "rounded-full px-2.5 py-0.5 text-xs font-semibold border transition-all cursor-pointer",
+                  unassignedOnly
+                    ? "bg-amber-100 text-amber-800 border-amber-300 font-bold"
+                    : "bg-white text-muted-foreground border-border hover:text-foreground",
+                )}
+              >
+                {unassignedOnly ? "Unassigned Only" : "Show All Active"}
+              </button>
+            </div>
 
-              <div className="relative flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded bg-[#f3f4f5]">
-                    <Car className="size-5 text-[#191c1d]" />
-                  </span>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xl font-semibold text-foreground">
-                      {task?.vehicle ? `${task.vehicle.year} ${task.vehicle.make} ${task.vehicle.model}` : "Select a task"}
-                    </span>
-                    <span className="flex items-center gap-1.5 text-[11px] text-[#424753]">
-                      <span>Customer: {task?.customer?.name ?? "—"}</span>
-                      <span>•</span>
-                      <span>Plate:</span>
-                      <span className="rounded bg-[#edeeef] px-1.5 py-0.5 font-mono text-[11px] font-medium text-[#191c1d]">
-                        {task?.vehicle?.regNo ?? "—"}
-                      </span>
-                    </span>
-                  </div>
-                </div>
-                <span
-                  className={cn(
-                    "flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase",
-                    task?.priority === "high"
-                      ? "bg-[rgba(186,26,26,0.1)] text-[#ba1a1a]"
-                      : task?.priority === "medium"
-                        ? "bg-[rgba(255,193,7,0.1)] text-[#6a3c00]"
-                        : "bg-[rgba(76,175,80,0.1)] text-[#4caf50]",
-                  )}
+            {/* Task Search */}
+            <div className="relative">
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={taskSearch}
+                onChange={(e) => setTaskSearch(e.target.value)}
+                placeholder="Search plate, customer, or task #..."
+                className="h-9 w-full rounded-xl border border-border bg-white pl-9 pr-8 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-all"
+              />
+              {taskSearch && (
+                <button
+                  type="button"
+                  onClick={() => setTaskSearch("")}
+                  className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  <span
-                    className={cn(
-                      "size-1.5 rounded-full",
-                      task?.priority === "high"
-                        ? "bg-[#ba1a1a]"
-                        : task?.priority === "medium"
-                          ? "bg-[#ffc107]"
-                          : "bg-[#4caf50]",
-                    )}
-                  />
-                  {task ? `${task.priority} Priority` : "No task"}
-                </span>
-              </div>
+                  <X className="size-3" />
+                </button>
+              )}
+            </div>
 
-              <div className="my-4 h-px bg-[#e5e7eb]" />
+            {/* Task List */}
+            <div className="flex flex-col gap-2.5 max-h-[720px] overflow-y-auto pr-1">
+              {filteredTasks.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-border bg-white p-8 text-center text-xs text-muted-foreground">
+                  No active tasks matching filter.
+                </div>
+              ) : (
+                filteredTasks.map((t) => {
+                  const isSelected = currentTask?.id === t.id;
+                  const v = vehicles.find((item) => item.id === t.vehicleId) ?? t.vehicle;
+                  const c = customers.find((item) => item.id === t.customerId) ?? t.customer;
+                  const hasMechanic = Boolean(t.mechanicId || (t.mechanics && t.mechanics.length > 0));
 
-              <div className="relative grid grid-cols-4 gap-4">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] text-[#727784]">Requested Services</span>
-                  <span className="truncate text-sm font-medium text-foreground">
-                    {task?.services.length ? task.services.map((s) => s.name).join(", ") : task?.issues ?? "—"}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] text-[#727784]">Services</span>
-                  <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-                    <Clock className="size-3.5 text-[#727784]" />
-                    {task?.services.length ? `${task.services.length} service${task.services.length > 1 ? "s" : ""}` : "TBD"}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] text-[#727784]">Station</span>
-                  <span className="truncate text-sm font-medium text-foreground">{task?.station ?? "Not set"}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] text-[#727784]">Task Status</span>
-                  {task ? (
-                    <StatusBadge status={task.status} />
-                  ) : (
-                    <span className="text-sm font-medium text-[#727784]">—</span>
-                  )}
-                </div>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-foreground">Available Mechanics</h2>
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-[#727784]" />
-                    <Input
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search names..."
-                      className="h-[38px] w-48 rounded-lg border-[#e5e7eb] pl-[30px] text-[13px]"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setAvailableOnly((v) => !v)}
-                    className={cn(
-                      "h-[38px] gap-2 rounded-lg border-[#e5e7eb] bg-white px-3.5 text-[13px] font-medium text-[#191c1d]",
-                      availableOnly && "border-primary bg-[#eff6ff] text-primary",
-                    )}
-                  >
-                    <Filter className="size-3.5" />
-                    {availableOnly ? "Showing available" : "Filter"}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {filteredMechanics.map((m) => {
-                  const workload = workloadOf(m);
-                  const unavailable = workload >= WORKLOAD_LIMIT;
-                  const selected = m.id === selectedId;
-                  const fillPct = Math.min((workload / WORKLOAD_LIMIT) * 100, 100);
-                  const fillColor = fillColorFor(workload);
-                  const availability = availabilityFor(workload);
                   return (
-                    <button
-                      key={m.id}
-                      type="button"
-                      disabled={unavailable}
-                      onClick={() => setSelectedId(selected ? null : m.id)}
+                    <div
+                      key={t.id}
+                      onClick={() => setSelectedTaskId(t.id)}
                       className={cn(
-                        "relative flex flex-col gap-3.5 rounded-lg border bg-white p-[18px] text-left shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors",
-                        selected
-                          ? "border-2 border-primary p-[17px]"
-                          : "border-[#e5e7eb] hover:border-primary/40",
-                        unavailable && "opacity-60",
+                        "flex flex-col gap-2 rounded-xl border p-3.5 text-xs transition-all cursor-pointer",
+                        isSelected
+                          ? "border-[#0052cc] bg-blue-50/40 shadow-xs ring-1 ring-[#0052cc]/30"
+                          : "border-border bg-white hover:border-slate-300 hover:bg-slate-50/60",
                       )}
                     >
-                      {selected && (
-                        <span className="absolute top-3.5 right-3.5 flex size-5 items-center justify-center rounded-full bg-primary">
-                          <Check className="size-3 text-white" />
-                        </span>
-                      )}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-foreground">#{t.id}</span>
+                          <span className="rounded-full bg-slate-100 px-2 py-0.2 text-[10px] font-semibold capitalize text-slate-700">
+                            {t.status}
+                          </span>
+                        </div>
+                        {hasMechanic ? (
+                          <span className="rounded-full bg-emerald-50 px-2 py-0.2 text-[10px] font-bold text-emerald-700 border border-emerald-200">
+                            Assigned
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-amber-50 px-2 py-0.2 text-[10px] font-bold text-amber-700 border border-amber-200 animate-pulse">
+                            Unassigned
+                          </span>
+                        )}
+                      </div>
 
-                      <div className="flex items-center gap-3.5">
-                        <div className="relative shrink-0">
-                          <Avatar className="size-12 rounded-xl after:rounded-xl">
-                            <AvatarImage
-                              src={m.avatar}
-                              alt={m.name}
-                              className="rounded-xl"
-                            />
-                            <AvatarFallback className="rounded-xl bg-[#eff6ff] text-sm font-semibold text-primary">
-                              {initials(m.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span
-                            className={cn(
-                              "absolute right-0 bottom-0 size-3 rounded-full ring-2 ring-white",
-                              unavailable ? "bg-[#ba1a1a]" : workload >= 2 ? "bg-[#ffc107]" : "bg-[#4caf50]",
-                            )}
+                      <div className="flex items-center gap-3">
+                        <div className="relative size-10 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-[#eef1f4]">
+                          <VehicleImage
+                            src={v?.image || "/images/cars/car-1.png"}
+                            alt={v?.model ?? "Car"}
+                            fill
+                            className="object-contain p-0.5"
                           />
                         </div>
-                        <div className="flex min-w-0 flex-col gap-0.5">
-                          <span className="truncate text-xl font-semibold text-foreground">{m.name}</span>
-                          <span className="truncate text-xs text-[#727784]">
-                            ID: {m.id}
-                            {m.specialization ? ` • ${m.specialization}` : ""}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-end justify-between gap-3">
-                        <div className="flex flex-col gap-1.5">
-                          <span className="text-[11px] text-[#727784]">Current Workload</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-foreground">
-                              {workload}/{WORKLOAD_LIMIT} tasks
+                        <div className="flex-1 overflow-hidden">
+                          <p className="font-bold text-foreground truncate">
+                            {v ? `${v.year} ${v.make} ${v.model}` : "Vehicle"}
+                          </p>
+                          <div className="mt-0.5 flex items-center gap-2">
+                            <span className="rounded border border-[#c2c6d5] bg-[#edf0f8] px-1.5 py-0.2 text-[10px] font-mono font-bold text-[#2a3042]">
+                              {v?.regNo ?? "—"}
                             </span>
-                            <span className="h-1.5 w-16 overflow-hidden rounded-full bg-[#edeeef]">
-                              <span
-                                className="block h-full rounded-full"
-                                style={{ width: `${fillPct}%`, backgroundColor: fillColor }}
-                              />
-                            </span>
+                            <span className="text-[11px] text-muted-foreground truncate">{c?.name}</span>
                           </div>
                         </div>
-                        <span
-                          className={cn(
-                            "shrink-0 rounded-full px-2.5 py-0.75 text-[11px] font-semibold",
-                            availability.className,
-                          )}
-                        >
-                          {availability.label}
-                        </span>
                       </div>
-                    </button>
+                    </div>
                   );
-                })}
-              </div>
-            </section>
+                })
+              )}
+            </div>
           </div>
 
-          <div className="col-span-4 flex flex-col gap-6 lg:sticky lg:top-22">
-            <section className="overflow-hidden rounded-[12px] border border-[#e2e8f0] bg-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-              <div className="relative h-16 bg-gradient-to-r from-[#004492] to-[#005bbf]">
-                {!selectedMechanic && (
-                  <span className="absolute bottom-3 left-4 text-xs font-semibold tracking-[0.55px] text-[#c8d8ff] uppercase">
-                    Selected Mechanic
-                  </span>
-                )}
-              </div>
-              <div className="px-[25px] pb-[25px]">
-                {selectedMechanic ? (
-                  <>
-                    <div className="relative -mt-10 flex items-end gap-3">
-                      <div className="relative shrink-0">
-                        <Avatar className="size-20 rounded-2xl border-4 border-white after:rounded-2xl">
-                          <AvatarImage src={selectedMechanic.avatar} alt={selectedMechanic.name} className="rounded-2xl" />
-                          <AvatarFallback className="rounded-2xl bg-[rgba(0,68,146,0.1)] text-xl font-bold text-[#004492]">
-                            {initials(selectedMechanic.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span
-                          className={cn(
-                            "absolute right-1.5 bottom-1.5 size-3.5 rounded-full ring-2 ring-white",
-                            workloadOf(selectedMechanic) >= WORKLOAD_LIMIT
-                              ? "bg-[#ba1a1a]"
-                              : workloadOf(selectedMechanic) >= 2
-                                ? "bg-[#ffc107]"
-                                : "bg-[#4caf50]",
-                          )}
+          {/* Right Column (7 cols): Mechanic Allocation Workspace */}
+          <div className="col-span-12 lg:col-span-7 flex flex-col gap-6">
+            {currentTask ? (
+              <>
+                {/* Active Task Banner */}
+                <Card className="rounded-xl border-border bg-white shadow-xs">
+                  <CardContent className="flex flex-col gap-4 p-5">
+                    <div className="flex items-center justify-between border-b border-border pb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm font-bold text-[#0052cc]">#{currentTask.id}</span>
+                        <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-[#0052cc] border border-blue-200 capitalize">
+                          {currentTask.status} stage
+                        </span>
+                      </div>
+                      <Link
+                        href={`/advisor/tasks/${currentTask.id}`}
+                        className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                      >
+                        View Full Details
+                        <ExternalLink className="size-3" />
+                      </Link>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="relative size-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-[#eef1f4]">
+                        <VehicleImage
+                          src={currentVehicle?.image || "/images/cars/car-1.png"}
+                          alt={currentVehicle?.model ?? "Vehicle"}
+                          fill
+                          className="object-contain p-1"
                         />
                       </div>
-                      <div className="flex flex-1 items-end justify-between gap-2 pb-1">
-                        <div>
-                          <p className="text-lg font-semibold text-foreground">{selectedMechanic.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {selectedMechanic.specialization ?? "Mechanic"}
-                          </p>
+                      <div className="flex-1">
+                        <h3 className="text-base font-bold text-foreground">
+                          {currentVehicle
+                            ? `${currentVehicle.year} ${currentVehicle.make} ${currentVehicle.model}`
+                            : "Vehicle"}
+                        </h3>
+                        <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                          <span className="rounded border border-[#c2c6d5] bg-[#edf0f8] px-1.5 py-0.2 font-mono font-bold text-[#2a3042]">
+                            {currentVehicle?.regNo ?? "—"}
+                          </span>
+                          <span>Owner: <strong className="text-foreground">{currentCustomer?.name}</strong></span>
+                          {currentCustomer?.phone && <span>📞 {currentCustomer.phone}</span>}
                         </div>
-                        <span
-                          className={cn(
-                            "mb-0.5 shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                            availabilityFor(workloadOf(selectedMechanic)).className,
-                          )}
+                      </div>
+                    </div>
+
+                    {currentTask.issues && (
+                      <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs text-slate-700">
+                        <strong className="text-foreground">Intake Concerns:</strong> {currentTask.issues}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Bay Reallocation & Instructions */}
+                <Card className="rounded-xl border-border bg-white shadow-xs">
+                  <CardContent className="flex flex-col gap-4 p-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs font-semibold">Allocated Workshop Bay / Station</Label>
+                        <select
+                          value={stationBay}
+                          onChange={(e) => setStationBay(e.target.value)}
+                          className="h-9 rounded-lg border border-border bg-white px-3 text-xs outline-none focus:border-[#0052cc]"
                         >
-                          {availabilityFor(workloadOf(selectedMechanic)).label}
-                        </span>
+                          {stations.map((s) => (
+                            <option key={s.id} value={s.name}>
+                              {s.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs font-semibold">Special Instructions for Assigned Mechanics</Label>
+                        <Input
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          placeholder="e.g. Focus on brake caliper noise, test drive after bleed..."
+                          className="h-9 text-xs"
+                        />
                       </div>
                     </div>
-                    <div className="mt-4 flex flex-col gap-2.5 border-t border-[#e2e8f0] pt-4 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-[#424753]">ID</span>
-                        <span className="font-medium text-foreground">{selectedMechanic.id.toUpperCase()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#424753]">Branch</span>
-                        <span className="font-medium text-foreground">{selectedMechanic.station ?? "—"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#424753]">Status</span>
-                        <span className="flex items-center gap-1.5 rounded-xl bg-[rgba(76,175,80,0.1)] px-2 py-0.5 text-[11px] font-semibold text-[#4caf50]">
-                          <span className="size-1.5 rounded-full bg-[#4caf50]" />
-                          On Shift
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[#424753]">Current Workload</span>
-                        <div className="flex items-center gap-2">
-                          <span className="rounded bg-[#edeeef] px-1.5 py-0.5 text-[11px] font-semibold text-foreground">
-                            {workloadOf(selectedMechanic)}/{WORKLOAD_LIMIT}
-                          </span>
-                          <span className="h-1.5 w-16 overflow-hidden rounded-full bg-[#edeeef]">
-                            <span
-                              className="block h-full rounded-full"
-                              style={{
-                                width: `${Math.min((workloadOf(selectedMechanic) / WORKLOAD_LIMIT) * 100, 100)}%`,
-                                backgroundColor: fillColorFor(workloadOf(selectedMechanic)),
-                              }}
-                            />
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center gap-3 pt-10 pb-4 text-center">
-                    <span className="flex size-12 items-center justify-center rounded-full bg-[rgba(0,68,146,0.1)]">
-                      <UserCheck className="size-6 text-[#004492]" />
-                    </span>
+                  </CardContent>
+                </Card>
+
+                {/* Mechanic Roster Selection */}
+                <Card className="rounded-xl border-border bg-white shadow-xs">
+                  <div className="border-b border-border bg-[#f8f9fa] px-5 py-3.5 rounded-t-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-foreground">No mechanic selected</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        Pick a mechanic from the list to preview their profile here.
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                        Select Certified Mechanics ({selectedMechanicIds.length} chosen)
+                      </h3>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Check one or more technicians to assign to Task #{currentTask.id}.
                       </p>
                     </div>
+
+                    <div className="relative w-full sm:w-56">
+                      <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                      <input
+                        type="text"
+                        value={mechanicSearch}
+                        onChange={(e) => setMechanicSearch(e.target.value)}
+                        placeholder="Search mechanics..."
+                        className="h-8 w-full rounded-lg border border-border bg-white pl-8 pr-2 text-xs outline-none focus:border-[#0052cc]"
+                      />
+                    </div>
                   </div>
-                )}
+
+                  <CardContent className="p-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto pr-1">
+                      {filteredMechanics.map((m) => {
+                        const isSelected = selectedMechanicIds.includes(m.id);
+                        const workload = workloadOf(m.id);
+
+                        return (
+                          <div
+                            key={m.id}
+                            onClick={() => toggleSelectMechanic(m.id)}
+                            className={cn(
+                              "flex items-center justify-between rounded-xl border p-3 text-xs transition-all cursor-pointer",
+                              isSelected
+                                ? "border-[#0052cc] bg-blue-50/50 shadow-xs ring-1 ring-[#0052cc]/30"
+                                : "border-border bg-white hover:border-slate-300 hover:bg-slate-50/50",
+                            )}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={cn(
+                                  "flex size-9 items-center justify-center rounded-full text-xs font-bold text-white shadow-xs",
+                                  isSelected ? "bg-[#0052cc]" : "bg-slate-600",
+                                )}
+                              >
+                                {initials(m.name)}
+                              </div>
+                              <div>
+                                <h4 className="font-bold text-foreground">{m.name}</h4>
+                                <p className="text-[11px] text-muted-foreground">
+                                  {m.specialization || m.station || "Certified Mechanic"}
+                                </p>
+                                <div className="mt-1 flex items-center gap-1.5">
+                                  <span
+                                    className={cn(
+                                      "rounded px-1.5 py-0.2 text-[10px] font-bold",
+                                      workload === 0
+                                        ? "bg-emerald-100 text-emerald-800"
+                                        : workload < WORKLOAD_LIMIT
+                                          ? "bg-blue-100 text-blue-800"
+                                          : "bg-rose-100 text-rose-800",
+                                    )}
+                                  >
+                                    {workload === 0 ? "Available (0)" : `${workload} active tasks`}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div
+                              className={cn(
+                                "size-5 rounded border flex items-center justify-center text-white transition-all",
+                                isSelected
+                                  ? "bg-[#0052cc] border-[#0052cc]"
+                                  : "border-slate-300 bg-white",
+                              )}
+                            >
+                              {isSelected && <Check className="size-3.5" />}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Dispatch Action */}
+                    <div className="mt-5 border-t border-border pt-4 flex items-center justify-between">
+                      <div className="text-xs text-muted-foreground">
+                        {selectedMechanicIds.length === 0 ? (
+                          <span className="text-amber-700 font-semibold">Please select at least 1 technician</span>
+                        ) : (
+                          <span>
+                            Selected: <strong className="text-foreground">{selectedMechanicIds.length} technician(s)</strong>
+                          </span>
+                        )}
+                      </div>
+
+                      <Button
+                        onClick={handleConfirmAssignment}
+                        disabled={submitting || selectedMechanicIds.length === 0}
+                        className="gap-2 bg-[#0052cc] text-xs font-bold text-white shadow-xs hover:bg-[#0047b3] disabled:opacity-50 h-10 px-5"
+                      >
+                        <UserCheck className="size-4" />
+                        {submitting ? "Assigning..." : `Assign & Dispatch to Task #${currentTask.id}`}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <div className="rounded-xl border border-dashed border-border bg-white p-16 text-center text-muted-foreground text-sm">
+                No task cards available in workshop queue.
               </div>
-            </section>
-
-            <section className="flex flex-col gap-3 rounded-[12px] border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-              <h2 className="border-b border-[#e2e8f0] pb-[9px] text-xl font-semibold text-foreground">Assignment Notes</h2>
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add internal notes about this assignment..."
-                className="mt-3 min-h-24 rounded-[4px] border-[#e2e8f0] text-[13px]"
-              />
-            </section>
-
-            <section className="rounded-[12px] border border-[#e2e8f0] bg-[rgba(0,68,146,0.05)] p-[17px]">
-              <p className="flex items-start gap-2 text-sm leading-5 text-[#424753]">
-                <Info className="mt-0.5 size-4 shrink-0 text-[#004492]" />
-                The mechanic will be notified instantly. Once assigned, they can update repair progress and log parts as the task moves through the workshop.
-              </p>
-            </section>
-
-            <section className="flex flex-col gap-3.5 rounded-[12px] border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-              <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-3">
-                <span className="text-sm font-medium text-[#424753]">Task</span>
-                <span className="text-sm font-semibold text-foreground">#{task?.id ?? "—"}</span>
-              </div>
-              <Button
-                type="button"
-                onClick={() => void handleConfirm()}
-                disabled={!selectedMechanic || submitting}
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-[4px] bg-[#004492] text-xs font-semibold tracking-[0.24px] text-white hover:bg-[#004492]/90"
-              >
-                <UserCheck className="size-4" />
-                {submitting ? "Assigning..." : "Confirm Assignment"}
-              </Button>
-            </section>
+            )}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AssignMechanicPage() {
+  return (
+    <Suspense fallback={<DetailLoading label="Loading mechanic assignment workspace..." />}>
+      <AssignMechanicContent />
+    </Suspense>
   );
 }

@@ -50,7 +50,7 @@ export const roleNav: Record<Role, RoleNavConfig> = {
       { label: "Appointments", href: "/dashboard/appointments", icon: CalendarDays },
       { label: "Service Tracking", href: "/dashboard/services", icon: Gauge },
       { label: "Estimates", href: "/dashboard/estimates", icon: FileCheck },
-      { label: "Communication Center", href: "/dashboard/chat", icon: MessageSquare },
+      { label: "Chat", href: "/dashboard/chat", icon: MessageSquare },
       { label: "Service History", href: "/dashboard/history", icon: History },
       { label: "Payments & Invoices", href: "/dashboard/payments", icon: Wallet },
     ],
@@ -66,10 +66,10 @@ export const roleNav: Record<Role, RoleNavConfig> = {
       { label: "Dashboard", href: "/advisor", icon: LayoutDashboard },
       { label: "Appointments", href: "/advisor/appointments", icon: CalendarDays },
       { label: "Receive Vehicle", href: "/advisor/receive", icon: Truck },
-      { label: "Create Task Card", href: "/advisor/task-cards/new", icon: FileText },
+      { label: "Create Task", href: "/advisor/tasks/new", icon: FileText },
       { label: "Assign Mechanic", href: "/advisor/task-cards/assign", icon: Users },
       { label: "Send Estimate", href: "/advisor/estimates/new", icon: FileCheck },
-      { label: "Communication Center", href: "/advisor/chat", icon: MessageSquare },
+      { label: "Chat", href: "/advisor/chat", icon: MessageSquare },
     ],
     bottomItems: [
       { label: "Help", href: "/faqs", icon: LifeBuoy },
@@ -79,7 +79,7 @@ export const roleNav: Record<Role, RoleNavConfig> = {
   mechanic: {
     brand: "MotoServe",
     items: [
-      { label: "Current Tasks", href: "/mechanic", icon: ClipboardList },
+      { label: "Dashboard", href: "/mechanic", icon: LayoutDashboard },
       { label: "Repair Progress", href: "/mechanic/tasks", icon: Wrench },
       { label: "History", href: "/mechanic/history", icon: History },
       { label: "Parts Request", href: "/mechanic/parts", icon: Package },
@@ -88,7 +88,6 @@ export const roleNav: Record<Role, RoleNavConfig> = {
       { label: "Help", href: "/faqs", icon: LifeBuoy },
       { label: "Logout", href: "/login", icon: LogOut },
     ],
-    actionButton: { label: "Logout" },
   },
   admin: {
     brand: "MotoServe",

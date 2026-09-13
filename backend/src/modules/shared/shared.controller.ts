@@ -6,11 +6,16 @@ import {
   listCustomers,
   listEmployees,
   listEstimates,
+  getEstimateById,
   listInvoices,
   listTasks,
   listParts,
   listRatings,
   listServices,
+  listStations,
+  createStation,
+  updateStation,
+  deleteStation,
   listTestimonials,
   getSiteContent,
   listThreads,
@@ -19,6 +24,7 @@ import {
   mapCustomerStatus,
   markThreadRead,
   updateAppointment,
+  deleteAppointment,
 } from "./shared.service.js";
 import { safeEmit } from "../../lib/socket.js";
 import { prisma } from "../../lib/prisma.js";
@@ -109,15 +115,26 @@ export async function getAppointment(req: Request, res: Response): Promise<void>
 }
 
 export async function updateAppointmentController(req: Request, res: Response): Promise<void> {
-  const { status } = req.body.body as { status: string };
+  const { status, date, time, notes } = (req.body.body || req.body) as {
+    status?: string;
+    date?: string;
+    time?: string;
+    notes?: string;
+  };
   const appointment = await updateAppointment(
     req.params.id as string,
-    status,
+    { status, date, time, notes },
     req.user?.role,
     req.user?.userId,
   );
   res.json({ ...appointment, status: appointment.status.toLowerCase() });
 }
+
+export async function deleteAppointmentController(req: Request, res: Response): Promise<void> {
+  await deleteAppointment(req.params.id as string);
+  res.status(204).end();
+}
+
 
 export async function getEmployees(req: Request, res: Response): Promise<void> {
   const role = req.query.role as string | undefined;
@@ -143,6 +160,23 @@ export async function getEstimates(req: Request, res: Response): Promise<void> {
       items: e.items.map((i) => ({ ...i, category: i.category.toLowerCase() })),
     })),
   );
+}
+
+export async function getEstimate(req: Request, res: Response): Promise<void> {
+  const customerId = req.user?.role === "OWNER" ? req.user.userId : undefined;
+  const estimate = await getEstimateById(req.params.id as string, customerId);
+  if (!estimate) {
+    res.status(404).json({ error: "Estimate not found" });
+    return;
+  }
+  res.json({
+    ...estimate,
+    taskId: estimate.taskCardId,
+    taskCardId: estimate.taskCardId,
+    taskCard: estimate.taskCard,
+    status: estimate.status.toLowerCase(),
+    items: estimate.items.map((i) => ({ ...i, category: i.category.toLowerCase() })),
+  });
 }
 
 export async function getInvoices(req: Request, res: Response): Promise<void> {
@@ -198,8 +232,8 @@ async function getParticipantThread(threadId: string, userId: string | undefined
 }
 
 export async function sendMessage(req: Request, res: Response): Promise<void> {
-  const { threadId, text } = req.body.body as { threadId: string; text: string };
-  await getParticipantThread(threadId, req.user?.userId);
+  const { threadId, text } = (req.body.body || req.body) as { threadId: string; text: string };
+  const thread = await getParticipantThread(threadId, req.user?.userId);
   const sender: "ADVISOR" | "OWNER" = req.user?.role === "OWNER" ? "OWNER" : "ADVISOR";
   const message = await prisma.message.create({ data: { threadId, sender, text } });
   await prisma.chatThread.update({
@@ -209,15 +243,92 @@ export async function sendMessage(req: Request, res: Response): Promise<void> {
       ...(sender === "OWNER" ? { advisorUnread: { increment: 1 } } : { ownerUnread: { increment: 1 } }),
     },
   });
-  const payload = { ...message, sender: message.sender.toLowerCase() };
-  safeEmit(threadId, "message:new", payload);
+  const payload = {
+    id: message.id,
+    threadId: message.threadId,
+    sender: message.sender.toLowerCase(),
+    text: message.text,
+    time: message.time.toISOString(),
+  };
+  safeEmit([threadId, `user:${thread.ownerId}`, `user:${thread.advisorId}`], "message:new", payload);
   res.status(201).json(payload);
 }
 
 export async function markThreadReadController(req: Request, res: Response): Promise<void> {
-  await getParticipantThread(req.params.id as string, req.user?.userId);
+  const thread = await getParticipantThread(req.params.id as string, req.user?.userId);
   await markThreadRead(req.params.id as string, req.user?.role);
+  safeEmit([thread.id, `user:${thread.ownerId}`, `user:${thread.advisorId}`], "thread:read", {
+    threadId: thread.id,
+    readerRole: req.user?.role.toLowerCase(),
+  });
   res.json({ ok: true });
+}
+
+export async function createThreadController(req: Request, res: Response): Promise<void> {
+  if (!req.user) throw new ApiError(401, "Authentication required");
+  const { advisorId, customerId, subject, text } = (req.body.body || req.body) as {
+    advisorId?: string;
+    customerId?: string;
+    subject?: string;
+    text: string;
+  };
+
+  let ownerId = "";
+  let targetAdvisorId = "";
+
+  if (req.user.role === "OWNER") {
+    if (!advisorId) throw new ApiError(400, "Advisor ID is required");
+    ownerId = req.user.userId;
+    targetAdvisorId = advisorId;
+  } else if (req.user.role === "ADVISOR") {
+    if (!customerId) throw new ApiError(400, "Customer ID is required");
+    ownerId = customerId;
+    targetAdvisorId = req.user.userId;
+  } else {
+    throw new ApiError(403, "Only vehicle owners and service advisors can create conversations");
+  }
+
+  const senderRole = req.user.role === "OWNER" ? "OWNER" : "ADVISOR";
+  const thread = await prisma.chatThread.create({
+    data: {
+      ownerId,
+      advisorId: targetAdvisorId,
+      subject: subject?.trim() || "Vehicle service inquiry",
+      ownerUnread: senderRole === "ADVISOR" ? 1 : 0,
+      advisorUnread: senderRole === "OWNER" ? 1 : 0,
+      messages: {
+        create: {
+          sender: senderRole,
+          text,
+        },
+      },
+    },
+    include: {
+      owner: { select: { id: true, name: true, avatar: true } },
+      advisor: { select: { id: true, name: true, avatar: true } },
+      messages: true,
+    },
+  });
+
+  const payload = {
+    id: thread.id,
+    ownerId: thread.ownerId,
+    advisorId: thread.advisorId,
+    subject: thread.subject,
+    unread: 0,
+    lastMessageAt: thread.lastMessageAt.toISOString(),
+    owner: { id: thread.owner.id, name: thread.owner.name, avatar: thread.owner.avatar },
+    advisor: { id: thread.advisor.id, name: thread.advisor.name, avatar: thread.advisor.avatar },
+    messages: thread.messages.map((m) => ({
+      id: m.id,
+      sender: m.sender.toLowerCase(),
+      text: m.text,
+      time: m.time.toISOString(),
+    })),
+  };
+
+  safeEmit([`user:${ownerId}`, `user:${targetAdvisorId}`], "thread:new", payload);
+  res.status(201).json(payload);
 }
 
 export async function getParts(_req: Request, res: Response): Promise<void> {
@@ -231,4 +342,27 @@ export async function getRatings(req: Request, res: Response): Promise<void> {
 
 export async function getTestimonials(_req: Request, res: Response): Promise<void> {
   res.json(await listTestimonials());
+}
+
+export async function getStations(_req: Request, res: Response): Promise<void> {
+  res.json(await listStations());
+}
+
+export async function createStationController(req: Request, res: Response): Promise<void> {
+  const { name } = req.body as { name: string };
+  if (!name?.trim()) throw new ApiError(400, "Station name is required");
+  const station = await createStation(name.trim());
+  res.status(201).json(station);
+}
+
+export async function updateStationController(req: Request, res: Response): Promise<void> {
+  const { name } = req.body as { name: string };
+  if (!name?.trim()) throw new ApiError(400, "Station name is required");
+  const station = await updateStation(req.params.id as string, name.trim());
+  res.json(station);
+}
+
+export async function deleteStationController(req: Request, res: Response): Promise<void> {
+  await deleteStation(req.params.id as string);
+  res.status(204).end();
 }

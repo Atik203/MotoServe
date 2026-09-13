@@ -6,8 +6,16 @@ import {
   addTaskPhotoController,
   addPartUsedController,
   updateTaskStatusController,
+  createPartRequestController,
+  listPartRequestsController,
 } from "./mechanic.controller.js";
-import { addTaskNoteSchema, addTaskPhotoSchema, addPartUsedSchema, updateTaskStatusSchema } from "./mechanic.validation.js";
+import {
+  addTaskNoteSchema,
+  addTaskPhotoSchema,
+  addPartUsedSchema,
+  updateTaskStatusSchema,
+  createPartRequestSchema,
+} from "./mechanic.validation.js";
 
 export const router = Router();
 
@@ -47,3 +55,17 @@ const photosMiddleware = [
 
 router.post("/tasks/:id/photos", ...photosMiddleware);
 
+router.post(
+  "/parts/request",
+  requireAuth,
+  requireRole("mechanic"),
+  validate(createPartRequestSchema),
+  createPartRequestController,
+);
+
+router.get(
+  "/parts/requests",
+  requireAuth,
+  requireRole("mechanic", "advisor", "admin"),
+  listPartRequestsController,
+);

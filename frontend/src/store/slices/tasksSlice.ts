@@ -57,15 +57,32 @@ export const createTaskCard = createAsyncThunk(
     appointmentId?: string;
     serviceIds?: string[];
     expectedDate?: string;
+    mechanicId?: string;
+    mechanicIds?: string[];
+    assignmentNotes?: string;
   }) => {
     return await api.post<{ id: string }>("/tasks", data);
   },
 );
 
+export const createTask = createTaskCard;
+
 export const assignMechanic = createAsyncThunk(
   "tasks/assign",
-  async ({ id, mechanicId, station, notes }: { id: string; mechanicId: string; station?: string; notes?: string }) => {
-    return await api.post<{ id: string }>(`/tasks/${id}/assign`, { mechanicId, station, notes });
+  async ({
+    id,
+    mechanicId,
+    mechanicIds,
+    station,
+    notes,
+  }: {
+    id: string;
+    mechanicId?: string;
+    mechanicIds?: string[];
+    station?: string;
+    notes?: string;
+  }) => {
+    return await api.post<{ id: string }>(`/tasks/${id}/assign`, { mechanicId, mechanicIds, station, notes });
   },
 );
 

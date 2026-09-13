@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
@@ -179,7 +180,9 @@ export default function VerificationDetailPage() {
                           {isPdf ? (
                             <iframe src={doc.url} title={doc.name} className="h-52 w-full rounded border border-border bg-white" />
                           ) : (
-                            <img src={doc.url} alt={doc.name} className="h-52 w-full rounded border border-border bg-white object-contain" />
+                            <div className="relative h-52 w-full overflow-hidden rounded border border-border bg-white">
+                              <Image src={doc.url} alt={doc.name} fill unoptimized className="object-contain" />
+                            </div>
                           )}
                         </div>
                         <p className="truncate px-3 pb-3 text-xs text-muted-foreground">{doc.name}</p>

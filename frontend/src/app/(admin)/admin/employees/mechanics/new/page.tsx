@@ -1,14 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  AlertTriangle,
   Eye,
   EyeOff,
   FileText,
-  KeyRound,
   Trash2,
   Upload,
   User as UserIcon,
@@ -18,11 +16,11 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAppDispatch } from "@/store/hooks";
-import { createEmployee } from "@/store/slices/employeesSlice";
+import Image from "next/image";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { createEmployee, fetchEmployees } from "@/store/slices/employeesSlice";
 import { uploadDocument } from "@/store/slices/authSlice";
-
-const BRANCHES = ["Main Bay / Station 01", "Main Bay / Station 02", "Main Bay / Station 03", "Main Bay / Station 04"];
+import { fetchStations } from "@/store/slices/stationsSlice";
 
 const SPECIALIZATIONS = [
   "Engine & Diagnostics",
@@ -30,6 +28,8 @@ const SPECIALIZATIONS = [
   "Electrical & AC",
   "General",
 ];
+
+const EMPLOYMENT_TYPES = ["Full Time", "Part Time", "Contract"];
 
 const SKILL_CHOICES = ["Oil Change", "Diagnostics", "Tire Alignment", "Suspension", "Exhaust Systems"];
 
@@ -40,15 +40,6 @@ const DOCUMENT_KINDS = [
   "Apprenticeship / Trade Certificate",
   "Employment Contract / Resume",
   "Other Document",
-];
-
-const PERMISSIONS = [
-  { key: "viewTasks", label: "View Assigned Tasks (Default)" },
-  { key: "updateProgress", label: "Update Task Progress" },
-  { key: "requestParts", label: "Request/Add Inventory Parts" },
-  { key: "markComplete", label: "Mark Task as Complete" },
-  { key: "uploadPhotos", label: "Upload Inspection Photos" },
-  { key: "directChat", label: "Direct Chat with Service Advisor" },
 ];
 
 const fieldLabel = "text-sm text-foreground";
@@ -75,6 +66,10 @@ interface AttachedDoc {
 export default function AddMechanicPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const employees = useAppSelector((s) => s.employees.items);
+  const stations = useAppSelector((s) => s.stations.items);
+  const generatedId = `EMP-MEC-2026-${String(employees.filter((e) => e.role === "mechanic").length + 1).padStart(3, "0")}`;
+
   const [form, setForm] = useState({
     fullName: "",
     nid: "",
@@ -87,26 +82,28 @@ export default function AddMechanicPage() {
     emergencyPhone: "",
     branch: "",
     joiningDate: "",
-    employmentType: "Full Time",
     salary: "",
     experience: "",
-    status: "Available",
   });
+
+  useEffect(() => {
+    if (employees.length === 0) {
+      dispatch(fetchEmployees());
+    }
+    dispatch(fetchStations());
+  }, [dispatch, employees.length]);
+
+  useEffect(() => {
+    if (!form.branch && stations.length > 0) {
+      setForm((prev) => (prev.branch ? prev : { ...prev, branch: stations[0].name }));
+    }
+  }, [stations, form.branch]);
+  const [employmentType, setEmploymentType] = useState("Full Time");
   const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [accountActive, setAccountActive] = useState(true);
   const [specialization, setSpecialization] = useState("");
   const [skills, setSkills] = useState<string[]>(["Oil Change", "Diagnostics"]);
   const [customSkill, setCustomSkill] = useState("");
-  const [permissions, setPermissions] = useState<Record<string, boolean>>({
-    viewTasks: true,
-    updateProgress: true,
-    requestParts: true,
-    markComplete: true,
-    uploadPhotos: true,
-    directChat: false,
-  });
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarKey, setAvatarKey] = useState<string | null>(null);
@@ -146,7 +143,6 @@ export default function AddMechanicPage() {
     } catch {
       // Fallback below
     }
-    // Fallback: convert file to a base64 Data URL so upload is 100% dynamic even in offline/demo environment
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result as string);
@@ -272,6 +268,7 @@ export default function AddMechanicPage() {
   return (
     <div className="bg-background min-h-screen p-8">
       <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6">
+        {/* Header & Breadcrumb */}
         <div className="flex flex-col gap-1">
           <nav className="flex items-center gap-1.5 text-sm text-[#64748b]">
             <span>Dashboard</span>
@@ -281,11 +278,12 @@ export default function AddMechanicPage() {
             <span className="font-medium text-[#424753]">Add Mechanic</span>
           </nav>
           <h1 className="text-3xl font-bold tracking-[-0.72px] text-foreground">Add Mechanic</h1>
-          <p className="text-sm text-[#424753]">Create a new mechanic profile, upload verification documents, and assign station permissions.</p>
+          <p className="text-sm text-[#424753]">Create a new workshop technician profile, assign bay station, and upload verification credentials.</p>
         </div>
 
         <div className="grid grid-cols-12 items-start gap-6">
-          <div className="col-span-8 flex flex-col gap-6">
+          {/* Left Column: Form Sections (8 cols) */}
+          <div className="col-span-12 flex flex-col gap-6 lg:col-span-8">
             {/* 1. Personal Information */}
             <section className="rounded-[12px] border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
               <div className="flex items-center gap-3 border-b border-[#e2e8f0] pb-4">
@@ -301,10 +299,10 @@ export default function AddMechanicPage() {
                     type="button"
                     disabled={avatarUploading}
                     onClick={() => document.getElementById("mech-avatar")?.click()}
-                    className="relative flex size-24 items-center justify-center overflow-hidden rounded-[12px] border border-dashed border-[#c2c6d5] bg-[#edeeef] transition-colors hover:border-primary disabled:opacity-60"
+                    className="relative flex size-24 items-center justify-center overflow-hidden rounded-[12px] border border-dashed border-[#c2c6d5] bg-[#edeeef] transition-colors hover:border-primary disabled:opacity-60 cursor-pointer"
                   >
                     {avatarUrl ? (
-                      <img src={avatarUrl} alt="Mechanic avatar" className="size-full object-cover" />
+                      <Image src={avatarUrl} alt="Mechanic avatar" fill unoptimized className="object-cover" />
                     ) : (
                       <UserPlus className="size-7 text-[#424753]" />
                     )}
@@ -322,7 +320,7 @@ export default function AddMechanicPage() {
                   </label>
                   <label className="flex flex-col gap-1">
                     <span className={fieldLabel}>Employee ID</span>
-                    <Input value="EMP-MEC-2026-001" readOnly className={idInputBase} />
+                    <Input value={generatedId} readOnly className={idInputBase} />
                   </label>
                   <label className="flex flex-col gap-1">
                     <span className={fieldLabel}>National ID (NID) / SSN</span>
@@ -366,21 +364,21 @@ export default function AddMechanicPage() {
               </div>
             </section>
 
-            {/* 2. Workshop Assignment & Skills */}
+            {/* 2. Workshop Assignment & Credentials */}
             <section className="rounded-[12px] border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
               <div className="flex items-center gap-3 border-b border-[#e2e8f0] pb-4">
                 <span className="flex size-9 items-center justify-center rounded-lg bg-[rgba(0,68,146,0.1)]">
                   <Wrench className="size-5 text-[#004492]" />
                 </span>
-                <h2 className="text-xl font-semibold text-foreground">Workshop Assignment & Skills</h2>
+                <h2 className="text-xl font-semibold text-foreground">Workshop Assignment & Credentials</h2>
               </div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-4 pt-5">
                 <label className="flex flex-col gap-1">
-                  <span className={fieldLabel}>Assigned Bay / Station *</span>
+                  <span className={fieldLabel}>Assigned Workshop Station / Bay *</span>
                   <select value={form.branch} onChange={set("branch")} className={selectCls}>
-                    <option value="">Select Bay</option>
-                    {BRANCHES.map((b) => (
-                      <option key={b}>{b}</option>
+                    <option value="">Select Station / Bay</option>
+                    {stations.map((b) => (
+                      <option key={b.id} value={b.name}>{b.name}</option>
                     ))}
                   </select>
                 </label>
@@ -398,14 +396,6 @@ export default function AddMechanicPage() {
                   <input type="date" value={form.joiningDate} onChange={set("joiningDate")} className={inputBase} />
                 </label>
                 <label className="flex flex-col gap-1">
-                  <span className={fieldLabel}>Employment Type</span>
-                  <select value={form.employmentType} onChange={set("employmentType")} className={selectCls}>
-                    <option>Full Time</option>
-                    <option>Part Time</option>
-                    <option>Contract</option>
-                  </select>
-                </label>
-                <label className="flex flex-col gap-1">
                   <span className={fieldLabel}>Monthly Salary (Base)</span>
                   <Input value={form.salary} onChange={set("salary")} placeholder="0.00" className={inputBase} />
                 </label>
@@ -415,6 +405,27 @@ export default function AddMechanicPage() {
                 </label>
               </div>
 
+              {/* Employment Type Pills */}
+              <div className="pt-4">
+                <span className={fieldLabel}>Employment Type</span>
+                <div className="flex gap-2 pt-2">
+                  {EMPLOYMENT_TYPES.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setEmploymentType(t)}
+                      className={cn(
+                        "rounded-[16px] border px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer",
+                        employmentType === t ? "border-[#004492] bg-[rgba(0,68,146,0.1)] text-[#004492] font-semibold" : "border-[#e2e8f0] bg-white text-[#424753] hover:border-[#004492]/40",
+                      )}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Core Skills & Competencies */}
               <div className="border-t border-[#e2e8f0] pt-4 mt-4">
                 <span className={fieldLabel}>Core Skills & Competencies</span>
                 <div className="flex flex-wrap gap-2 pt-2">
@@ -424,10 +435,10 @@ export default function AddMechanicPage() {
                       type="button"
                       onClick={() => toggleSkill(skill)}
                       className={cn(
-                        "rounded-[16px] border px-3 py-1 text-xs font-medium transition-colors",
+                        "rounded-[16px] border px-3 py-1 text-xs font-medium transition-colors cursor-pointer",
                         skills.includes(skill)
                           ? "border-[#004492] bg-[rgba(0,68,146,0.1)] text-[#004492] font-semibold"
-                          : "border-[#e2e8f0] bg-white text-[#424753]",
+                          : "border-[#e2e8f0] bg-white text-[#424753] hover:border-[#004492]/40",
                       )}
                     >
                       {skill} {skills.includes(skill) ? "✓" : "+"}
@@ -444,6 +455,32 @@ export default function AddMechanicPage() {
                   <Button type="button" variant="outline" size="sm" onClick={addCustomSkill} className="rounded text-xs">
                     Add
                   </Button>
+                </div>
+              </div>
+
+              {/* Account Credentials */}
+              <div className="border-t border-[#e2e8f0] pt-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <label className="flex flex-col gap-1">
+                    <span className={fieldLabel}>Temporary Password *</span>
+                    <div className="relative">
+                      <Input
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Minimum 6 characters"
+                        className={cn(inputBase, "pr-10")}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                        aria-label="Toggle password visibility"
+                      >
+                        {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      </button>
+                    </div>
+                  </label>
                 </div>
               </div>
             </section>
@@ -477,7 +514,7 @@ export default function AddMechanicPage() {
                       type="button"
                       onClick={() => setSelectedKind(k)}
                       className={cn(
-                        "rounded-[16px] border px-3 py-1 text-xs font-medium transition-colors",
+                        "rounded-[16px] border px-3 py-1 text-xs font-medium transition-colors cursor-pointer",
                         selectedKind === k
                           ? "border-primary bg-primary/10 text-primary font-semibold"
                           : "border-[#e2e8f0] bg-white text-[#424753] hover:border-primary/40",
@@ -530,7 +567,7 @@ export default function AddMechanicPage() {
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white">
                           {doc.preview ? (
-                            <img src={doc.preview} alt={doc.name} className="size-full object-cover" />
+                            <Image src={doc.preview} alt={doc.name} fill unoptimized className="object-cover" />
                           ) : (
                             <FileText className="size-5 text-primary" />
                           )}
@@ -565,134 +602,80 @@ export default function AddMechanicPage() {
                 </div>
               )}
             </section>
-
-            {/* 4. System Access & Permissions */}
-            <section className="rounded-[12px] border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-              <div className="flex items-center gap-3 border-b border-[#e2e8f0] pb-4">
-                <span className="flex size-9 items-center justify-center rounded-lg bg-[rgba(0,68,146,0.1)]">
-                  <KeyRound className="size-5 text-[#004492]" />
-                </span>
-                <h2 className="text-xl font-semibold text-foreground">System Access & Permissions</h2>
-              </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-4 pt-5">
-                <label className="flex flex-col gap-1">
-                  <span className={fieldLabel}>Username</span>
-                  <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. jdoe" className={inputBase} />
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className={fieldLabel}>Temporary Password</span>
-                  <div className="relative">
-                    <Input
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      type={showPassword ? "text" : "password"}
-                      placeholder="TempPass123!"
-                      className={cn(inputBase, "pr-10")}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
-                      aria-label="Toggle password visibility"
-                    >
-                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                    </button>
-                  </div>
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className={fieldLabel}>System Role</span>
-                  <Input value="Mechanic" readOnly className={idInputBase} />
-                </label>
-                <div className="flex items-end justify-between pb-1">
-                  <span className={fieldLabel}>Account Active</span>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={accountActive}
-                    onClick={() => setAccountActive((v) => !v)}
-                    className={cn(
-                      "flex h-6 w-11 items-center rounded-[12px] px-0.5 transition-colors cursor-pointer",
-                      accountActive ? "justify-end bg-[#004492]" : "justify-start bg-[#e1e3e4]",
-                    )}
-                  >
-                    <span className="size-5 rounded-full border border-white bg-white shadow" />
-                  </button>
-                </div>
-              </div>
-              <div className="pt-5">
-                <span className={fieldLabel}>App Permissions</span>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 pt-2">
-                  {PERMISSIONS.map((p) => (
-                    <label key={p.key} className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
-                      <input
-                        type="checkbox"
-                        checked={permissions[p.key]}
-                        onChange={() => setPermissions((prev) => ({ ...prev, [p.key]: !prev[p.key] }))}
-                        className={cn("size-4 accent-[#004492]", p.key === "viewTasks" && "cursor-not-allowed opacity-60")}
-                        disabled={p.key === "viewTasks"}
-                      />
-                      {p.label}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </section>
           </div>
 
-          {/* Right Column: Profile Preview */}
-          <div className="col-span-4 flex flex-col gap-6">
-            <div className="rounded-[12px] border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-              <p className="pb-4 text-[11px] font-medium tracking-[0.55px] text-[#424753] uppercase">Profile Preview</p>
-              <div className="flex items-center gap-4 pb-4">
-                <span className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#e2e8f0] bg-[rgba(0,68,146,0.1)] text-xl font-bold text-[#004492]">
-                  {avatarUrl ? <img src={avatarUrl} alt="" className="size-full object-cover" /> : initials(form.fullName || "New Mechanic")}
-                  <span className="absolute right-0.5 bottom-0.5 size-3 rounded-full border-2 border-white bg-[#4caf50]" />
-                </span>
-                <div>
-                  <p className="text-base font-semibold text-foreground">{form.fullName || "New Mechanic"}</p>
-                  <p className="text-xs text-muted-foreground">EMP-MEC-2026-001</p>
-                  {specialization && (
-                    <span className="mt-1 inline-block rounded bg-[rgba(0,68,146,0.1)] px-2 py-0.5 text-[11px] font-semibold text-[#004492]">
-                      {specialization}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-col gap-2.5 border-t border-[#e2e8f0] pt-4 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-[#424753]">Status</span>
-                  <span className="flex items-center gap-1.5 rounded-xl bg-[rgba(76,175,80,0.1)] px-2 py-0.5 text-[11px] font-semibold text-[#4caf50]">
-                    <span className="size-1.5 rounded-full bg-[#4caf50]" />
-                    {form.status}
+          {/* Right Column: Profile Preview & Actions (4 cols) */}
+          <div className="col-span-12 flex flex-col gap-6 lg:col-span-4 sticky top-6">
+            {/* Live Profile Preview Card */}
+            <div className="overflow-hidden rounded-[12px] border border-[#e2e8f0] bg-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <div className="relative h-16 bg-gradient-to-r from-[#004492] to-[#005bbf]" />
+              <div className="px-[25px] pb-[25px]">
+                <div className="relative -mt-10 flex items-end gap-3">
+                  <span className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[rgba(0,68,146,0.1)] text-xl font-bold text-[#004492]">
+                    {avatarUrl ? <Image src={avatarUrl} alt="" fill unoptimized className="object-cover" /> : initials(form.fullName || "New Mechanic")}
+                    <span className="absolute right-0.5 bottom-0.5 size-3 rounded-full border-2 border-white bg-[#4caf50]" />
                   </span>
+                  <div className="pb-1">
+                    <p className="text-base font-semibold text-foreground">{form.fullName || "New Mechanic"}</p>
+                    <span className="mt-0.5 inline-flex items-center gap-1 rounded bg-[rgba(0,68,146,0.1)] px-2 py-0.5 text-[11px] font-semibold text-[#004492]">
+                      <Wrench className="size-3" />
+                      Mechanic
+                    </span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-[#424753]">Assigned Bay</span>
-                  <span className="font-medium text-foreground">{form.branch || "-"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#424753]">Documents</span>
-                  <span className="font-medium text-primary font-semibold">{docs.length} attached</span>
+                <div className="flex flex-col gap-2.5 border-t border-[#e2e8f0] pt-4 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[#424753]">ID</span>
+                    <span className="font-mono font-medium text-foreground">{generatedId}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#424753]">Status</span>
+                    <span className="flex items-center gap-1.5 rounded-xl bg-[rgba(76,175,80,0.1)] px-2 py-0.5 text-[11px] font-semibold text-[#4caf50]">
+                      <span className="size-1.5 rounded-full bg-[#4caf50]" />
+                      Active
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#424753]">Assigned Bay</span>
+                    <span className="font-medium text-foreground">{form.branch || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#424753]">Specialization</span>
+                    <span className="font-medium text-foreground">{specialization || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#424753]">Employment</span>
+                    <span className="font-medium text-foreground">{employmentType}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#424753]">Documents</span>
+                    <span className="font-medium text-primary font-semibold">{docs.length} attached</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Sticky bottom bar */}
-        <div className="sticky bottom-4 flex items-center justify-between rounded-[12px] border border-[#e2e8f0] bg-white px-6 py-4 shadow-[0_1px_2px_0px_rgba(0,0,0,0.05)]">
-          <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <AlertTriangle className="size-3.5" />
-            Ensure all required fields and documents are attached before creation
-          </p>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => router.push("/admin/employees")} className="rounded-[4px] px-4 text-xs font-semibold">
-              Cancel
-            </Button>
-            <Button size="sm" onClick={() => void submit()} disabled={submitting || uploadingDocs} className="gap-1.5 rounded-[4px] bg-[#004492] px-4 text-xs font-semibold text-white hover:bg-[#004492]/90">
-              <UserPlus className="size-3.5" />
-              {submitting ? "Creating Mechanic..." : "Create Account"}
-            </Button>
+
+            {/* Action Buttons Card */}
+            <div className="flex flex-col gap-3 rounded-[12px] border border-[#e2e8f0] bg-white p-5 shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push("/admin/employees")}
+                className="h-10 rounded-lg border-[#e2e8f0] text-xs font-semibold text-[#424753] hover:bg-secondary hover:text-foreground transition-colors"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => void submit()}
+                disabled={submitting || uploadingDocs}
+                className="gap-2 h-10 rounded-lg bg-[#004492] text-xs font-semibold text-white shadow-xs hover:bg-[#003675] transition-colors"
+              >
+                <UserPlus className="size-4" />
+                {submitting ? "Creating Mechanic..." : "Create Account"}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

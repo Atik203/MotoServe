@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { logAudit } from "../../lib/audit.js";
-import { addTaskNote, addTaskPhoto, addPartUsed, updateTaskStatus } from "./mechanic.service.js";
-import type { AddTaskNoteBody, AddPartUsedBody, UpdateTaskStatusBody } from "./mechanic.types.js";
+import { addTaskNote, addTaskPhoto, addPartUsed, updateTaskStatus, createPartRequest, listPartRequests } from "./mechanic.service.js";
+import type { AddTaskNoteBody, AddPartUsedBody, UpdateTaskStatusBody, CreatePartRequestBody } from "./mechanic.types.js";
 
 export async function updateTaskStatusController(req: Request, res: Response): Promise<void> {
   const { status } = req.body.body as UpdateTaskStatusBody;
@@ -30,3 +30,17 @@ export async function addTaskPhotoController(req: Request, res: Response): Promi
   res.status(201).json({ photos: task.photos });
 }
 
+export async function createPartRequestController(req: Request, res: Response): Promise<void> {
+  const mechanicId = req.user?.userId;
+  if (!mechanicId) throw new Error("Unauthorized");
+  const request = await createPartRequest(mechanicId, req.body.body as CreatePartRequestBody);
+  await logAudit(req.user?.name ?? "mechanic", `Requested part: ${request.partName} x${request.qty}`);
+  res.status(201).json(request);
+}
+
+export async function listPartRequestsController(req: Request, res: Response): Promise<void> {
+  const mechanicId = req.user?.userId;
+  if (!mechanicId) throw new Error("Unauthorized");
+  const requests = await listPartRequests(mechanicId);
+  res.json(requests);
+}

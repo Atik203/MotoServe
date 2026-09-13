@@ -28,7 +28,7 @@ export async function createCheckoutSession(userId: string, invoiceId: string) {
       },
     ],
     metadata: { invoiceId: invoice.id, userId },
-    success_url: `${CLIENT_URL}/dashboard/payments?status=success`,
+    success_url: `${CLIENT_URL}/dashboard/payments?status=success&invoice_id=${invoice.id}`,
     cancel_url: `${CLIENT_URL}/dashboard/payments?status=cancelled`,
   });
 

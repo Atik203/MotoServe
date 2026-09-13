@@ -46,7 +46,14 @@ export function buildKpis(role: KpiRole, ctx: KpiContext): KpiCard[] {
   const unpaidInvoices = invoices.filter((i) => i.status !== "paid");
   const unpaidTotal = unpaidInvoices.reduce((sum, i) => sum + i.total, 0);
   const upcomingAppointments = appointments.filter((a) => a.status !== "cancelled");
-  const assignedTasks = userId ? tasks.filter((t) => t.mechanicId === userId) : tasks;
+  const assignedTasks = userId
+    ? tasks.filter(
+        (t) =>
+          t.mechanicId === userId ||
+          t.mechanicIds?.includes(userId) ||
+          t.mechanics?.some((m) => m.id === userId),
+      )
+    : tasks;
 
   const nextAppointment = upcomingAppointments[0];
   const nextAppointmentDate = nextAppointment
@@ -60,12 +67,16 @@ export function buildKpis(role: KpiRole, ctx: KpiContext): KpiCard[] {
         const lastServiced =
           tasks
             .filter((t) => t.status === "completed" || t.status === "ready")
-            .map((t) => ({
-              vehicle: vehicles.find((v) => v.id === t.vehicleId),
-              at: t.progress[t.progress.length - 1]?.timestamp,
-            }))
-            .filter((x) => x.vehicle && x.at)
-            .sort((a, b) => new Date(b.at as string).getTime() - new Date(a.at as string).getTime())[0];
+            .map((t) => {
+              const raw = t.progress[t.progress.length - 1]?.timestamp || (t as unknown as { updatedAt?: string }).updatedAt;
+              const ms = raw ? new Date(raw).getTime() : NaN;
+              return {
+                vehicle: vehicles.find((v) => v.id === t.vehicleId),
+                at: Number.isFinite(ms) ? ms : null,
+              };
+            })
+            .filter((x): x is { vehicle: typeof vehicles[number]; at: number } => Boolean(x.vehicle && x.at !== null))
+            .sort((a, b) => b.at - a.at)[0];
         const reminderVehicle = lastServiced?.vehicle ?? (vehicles.length > 0 ? vehicles[0] : null);
         return [
           {
@@ -105,8 +116,8 @@ export function buildKpis(role: KpiRole, ctx: KpiContext): KpiCard[] {
             label: "Next Reminder",
             value: reminderVehicle ? `${reminderVehicle.make} ${reminderVehicle.model}` : "No reminders",
             delta: reminderVehicle
-              ? lastServiced?.at
-                ? `Last serviced ${Math.max(1, Math.round((Date.now() - new Date(lastServiced.at as string).getTime()) / 86_400_000))}d ago`
+              ? lastServiced
+                ? `Last serviced ${Math.max(1, Math.round((Date.now() - lastServiced.at) / 86_400_000))}d ago`
                 : `${servicedMileage.toLocaleString()} mi — due for first service`
               : "Register a vehicle to begin",
             trend: "flat",
@@ -165,7 +176,7 @@ export function buildKpis(role: KpiRole, ctx: KpiContext): KpiCard[] {
           id: "kpi-102",
           label: "Active Tasks",
           value: String(activeTasks.length).padStart(2, "0"),
-          delta: `${tasks.filter((t) => !t.mechanicId).length} awaiting mechanic`,
+          delta: `${tasks.filter((t) => !t.mechanicId && (!t.mechanics || t.mechanics.length === 0)).length} awaiting mechanic`,
           trend: "flat",
           icon: "wrench",
         },

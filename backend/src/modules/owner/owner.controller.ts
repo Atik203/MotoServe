@@ -56,9 +56,21 @@ export async function deleteVehicleController(req: Request, res: Response): Prom
 
 export async function bookAppointmentController(req: Request, res: Response): Promise<void> {
   if (!req.user) throw new ApiError(401, "Authentication required");
-  const appointment = await bookAppointment(req.user.userId, req.body.body as BookAppointmentBody);
+  const body = req.body.body as BookAppointmentBody;
+  let ownerId = req.user.userId;
+  if (req.user.role !== "OWNER") {
+    if (body.ownerId) {
+      ownerId = body.ownerId;
+    } else {
+      const vehicle = await prisma.vehicle.findUnique({ where: { id: body.vehicleId } });
+      if (!vehicle) throw new ApiError(400, "Vehicle not found");
+      ownerId = vehicle.ownerId;
+    }
+  }
+  const appointment = await bookAppointment(ownerId, body);
   res.status(201).json({ ...appointment, status: appointment.status.toLowerCase() });
 }
+
 
 export async function decideEstimateController(req: Request, res: Response): Promise<void> {
   if (!req.user) throw new ApiError(401, "Authentication required");

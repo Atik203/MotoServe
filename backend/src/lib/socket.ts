@@ -31,6 +31,31 @@ export function initSocket(httpServer: HttpServer): Server {
     socket.join(`user:${userId}`);
     const threads = await listThreads(role.toLowerCase(), userId);
     for (const thread of threads) socket.join(thread.id);
+
+    socket.on("thread:join", (threadId: string) => {
+      if (typeof threadId === "string" && threadId) {
+        socket.join(threadId);
+      }
+    });
+
+    socket.on("typing:start", (data: { threadId: string; senderName?: string }) => {
+      if (data?.threadId) {
+        socket.to(data.threadId).emit("typing:start", {
+          threadId: data.threadId,
+          senderName: data.senderName,
+          userId,
+        });
+      }
+    });
+
+    socket.on("typing:stop", (data: { threadId: string }) => {
+      if (data?.threadId) {
+        socket.to(data.threadId).emit("typing:stop", {
+          threadId: data.threadId,
+          userId,
+        });
+      }
+    });
   });
 
   return io;
@@ -41,9 +66,15 @@ export function getIo(): Server {
   return io;
 }
 
-export function safeEmit(room: string, event: string, payload: unknown): void {
+export function safeEmit(rooms: string | string[], event: string, payload: unknown): void {
   try {
-    io?.to(room).emit(event, payload);
+    if (!io) return;
+    const list = Array.isArray(rooms) ? rooms : [rooms];
+    let emitter: any = io;
+    for (const r of list) {
+      emitter = emitter.to(r);
+    }
+    emitter.emit(event, payload);
   } catch {
     // no-op — socket push is best-effort (unavailable on serverless)
   }

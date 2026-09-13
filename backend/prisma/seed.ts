@@ -38,7 +38,6 @@ const DEMO_ACCOUNTS = [
     role: "MECHANIC",
     status: "ACTIVE",
     avatar: "/images/avatars/alex-turner.png",
-    station: "Main Bay / Station 04",
     specialization: "Brakes & Suspension",
   },
 ];
@@ -86,14 +85,36 @@ const SERVICES = [
   { name: "Undercarriage Inspection", category: "INSPECTIONS", basePrice: 39.99, durationMins: 45, description: "Frame, axle and under-body component inspection." },
 ];
 
-async function main() {
-  console.log("Seeding demo accounts...");
+async function clearNonEssentialData() {
+  console.log("Clearing non-essential data...");
+  await prisma.payment.deleteMany();
+  await prisma.invoice.deleteMany();
+  await prisma.estimateItem.deleteMany();
+  await prisma.estimate.deleteMany();
+  await prisma.partsUsed.deleteMany();
+  await prisma.taskNote.deleteMany();
+  await prisma.taskProgress.deleteMany();
+  await prisma.partRequest.deleteMany();
+  await prisma.rating.deleteMany();
+  await prisma.message.deleteMany();
+  await prisma.chatThread.deleteMany();
+  await prisma.taskCard.deleteMany();
+  await prisma.appointment.deleteMany();
+  await prisma.vehicle.deleteMany();
+  await prisma.part.deleteMany();
+  await prisma.auditLog.deleteMany();
+  console.log("Non-essential data cleared.");
+}
 
+async function main() {
+  await clearNonEssentialData();
+
+  console.log("Seeding demo accounts...");
   for (const account of DEMO_ACCOUNTS) {
     const { password, ...profile } = account;
     await prisma.user.upsert({
       where: { email: account.email },
-      update: {},
+      update: { name: profile.name, role: profile.role as never, status: profile.status as never },
       create: {
         ...profile,
         role: profile.role as never,
@@ -107,6 +128,13 @@ async function main() {
   await prisma.service.deleteMany();
   await prisma.service.createMany({
     data: SERVICES.map((s) => ({ ...s, category: s.category as never })),
+  });
+
+  console.log("Seeding default station...");
+  await prisma.station.upsert({
+    where: { name: "Main Bay / Station 01" },
+    update: {},
+    create: { name: "Main Bay / Station 01" },
   });
 
   await seedSiteContent();
