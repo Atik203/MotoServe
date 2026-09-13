@@ -6,6 +6,7 @@ import {
   listCustomers,
   listEmployees,
   listEstimates,
+  getEstimateById,
   listInvoices,
   listTasks,
   listParts,
@@ -155,6 +156,23 @@ export async function getEstimates(req: Request, res: Response): Promise<void> {
       items: e.items.map((i) => ({ ...i, category: i.category.toLowerCase() })),
     })),
   );
+}
+
+export async function getEstimate(req: Request, res: Response): Promise<void> {
+  const customerId = req.user?.role === "OWNER" ? req.user.userId : undefined;
+  const estimate = await getEstimateById(req.params.id as string, customerId);
+  if (!estimate) {
+    res.status(404).json({ error: "Estimate not found" });
+    return;
+  }
+  res.json({
+    ...estimate,
+    taskId: estimate.taskCardId,
+    taskCardId: estimate.taskCardId,
+    taskCard: estimate.taskCard,
+    status: estimate.status.toLowerCase(),
+    items: estimate.items.map((i) => ({ ...i, category: i.category.toLowerCase() })),
+  });
 }
 
 export async function getInvoices(req: Request, res: Response): Promise<void> {

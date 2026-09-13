@@ -205,7 +205,15 @@ export interface Estimate {
   internalNotes?: string | null;
   items: EstimateItem[];
   total: number;
-  taskCard?: { id: string; vehicle?: Vehicle };
+  taskCard?: {
+    id: string;
+    vehicle?: Vehicle;
+    customer?: Customer;
+    advisor?: Employee;
+    status?: TaskStatus;
+    issues?: string | null;
+    priority?: string;
+  };
 }
 
 export interface InvoiceItem {

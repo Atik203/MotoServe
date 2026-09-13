@@ -148,8 +148,14 @@ export async function createEstimate(advisorId: string, role: string, body: Crea
   const task = await prisma.taskCard.findUnique({ where: { id: targetId }, select: { customerId: true, status: true, advisorId: true } });
   if (!task) throw new ApiError(404, "Task not found");
   if (task.status === "COMPLETED") throw new ApiError(400, "Cannot estimate a completed task");
-  if (role === "ADVISOR" && task.advisorId !== advisorId) {
+  if (role === "ADVISOR" && task.advisorId && task.advisorId !== advisorId) {
     throw new ApiError(403, "You can only create estimates for tasks assigned to you");
+  }
+  if (!task.advisorId) {
+    await prisma.taskCard.update({
+      where: { id: targetId },
+      data: { advisorId },
+    });
   }
   const total = body.items.reduce((sum, i) => sum + i.amount, 0);
   return createWithSequentialId<Estimate>(prisma.estimate, "ES-", 3300, (id) => ({

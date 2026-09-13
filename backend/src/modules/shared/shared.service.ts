@@ -204,9 +204,47 @@ export function listEstimates(customerId?: string) {
     where: { customerId: customerId ?? undefined },
     include: {
       items: true,
-      taskCard: { select: { id: true, vehicle: true } },
+      taskCard: {
+        select: {
+          id: true,
+          status: true,
+          vehicleId: true,
+          issues: true,
+          priority: true,
+          vehicle: true,
+          customer: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+          advisor: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
+  });
+}
+
+export function getEstimateById(id: string, customerId?: string) {
+  return prisma.estimate.findFirst({
+    where: {
+      id,
+      customerId: customerId ?? undefined,
+    },
+    include: {
+      items: true,
+      taskCard: {
+        select: {
+          id: true,
+          status: true,
+          vehicleId: true,
+          issues: true,
+          priority: true,
+          station: true,
+          vehicle: true,
+          customer: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+          advisor: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+          mechanic: { select: { id: true, name: true, avatar: true, specialization: true } },
+          mechanics: { select: { id: true, name: true, avatar: true, specialization: true } },
+        },
+      },
+    },
   });
 }
 

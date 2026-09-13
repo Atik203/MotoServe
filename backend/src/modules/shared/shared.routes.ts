@@ -8,6 +8,7 @@ import {
   getCustomers,
   getEmployees,
   getEstimates,
+  getEstimate,
   getHealth,
   getInvoices,
   getParts,
@@ -52,6 +53,7 @@ router.get("/employees", requireAuth, getEmployees);
 router.get("/customers", requireAuth, requireRole("admin", "advisor"), getCustomers);
 
 router.get("/estimates", requireAuth, getEstimates);
+router.get("/estimates/:id", requireAuth, getEstimate);
 router.get("/invoices", requireAuth, getInvoices);
 
 router.get("/chat/threads", requireAuth, getThreads);

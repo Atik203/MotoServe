@@ -1,18 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
 import {
-  CalendarDays,
+  ArrowLeft,
+  Calendar,
+  CalendarCheck,
+  Car,
   Check,
-  ChevronDown,
   Clock,
+  ExternalLink,
+  Fuel,
   Gauge,
-  Mail,
-  Phone,
+  KeyRound,
   Plus,
+  RefreshCw,
   Search,
+  Sparkles,
+  User,
+  UserCheck,
   UserRound,
   Users,
   Wrench,
@@ -24,40 +32,57 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { createTask } from "@/store/slices/tasksSlice";
+import { createTaskCard, fetchTasks } from "@/store/slices/tasksSlice";
 import { fetchVehicles, addVehicle } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers, createCustomer } from "@/store/slices/customersSlice";
 import { fetchAppointments } from "@/store/slices/appointmentsSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
-import { VehicleForm, type VehicleFormData } from "@/components/roles/owner/VehicleForm";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { ServicePicker } from "@/components/roles/shared/ServicePicker";
-import { FormLoading } from "@/components/ui/loading";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { DetailLoading } from "@/components/ui/loading";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { Appointment, Customer, Vehicle } from "@/types";
 
-const priorities = [
-  { key: "low", label: "Low", activeClass: "bg-[#eff6ff] border-primary text-primary" },
-  { key: "medium", label: "Medium", activeClass: "bg-[rgba(255,193,7,0.12)] border-[#ffc107] text-[#8b5000]" },
-  { key: "high", label: "High", activeClass: "bg-[rgba(186,26,26,0.08)] border-[#ba1a1a] text-[#ba1a1a]" },
+const STATIONS = [
+  "Main Bay / Station 01",
+  "Main Bay / Station 02",
+  "Main Bay / Station 03",
+  "Station 04",
+  "Station 05",
+  "Quick Lube Bay",
+  "Diagnostics Center",
+];
+
+const PRIORITIES = [
+  { key: "low", label: "Low", color: "border-slate-300 text-slate-600 bg-slate-50" },
+  { key: "medium", label: "Medium", color: "border-blue-300 text-blue-700 bg-blue-50" },
+  { key: "high", label: "High", color: "border-amber-300 text-amber-700 bg-amber-50" },
 ] as const;
 
-const WORKLOAD_LIMIT = 5;
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-xs font-bold tracking-[0.35px] text-foreground uppercase">{children}</h2>
+  );
+}
 
-const fieldLabel = "text-xs font-semibold tracking-[0.24px] text-[#424753]";
-const inputBase =
-  "h-9 w-full rounded border border-[#e2e8f0] bg-[#f8f9fa] px-3 text-sm text-[#191c1d] placeholder:text-[#9ca3af] outline-none focus:border-primary/60";
-const selectBase = cn(inputBase, "appearance-none pr-8");
-const card = "rounded-xl border border-[#e5e7eb] bg-white p-5 shadow-[0_1px_1.5px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)]";
-const primaryBtn =
-  "flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-[9px] text-xs font-semibold text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] disabled:opacity-60";
-
-const initials = (name: string) =>
-  name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
-
-export default function CreateTaskPage() {
+function CreateTaskContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
+
+  const urlAppointmentId = searchParams.get("appointment") || searchParams.get("appointmentId");
+
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const vehiclesStatus = useAppSelector((s) => s.vehicles.status);
   const customers = useAppSelector((s) => s.customers.items);
@@ -67,185 +92,105 @@ export default function CreateTaskPage() {
   const tasks = useAppSelector((s) => s.tasks.items);
   const user = useAppSelector((s) => s.auth.user);
 
-  // Mode: booked appointment or walk-in
-  const [mode, setMode] = useState<"appointment" | "walkin">("appointment");
+  // Mode: Booked Appointment vs Walk-In
+  const [mode, setMode] = useState<"appointment" | "walkin">(urlAppointmentId ? "appointment" : "appointment");
+  const [appointmentId, setAppointmentId] = useState(urlAppointmentId ?? "");
 
-  // Appointment mode
-  const [appointmentId, setAppointmentId] = useState(
-    () =>
-      (typeof window !== "undefined"
-        ? (new URLSearchParams(window.location.search).get("appointment") ||
-            new URLSearchParams(window.location.search).get("appointmentId")) ??
-          ""
-        : ""),
-  );
-
-  // Walk-in mode
+  // Walk-In state
   const [walkinCustomerId, setWalkinCustomerId] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
   const [walkinVehicleId, setWalkinVehicleId] = useState("");
-  const [newCustomerOpen, setNewCustomerOpen] = useState(false);
-  const [newVehicleOpen, setNewVehicleOpen] = useState(false);
-  const [newCustomerForm, setNewCustomerForm] = useState({ name: "", phone: "", email: "" });
 
-  // Intake fields
+  // New Customer Modal
+  const [newCustomerOpen, setNewCustomerOpen] = useState(false);
+  const [newCustomerForm, setNewCustomerForm] = useState({ name: "", phone: "", email: "" });
+  const [customerBusy, setCustomerBusy] = useState(false);
+
+  // New Vehicle Modal
+  const [newVehicleOpen, setNewVehicleOpen] = useState(false);
+  const [newVehicleMake, setNewVehicleMake] = useState("");
+  const [newVehicleModel, setNewVehicleModel] = useState("");
+  const [newVehicleYear, setNewVehicleYear] = useState("2023");
+  const [newVehicleReg, setNewVehicleReg] = useState("");
+  const [newVehicleFuel, setNewVehicleFuel] = useState<"gasoline" | "diesel" | "hybrid" | "electric">("gasoline");
+  const [newVehicleMileage, setNewVehicleMileage] = useState("25000");
+  const [vehicleBusy, setVehicleBusy] = useState(false);
+
+  // Intake physical condition fields
   const [keysReceived, setKeysReceived] = useState(true);
-  const [mileage, setMileage] = useState("");
-  const [fuelLevel, setFuelLevel] = useState("");
+  const [mileage, setMileage] = useState("25000");
+  const [fuelLevel, setFuelLevel] = useState("1/2");
   const [accessories, setAccessories] = useState("");
 
   // Task details
   const [issues, setIssues] = useState("");
-  const [priority, setPriority] = useState<(typeof priorities)[number]["key"]>("medium");
+  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [serviceIds, setServiceIds] = useState<string[]>([]);
-  const [expectedDate, setExpectedDate] = useState("");
-  const [expectedTime, setExpectedTime] = useState("");
-  const [station, setStation] = useState(user?.station ?? "");
-  const [stationPrefilled, setStationPrefilled] = useState(false);
+  const [expectedDate, setExpectedDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  });
+  const [expectedTime, setExpectedTime] = useState("05:00 PM");
+  const [station, setStation] = useState(STATIONS[0]);
 
-  // Multi-mechanic
+  // Mechanic assignment
   const [selectedMechanicIds, setSelectedMechanicIds] = useState<string[]>([]);
   const [mechanicSearch, setMechanicSearch] = useState("");
   const [assignmentNotes, setAssignmentNotes] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
 
-  if (!stationPrefilled && user?.station) {
-    setStation(user.station);
-    setStationPrefilled(true);
-  }
-
   useEffect(() => {
     dispatch(fetchVehicles());
     dispatch(fetchCustomers());
     dispatch(fetchServices());
     dispatch(fetchEmployees());
-    dispatch(fetchAppointments())
-      .unwrap()
-      .then((appts) => {
-        const paramId =
-          typeof window !== "undefined"
-            ? new URLSearchParams(window.location.search).get("appointment") ||
-              new URLSearchParams(window.location.search).get("appointmentId")
-            : null;
-        if (paramId) {
-          const a = appts.find((x) => x.id === paramId);
-          if (a) {
-            setAppointmentId(a.id);
-            setServiceIds(a.serviceIds);
-            if (a.notes) setIssues(a.notes);
-          }
-        }
-      })
-      .catch(() => {});
+    dispatch(fetchTasks());
+    dispatch(fetchAppointments());
   }, [dispatch]);
 
-  // --- Resolved entities ---
+  // When url appointment is loaded, pre-populate
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (urlAppointmentId && appointments.length > 0) {
+        const appt = appointments.find((a) => a.id === urlAppointmentId);
+        if (appt) {
+          setAppointmentId(appt.id);
+          setServiceIds(appt.serviceIds);
+          if (appt.notes) setIssues(appt.notes);
+          const v = vehicles.find((x) => x.id === appt.vehicleId);
+          if (v) setMileage(String(v.mileage || 25000));
+        }
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [urlAppointmentId, appointments, vehicles]);
+
+  // Confirmed appointments
   const confirmedAppointments = useMemo(
-    () => appointments.filter((a) => a.status === "confirmed"),
-    [appointments],
+    () => appointments.filter((a) => a.status === "confirmed" || a.id === appointmentId),
+    [appointments, appointmentId],
   );
 
-  const appointment: Appointment | null = appointmentId
+  const selectedAppointment: Appointment | null = appointmentId
     ? (appointments.find((a) => a.id === appointmentId) ?? null)
     : null;
 
   const resolvedCustomerId = mode === "appointment"
-    ? (appointment?.ownerId ?? "")
+    ? (selectedAppointment?.ownerId ?? "")
     : walkinCustomerId;
 
   const resolvedVehicleId = mode === "appointment"
-    ? (appointment?.vehicleId ?? "")
+    ? (selectedAppointment?.vehicleId ?? "")
     : walkinVehicleId;
 
-  const customer: Customer | null = customers.find((c) => c.id === resolvedCustomerId) ?? null;
-  const resolvedVehicle: Vehicle | null = vehicles.find((v) => v.id === resolvedVehicleId) ?? null;
-  const vehiclesOfCustomer = vehicles.filter((v) => v.ownerId === resolvedCustomerId);
-
-  // Pre-fill services from appointment
-  const appointmentServices = useMemo(
-    () => appointment ? services.filter((s) => appointment.serviceIds.includes(s.id)) : [],
-    [appointment, services],
-  );
-
-  const selectAppointment = (id: string) => {
-    setAppointmentId(id);
-    const a = appointments.find((x) => x.id === id);
-    if (a) {
-      setServiceIds(a.serviceIds);
-      setIssues(
-        [a.notes, ...services.filter((s) => a.serviceIds.includes(s.id)).map((s) => s.name)]
-          .filter(Boolean)
-          .join(" • "),
-      );
-      const v = vehicles.find((x) => x.id === a.vehicleId);
-      if (v) setMileage(String(v.mileage));
-    }
-  };
-
-  const selectCustomer = (id: string) => {
-    setWalkinCustomerId(id);
-    setWalkinVehicleId("");
-    setNewVehicleOpen(false);
-    const customerVehicles = vehicles.filter((v) => v.ownerId === id);
-    if (customerVehicles.length === 1) {
-      setWalkinVehicleId(customerVehicles[0].id);
-      setMileage(String(customerVehicles[0].mileage));
-    }
-  };
-
-  const selectVehicle = (id: string) => {
-    setWalkinVehicleId(id);
-    const v = vehicles.find((x) => x.id === id);
-    if (v) setMileage(String(v.mileage));
-  };
-
-  const handleNewCustomer = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCustomerForm.name.trim() || !newCustomerForm.phone.trim()) {
-      toast.error("Name and phone are required");
-      return;
-    }
-    try {
-      const created = await dispatch(
-        createCustomer({
-          name: newCustomerForm.name.trim(),
-          phone: newCustomerForm.phone.trim(),
-          email: newCustomerForm.email.trim() || undefined,
-        }),
-      ).unwrap();
-      setWalkinCustomerId(created.id);
-      setNewCustomerForm({ name: "", phone: "", email: "" });
-      setNewCustomerOpen(false);
-      toast.success(`Customer ${created.name} registered`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to register customer");
-    }
-  };
-
-  const handleNewVehicle = async (data: VehicleFormData) => {
-    if (!resolvedCustomerId) throw new Error("Pick or register a customer first");
-    const vehicle = await dispatch(addVehicle({ ...data, ownerId: resolvedCustomerId })).unwrap();
-    setWalkinVehicleId(vehicle.id);
-    setNewVehicleOpen(false);
-    toast.success("Vehicle registered for customer");
-  };
+  const selectedCustomer: Customer | null = customers.find((c) => c.id === resolvedCustomerId) ?? null;
+  const selectedVehicle: Vehicle | null = vehicles.find((v) => v.id === resolvedVehicleId) ?? null;
+  const customerVehicles = vehicles.filter((v) => v.ownerId === resolvedCustomerId);
 
   // Mechanics
-  const mechanics = useMemo(() => employees.filter((e) => e.role === "mechanic"), [employees]);
-
-  const workloadOf = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const t of tasks) {
-      if (t.status !== "completed" && t.status !== "ready") {
-        if (t.mechanicIds && t.mechanicIds.length > 0) {
-          for (const mId of t.mechanicIds) counts.set(mId, (counts.get(mId) ?? 0) + 1);
-        } else if (t.mechanicId) {
-          counts.set(t.mechanicId, (counts.get(t.mechanicId) ?? 0) + 1);
-        }
-      }
-    }
-    return (id: string) => counts.get(id) ?? 0;
-  }, [tasks]);
+  const mechanics = useMemo(() => employees.filter((e) => e.role === "mechanic" && e.status === "active"), [employees]);
 
   const filteredMechanics = useMemo(() => {
     const q = mechanicSearch.trim().toLowerCase();
@@ -258,387 +203,498 @@ export default function CreateTaskPage() {
     );
   }, [mechanics, mechanicSearch]);
 
-  const selectedMechanics = useMemo(
-    () => mechanics.filter((m) => selectedMechanicIds.includes(m.id)),
-    [mechanics, selectedMechanicIds],
+  const toggleMechanic = (id: string) => {
+    setSelectedMechanicIds((prev) =>
+      prev.includes(id) ? prev.filter((mId) => mId !== id) : [...prev, id],
+    );
+  };
+
+  const toggleService = (id: string) => {
+    setServiceIds((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
+    );
+  };
+
+  const selectAppointment = (id: string) => {
+    setAppointmentId(id);
+    const a = appointments.find((x) => x.id === id);
+    if (a) {
+      setServiceIds(a.serviceIds);
+      if (a.notes) setIssues(a.notes);
+      const v = vehicles.find((x) => x.id === a.vehicleId);
+      if (v) setMileage(String(v.mileage || 25000));
+    }
+  };
+
+  // Pricing calculations
+  const serviceCost = useMemo(
+    () =>
+      services
+        .filter((s) => serviceIds.includes(s.id))
+        .reduce((sum, s) => sum + s.basePrice, 0),
+    [services, serviceIds],
   );
+  const tax = Math.round(serviceCost * 0.085 * 100) / 100;
+  const total = Math.round((serviceCost + tax) * 100) / 100;
 
-  const toggleMechanic = (id: string) =>
-    setSelectedMechanicIds((prev) => prev.includes(id) ? prev.filter((mId) => mId !== id) : [...prev, id]);
+  // New Customer handler
+  const handleNewCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustomerForm.name.trim() || !newCustomerForm.phone.trim()) {
+      toast.error("Name and phone number are required");
+      return;
+    }
+    setCustomerBusy(true);
+    try {
+      const created = await dispatch(
+        createCustomer({
+          name: newCustomerForm.name.trim(),
+          phone: newCustomerForm.phone.trim(),
+          email: newCustomerForm.email.trim() || undefined,
+        }),
+      ).unwrap();
+      setWalkinCustomerId(created.id);
+      setNewCustomerForm({ name: "", phone: "", email: "" });
+      setNewCustomerOpen(false);
+      toast.success(`Client ${created.name} registered`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to register customer");
+    } finally {
+      setCustomerBusy(false);
+    }
+  };
 
-  const removeMechanic = (id: string) =>
-    setSelectedMechanicIds((prev) => prev.filter((mId) => mId !== id));
-
-  const toggleService = (id: string) =>
-    setServiceIds((prev) => prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]);
+  // New Vehicle handler
+  const handleNewVehicle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resolvedCustomerId) {
+      toast.error("Select customer account first");
+      return;
+    }
+    setVehicleBusy(true);
+    try {
+      const created = await dispatch(
+        addVehicle({
+          ownerId: resolvedCustomerId,
+          make: newVehicleMake,
+          model: newVehicleModel,
+          year: parseInt(newVehicleYear, 10) || new Date().getFullYear(),
+          regNo: newVehicleReg.toUpperCase(),
+          fuelType: newVehicleFuel,
+          mileage: parseInt(newVehicleMileage, 10) || 0,
+          image: "/images/cars/car-1.png",
+        }),
+      ).unwrap();
+      setWalkinVehicleId(created.id);
+      setNewVehicleOpen(false);
+      setNewVehicleMake("");
+      setNewVehicleModel("");
+      setNewVehicleReg("");
+      toast.success("Vehicle registered for customer");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to register vehicle");
+    } finally {
+      setVehicleBusy(false);
+    }
+  };
 
   const submit = async () => {
     if (!resolvedVehicleId || !resolvedCustomerId) {
-      toast.error("Select or register a vehicle and its owner first");
+      toast.error("Please select or register a vehicle and customer");
       return;
     }
     if (!issues.trim()) {
-      toast.error("Please describe the reported issues");
+      toast.error("Please provide customer concerns or intake reason");
       return;
     }
-    if (serviceIds.length === 0) {
-      toast.error("Select at least one service to perform");
-      return;
-    }
+
     setSubmitting(true);
     try {
+      const fuelMap: Record<string, number> = { Empty: 5, "1/4": 25, "1/2": 50, "3/4": 75, Full: 100 };
+
       const res = await dispatch(
-        createTask({
+        createTaskCard({
           vehicleId: resolvedVehicleId,
           customerId: resolvedCustomerId,
+          appointmentId: mode === "appointment" ? appointmentId || undefined : undefined,
           issues: issues.trim(),
           priority,
-          station: station.trim() || user?.station || undefined,
+          station: station.trim() || STATIONS[0],
           serviceIds,
           mileage: Number(mileage.replace(/[^0-9]/g, "")) || undefined,
-          fuelLevel: fuelLevel ? Number(fuelLevel) : undefined,
+          fuelLevel: fuelMap[fuelLevel] ?? 50,
           keysReceived,
           accessories: accessories.trim() || undefined,
-          appointmentId: appointment?.id,
-          expectedDate: expectedDate ? (expectedTime ? `${expectedDate} ${expectedTime}` : expectedDate) : undefined,
-          mechanicIds: selectedMechanicIds.length > 0 ? selectedMechanicIds : undefined,
-          mechanicId: selectedMechanicIds[0] ?? undefined,
+          expectedDate: expectedDate ? `${expectedDate} ${expectedTime}` : undefined,
+          mechanicId: selectedMechanicIds[0] || undefined,
+          mechanicIds: selectedMechanicIds,
           assignmentNotes: assignmentNotes.trim() || undefined,
         }),
       ).unwrap();
 
-      const mechanicText =
-        selectedMechanicIds.length > 0
-          ? ` with ${selectedMechanicIds.length} mechanic${selectedMechanicIds.length > 1 ? "s" : ""} assigned`
-          : "";
-      toast.success(`Task ${res.id} created${mechanicText}`);
-      router.push("/advisor/receive");
+      toast.success(`Workshop Task Card #${res.id} created successfully!`);
+      router.push(`/advisor/tasks/${res.id}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create task");
+      toast.error(err instanceof Error ? err.message : "Failed to create task card");
+    } finally {
       setSubmitting(false);
     }
   };
 
-  const customerInitials = customer ? initials(customer.name) : "?";
+  const loading = (vehiclesStatus === "idle" || vehiclesStatus === "loading") && vehicles.length === 0;
 
-  if (
-    (vehiclesStatus === "idle" || vehiclesStatus === "loading") &&
-    vehicles.length === 0 &&
-    customers.length === 0
-  ) {
-    return <FormLoading label="Loading task form" />;
+  if (loading) {
+    return <DetailLoading label="Loading workshop intake workstation..." />;
   }
 
   return (
-    <div className="min-h-screen bg-[#f9fafb] p-8">
+    <div className="min-h-screen bg-[#f9fafb] p-6">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        {/* Header */}
-        <div className="flex items-start justify-between">
+        {/* Navigation & Header */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
           <div>
-            <p className="text-[11px] text-[#64748b]">Dashboard › Work Orders › Create Task</p>
-            <h1 className="text-3xl font-bold tracking-[-0.5px] text-[#191c1d]">Create Task</h1>
-            <p className="pt-1 text-sm text-[#64748b]">Log a booked appointment or walk-in vehicle for service.</p>
+            <nav className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+              <Link href="/advisor" className="hover:text-foreground">
+                Advisor
+              </Link>
+              <span>›</span>
+              <Link href="/advisor/tasks" className="hover:text-foreground">
+                Workshop Tasks
+              </Link>
+              <span>›</span>
+              <span className="text-[#0052cc]">Create Task Card</span>
+            </nav>
+            <div className="mt-1 flex items-center gap-2">
+              <h1 className="text-xl font-bold tracking-tight text-foreground">
+                Initiate Vehicle Intake & Task Card
+              </h1>
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-[#0052cc] border border-blue-200">
+                <Wrench className="size-3.5" />
+                Service Reception
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Record physical check-in parameters, customer reported concerns, catalog services, and assign workshop bays.
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => router.push("/advisor/receive")}
-              className="rounded-lg border border-[#e5e7eb] bg-white px-4 py-[9px] text-xs font-semibold text-[#424753] shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
+
+          <div className="flex items-center gap-2">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="gap-1.5 rounded-md border-border bg-white text-xs font-semibold shadow-xs hover:bg-[#f3f4f5]"
             >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={() => void submit()}
-              disabled={submitting}
-              className={primaryBtn}
-            >
-              <Plus className="size-3.5" />
-              {submitting ? "Creating..." : "Create Task"}
-            </button>
+              <Link href="/advisor/receive">
+                <ArrowLeft className="size-3.5" />
+                Reception Desk
+              </Link>
+            </Button>
           </div>
         </div>
 
+        {/* 12-Column Responsive Layout */}
         <div className="grid grid-cols-12 items-start gap-6">
-          {/* LEFT: Intake / Source */}
-          <div className="col-span-4 flex flex-col gap-4">
-            {/* Mode switcher */}
-            <div className={card}>
-              <div className="grid grid-cols-2 gap-1 rounded-lg bg-[#f3f4f6] p-1 mb-4">
-                {(["appointment", "walkin"] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setMode(m)}
-                    className={cn(
-                      "rounded-md py-2 text-xs font-semibold transition-colors",
-                      mode === m ? "bg-white text-[#191c1d] shadow-sm" : "text-[#64748b]",
-                    )}
-                  >
-                    {m === "appointment" ? "Booked Appointment" : "Walk-in / On-site"}
-                  </button>
-                ))}
-              </div>
+          {/* Left Column (7 cols): Intake Source, Vehicle, Check-in, Services */}
+          <div className="col-span-12 lg:col-span-7 flex flex-col gap-6">
+            {/* 1. Intake Source & Customer */}
+            <Card className="rounded-xl border-border bg-white shadow-xs">
+              <CardContent className="flex flex-col gap-4 p-5">
+                <div className="flex items-center justify-between">
+                  <SectionTitle>1. Intake Source & Customer</SectionTitle>
+                  <div className="flex rounded-lg border border-border bg-[#f8f9fa] p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setMode("appointment")}
+                      className={cn(
+                        "rounded-md px-3 py-1 text-xs font-semibold transition-all",
+                        mode === "appointment" ? "bg-white text-[#0052cc] shadow-xs" : "text-muted-foreground",
+                      )}
+                    >
+                      Booked Booking
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMode("walkin")}
+                      className={cn(
+                        "rounded-md px-3 py-1 text-xs font-semibold transition-all",
+                        mode === "walkin" ? "bg-white text-[#0052cc] shadow-xs" : "text-muted-foreground",
+                      )}
+                    >
+                      Walk-in Intake
+                    </button>
+                  </div>
+                </div>
 
-              {mode === "appointment" ? (
-                <div className="flex flex-col gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <label className={fieldLabel}>Confirmed Appointment</label>
-                    <div className="relative">
+                {mode === "appointment" ? (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <Label className="text-xs font-semibold">Select Confirmed Appointment</Label>
                       <select
                         value={appointmentId}
                         onChange={(e) => selectAppointment(e.target.value)}
-                        className={selectBase}
+                        className="h-10 rounded-lg border border-border bg-white px-3 text-xs outline-none focus:border-[#0052cc]"
                       >
-                        <option value="">Select a confirmed booking…</option>
+                        <option value="">-- Choose Booked Appointment --</option>
                         {confirmedAppointments.map((a) => {
                           const v = vehicles.find((x) => x.id === a.vehicleId);
+                          const c = customers.find((x) => x.id === a.ownerId);
                           return (
                             <option key={a.id} value={a.id}>
-                              {a.date} {a.time} — {v ? `${v.make} ${v.model} (${v.regNo})` : "Vehicle"}
+                              #{a.id} — {a.date} ({a.time}) • {c?.name ?? "Customer"} • {v ? `${v.make} ${v.model} [${v.regNo}]` : "Vehicle"}
                             </option>
                           );
                         })}
                       </select>
-                      <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-[#64748b]" />
                     </div>
-                  </div>
-                  {appointment && (
-                    <div className="rounded-lg border border-[#e5e7eb] bg-[#f9fafb] p-3 text-xs text-[#64748b]">
-                      <p className="font-semibold text-[#191c1d]">{appointment.date} · {appointment.time}</p>
-                      {appointmentServices.length > 0 && (
-                        <p className="mt-1">{appointmentServices.map((s) => s.name).join(", ")}</p>
-                      )}
-                      {appointment.notes && <p className="mt-1 italic">{appointment.notes}</p>}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {/* Customer */}
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className={fieldLabel}>Customer</label>
-                      <button
-                        type="button"
-                        onClick={() => setNewCustomerOpen((o) => !o)}
-                        className={cn("text-xs font-semibold", newCustomerOpen ? "text-[#64748b]" : "text-primary hover:underline")}
-                      >
-                        {newCustomerOpen ? "Pick existing" : "+ New"}
-                      </button>
-                    </div>
-                    {newCustomerOpen ? (
-                      <form onSubmit={(e) => void handleNewCustomer(e)} className="flex flex-col gap-2 rounded-lg border border-[#e2e8f0] bg-[#fafbfc] p-3">
-                        <input value={newCustomerForm.name} onChange={(e) => setNewCustomerForm((f) => ({ ...f, name: e.target.value }))} placeholder="Full name" className={inputBase} />
-                        <input value={newCustomerForm.phone} onChange={(e) => setNewCustomerForm((f) => ({ ...f, phone: e.target.value }))} placeholder="Phone" className={inputBase} />
-                        <input value={newCustomerForm.email} onChange={(e) => setNewCustomerForm((f) => ({ ...f, email: e.target.value }))} placeholder="Email (optional)" className={inputBase} />
-                        <button type="submit" className={primaryBtn}>
-                          <UserRound className="size-3.5" />
-                          Register Customer
-                        </button>
-                      </form>
-                    ) : (
-                      <div className="relative">
-                        <select value={walkinCustomerId} onChange={(e) => selectCustomer(e.target.value)} className={selectBase}>
-                          <option value="">Select customer…</option>
-                          {customers.map((c) => (
-                            <option key={c.id} value={c.id}>{c.name} — {c.phone}</option>
-                          ))}
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-[#64748b]" />
+
+                    {selectedAppointment && (
+                      <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50/50 p-3 text-xs">
+                        <div>
+                          <p className="font-bold text-[#0052cc]">
+                            Booking #{selectedAppointment.id} on {selectedAppointment.date} at {selectedAppointment.time}
+                          </p>
+                          <p className="text-muted-foreground mt-0.5">{selectedAppointment.notes || "Standard check-in"}</p>
+                        </div>
+                        <span className="rounded-full bg-blue-100 px-2.5 py-0.5 font-bold text-[#0052cc] text-[10px] uppercase">
+                          Confirmed
+                        </span>
                       </div>
                     )}
                   </div>
-
-                  {/* Vehicle */}
-                  {resolvedCustomerId && (
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className={fieldLabel}>Vehicle</label>
-                        <button
-                          type="button"
-                          onClick={() => setNewVehicleOpen((o) => !o)}
-                          className={cn("text-xs font-semibold", newVehicleOpen ? "text-[#64748b]" : "text-primary hover:underline")}
-                        >
-                          {newVehicleOpen ? "Pick existing" : "+ Register"}
-                        </button>
-                      </div>
-                      {newVehicleOpen ? (
-                        <div className="rounded-lg border border-[#e2e8f0] bg-[#fafbfc] p-3">
-                          <VehicleForm submitLabel="Register Vehicle" onSubmit={handleNewVehicle} />
-                        </div>
-                      ) : (
-                        <div className="relative">
-                          <select value={walkinVehicleId} onChange={(e) => selectVehicle(e.target.value)} className={selectBase}>
-                            <option value="">Select vehicle…</option>
-                            {vehiclesOfCustomer.map((v) => (
-                              <option key={v.id} value={v.id}>{v.year} {v.make} {v.model} — {v.regNo}</option>
-                            ))}
-                          </select>
-                          <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-[#64748b]" />
-                        </div>
-                      )}
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-semibold">Select Walk-in Client</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewCustomerOpen(true)}
+                        className="h-7 text-[11px] font-semibold text-[#0052cc] border-[#0052cc]/30 hover:bg-blue-50"
+                      >
+                        <Plus className="size-3" />
+                        + New Customer
+                      </Button>
                     </div>
+
+                    <select
+                      value={walkinCustomerId}
+                      onChange={(e) => {
+                        setWalkinCustomerId(e.target.value);
+                        setWalkinVehicleId("");
+                      }}
+                      className="h-10 rounded-lg border border-border bg-white px-3 text-xs outline-none focus:border-[#0052cc]"
+                    >
+                      <option value="">-- Select Registered Client --</option>
+                      {customers.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} {c.phone ? `(${c.phone})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* 2. Vehicle Selection & Physical Inspection Checklist */}
+            <Card className="rounded-xl border-border bg-white shadow-xs">
+              <CardContent className="flex flex-col gap-4 p-5">
+                <div className="flex items-center justify-between">
+                  <SectionTitle>2. Vehicle & Physical Inspection</SectionTitle>
+                  {resolvedCustomerId && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setNewVehicleOpen(true)}
+                      className="h-7 text-[11px] font-semibold text-[#0052cc] border-[#0052cc]/30 hover:bg-blue-50"
+                    >
+                      <Plus className="size-3" />
+                      Register Vehicle
+                    </Button>
                   )}
                 </div>
-              )}
-            </div>
 
-            {/* Customer info */}
-            <div className={card}>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.6px] text-[#64748b]">Customer</h3>
-              <div className="flex items-center gap-3">
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#eff6ff] text-sm font-bold text-primary">
-                  {customerInitials}
-                </span>
-                <div>
-                  <p className="text-sm font-semibold text-[#191c1d]">{customer?.name ?? "—"}</p>
-                  <p className="text-xs capitalize text-[#64748b]">{customer ? customer.status : "No customer selected"}</p>
-                </div>
-              </div>
-              {customer && (
-                <div className="mt-3 flex flex-col gap-1.5">
-                  <p className="flex items-center gap-2 text-xs text-[#64748b]">
-                    <Mail className="size-3 shrink-0" />{customer.email ?? "—"}
-                  </p>
-                  <p className="flex items-center gap-2 text-xs text-[#64748b]">
-                    <Phone className="size-3 shrink-0" />{customer.phone}
-                  </p>
-                </div>
-              )}
-            </div>
+                {mode === "walkin" && (
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs font-semibold">Client Vehicle</Label>
+                    <select
+                      value={walkinVehicleId}
+                      onChange={(e) => setWalkinVehicleId(e.target.value)}
+                      disabled={!walkinCustomerId}
+                      className="h-10 rounded-lg border border-border bg-white px-3 text-xs outline-none focus:border-[#0052cc] disabled:opacity-50"
+                    >
+                      <option value="">
+                        {walkinCustomerId ? "-- Choose Customer Vehicle --" : "-- Select Customer First --"}
+                      </option>
+                      {customerVehicles.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.year} {v.make} {v.model} ({v.regNo})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
-            {/* Vehicle preview */}
-            {resolvedVehicle && (
-              <div className={card}>
-                <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.6px] text-[#64748b]">Vehicle</h3>
-                <div className="relative mb-3 h-28 overflow-hidden rounded-lg bg-[#eef1f4]">
-                  <VehicleImage
-                    src={resolvedVehicle.image}
-                    alt={resolvedVehicle.model}
-                    fill
-                    className="object-contain p-2"
-                  />
-                  <span className="absolute right-2 bottom-2 rounded bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-[#191c1d] backdrop-blur-sm">
-                    {resolvedVehicle.regNo}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <p className="text-[10px] text-[#64748b]">Make & Model</p>
-                    <p className="text-xs font-semibold text-[#191c1d]">{resolvedVehicle.year} {resolvedVehicle.make} {resolvedVehicle.model}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-[#64748b]">Fuel Type</p>
-                    <p className="text-xs font-semibold capitalize text-[#191c1d]">{resolvedVehicle.fuelType}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-[#64748b]">Mileage</p>
-                    <p className="text-xs font-semibold text-[#191c1d]">{resolvedVehicle.mileage.toLocaleString()} mi</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-[#64748b]">Reg. No</p>
-                    <p className="text-xs font-semibold text-[#191c1d]">{resolvedVehicle.regNo}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Intake specs */}
-            <div className={card}>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.6px] text-[#64748b]">Intake Specs</h3>
-              <div className="flex flex-col gap-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex flex-col gap-1">
-                    <label className={fieldLabel}>Mileage</label>
-                    <div className="relative">
-                      <Gauge className="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-[#64748b]" />
-                      <input
-                        type="text"
-                        value={mileage}
-                        onChange={(e) => setMileage(e.target.value)}
-                        className={cn(inputBase, "pl-7 pr-7")}
-                        placeholder="0"
+                {/* Selected Vehicle Profile */}
+                {selectedVehicle ? (
+                  <div className="flex items-center gap-4 rounded-xl border border-border bg-slate-50/50 p-4">
+                    <div className="relative size-16 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                      <VehicleImage
+                        src={selectedVehicle.image || "/images/cars/car-1.png"}
+                        alt={selectedVehicle.model}
+                        fill
+                        className="object-contain p-1"
                       />
-                      <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-xs text-[#64748b]">mi</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-bold text-foreground">
+                        {selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}
+                      </h3>
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="inline-flex items-center rounded border border-[#c2c6d5] bg-[#edf0f8] px-1.5 py-0.2 text-[10px] font-mono font-bold text-[#2a3042] tracking-wider">
+                          {selectedVehicle.regNo}
+                        </span>
+                        <span className="text-xs text-muted-foreground capitalize">
+                          {selectedVehicle.fuelType} • {selectedVehicle.transmission || "Auto"}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <label className={fieldLabel}>Fuel Level %</label>
-                    <input
-                      type="text"
-                      value={fuelLevel}
-                      onChange={(e) => setFuelLevel(e.target.value)}
-                      placeholder="75"
-                      className={inputBase}
+                ) : (
+                  <div className="rounded-lg border border-dashed border-border p-5 text-center text-xs text-muted-foreground">
+                    Select an appointment or client account to inspect vehicle.
+                  </div>
+                )}
+
+                {/* Physical Intake Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-border pt-4">
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs font-semibold flex items-center gap-1">
+                      <Gauge className="size-3.5 text-slate-500" />
+                      Intake Mileage
+                    </Label>
+                    <Input
+                      type="number"
+                      value={mileage}
+                      onChange={(e) => setMileage(e.target.value)}
+                      placeholder="e.g. 24500"
+                      className="h-9 text-xs"
                     />
                   </div>
-                </div>
-                <div className="flex items-center justify-between rounded-lg bg-[#f3f4f6] px-3 py-2.5">
-                  <div>
-                    <p className="text-xs font-semibold text-[#191c1d]">Keys Received</p>
-                    <p className="text-[10px] text-[#64748b]">Vehicle key handed over</p>
+
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs font-semibold flex items-center gap-1">
+                      <Fuel className="size-3.5 text-slate-500" />
+                      Fuel Level
+                    </Label>
+                    <select
+                      value={fuelLevel}
+                      onChange={(e) => setFuelLevel(e.target.value)}
+                      className="h-9 rounded-md border border-border bg-white px-2.5 text-xs"
+                    >
+                      <option value="Empty">Empty (Reserve)</option>
+                      <option value="1/4">1/4 Tank</option>
+                      <option value="1/2">1/2 Tank</option>
+                      <option value="3/4">3/4 Tank</option>
+                      <option value="Full">Full Tank</option>
+                    </select>
                   </div>
-                  <Switch checked={keysReceived} onCheckedChange={setKeysReceived} aria-label="Keys received" />
+
+                  <div className="flex flex-col gap-1.5 justify-center">
+                    <Label className="text-xs font-semibold flex items-center gap-1">
+                      <KeyRound className="size-3.5 text-slate-500" />
+                      Keys Custody
+                    </Label>
+                    <label className="flex items-center gap-2 rounded-md border border-border bg-white px-2.5 h-9 text-xs font-semibold cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={keysReceived}
+                        onChange={(e) => setKeysReceived(e.target.checked)}
+                        className="rounded accent-[#0052cc] size-4"
+                      />
+                      <span>In Custody</span>
+                    </label>
+                  </div>
                 </div>
-                <div className="flex flex-col gap-1">
-                  <label className={fieldLabel}>Accessories in vehicle</label>
-                  <input
-                    type="text"
+
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-semibold">Personal Items / Condition Notes</Label>
+                  <Input
                     value={accessories}
                     onChange={(e) => setAccessories(e.target.value)}
-                    placeholder="e.g. Dashcam, tools in trunk..."
-                    className={inputBase}
+                    placeholder="e.g. Dashcam, toll transponder left in vehicle, scratch on rear bumper..."
+                    className="h-9 text-xs"
                   />
                 </div>
-              </div>
-            </div>
-          </div>
+              </CardContent>
+            </Card>
 
-          {/* RIGHT: Task Details */}
-          <div className="col-span-8 flex flex-col gap-4">
-            {/* Services */}
-            <div className={card}>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.6px] text-[#64748b]">
-                Services to Perform *
-              </h3>
-              <ServicePicker
-                services={services}
-                selectedIds={serviceIds}
-                onToggle={toggleService}
-                maxHeight="max-h-80"
-                showTotal
-              />
-            </div>
+            {/* 3. Services & Customer Concerns */}
+            <Card className="rounded-xl border-border bg-white shadow-xs">
+              <CardContent className="flex flex-col gap-4 p-5">
+                <SectionTitle>3. Requested Services & Diagnostic Scope</SectionTitle>
 
-            {/* Reported Issues */}
-            <div className={card}>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.6px] text-[#64748b]">Task Details</h3>
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <label className={fieldLabel}>Reported Problems / Customer Concerns *</label>
-                  <textarea
+                <ServicePicker
+                  services={services}
+                  selectedIds={serviceIds}
+                  onToggle={toggleService}
+                  maxHeight="max-h-72"
+                  showTotal
+                />
+
+                <div className="flex flex-col gap-1.5 border-t border-border pt-4">
+                  <Label className="text-xs font-semibold">Customer Concerns & Reported Symptoms *</Label>
+                  <Textarea
                     value={issues}
                     onChange={(e) => setIssues(e.target.value)}
-                    placeholder={appointment ? "Prefilled from booking — edit if needed." : "Describe the reported issues..."}
-                    className={cn(inputBase, "h-24 resize-none py-2.5")}
+                    rows={3}
+                    placeholder="Describe customer complaint, squeaks, warning lights, or requested inspection scopes..."
+                    className="text-xs"
                   />
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column (5 cols): Workshop Bay, Technicians, Summary */}
+          <div className="col-span-12 lg:col-span-5 flex flex-col gap-6 lg:sticky lg:top-6">
+            {/* 4. Workshop Bay & Priority */}
+            <Card className="rounded-xl border-border bg-white shadow-xs">
+              <CardContent className="flex flex-col gap-4 p-5">
+                <SectionTitle>4. Bay Allocation & Priority</SectionTitle>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1.5">
-                    <label className={fieldLabel}>Priority</label>
-                    <div className="flex gap-2">
-                      {priorities.map((p) => (
+                    <Label className="text-xs font-semibold">Workshop Bay</Label>
+                    <select
+                      value={station}
+                      onChange={(e) => setStation(e.target.value)}
+                      className="h-9 rounded-md border border-border bg-white px-2.5 text-xs"
+                    >
+                      {STATIONS.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs font-semibold">Service Priority</Label>
+                    <div className="grid grid-cols-3 gap-1">
+                      {PRIORITIES.map((p) => (
                         <button
                           key={p.key}
                           type="button"
                           onClick={() => setPriority(p.key)}
                           className={cn(
-                            "flex-1 rounded-lg border py-2 text-xs font-semibold transition-all",
+                            "rounded border py-1.5 text-center text-xs font-bold transition-all",
                             priority === p.key
-                              ? p.activeClass
-                              : "border-[#e5e7eb] bg-white text-[#64748b] hover:border-[#c2c6d5]",
+                              ? p.color + " ring-1 ring-primary/40 font-black"
+                              : "border-border text-muted-foreground hover:bg-slate-50",
                           )}
                         >
                           {p.label}
@@ -646,171 +702,336 @@ export default function CreateTaskPage() {
                       ))}
                     </div>
                   </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className={fieldLabel}>Station</label>
-                    <div className="relative">
-                      <Wrench className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-[#64748b]" />
-                      <input
-                        type="text"
-                        value={station}
-                        onChange={(e) => setStation(e.target.value)}
-                        placeholder="e.g. Bay 04"
-                        className={cn(inputBase, "pl-8")}
-                      />
-                    </div>
-                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 border-t border-border pt-3">
                   <div className="flex flex-col gap-1.5">
-                    <label className={fieldLabel}>Expected Completion Date</label>
-                    <div className="relative">
-                      <input
-                        type="date"
-                        value={expectedDate}
-                        onChange={(e) => setExpectedDate(e.target.value)}
-                        className={cn(inputBase, "pr-8")}
-                      />
-                      <CalendarDays className="pointer-events-none absolute top-1/2 right-2.5 size-3.5 -translate-y-1/2 text-[#64748b]" />
-                    </div>
+                    <Label className="text-xs font-semibold">Target Delivery Date</Label>
+                    <Input
+                      type="date"
+                      value={expectedDate}
+                      onChange={(e) => setExpectedDate(e.target.value)}
+                      className="h-9 text-xs"
+                    />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={fieldLabel}>Expected Time</label>
-                    <div className="relative">
-                      <input
-                        type="time"
-                        value={expectedTime}
-                        onChange={(e) => setExpectedTime(e.target.value)}
-                        className={cn(inputBase, "pr-8")}
-                      />
-                      <Clock className="pointer-events-none absolute top-1/2 right-2.5 size-3.5 -translate-y-1/2 text-[#64748b]" />
-                    </div>
+                    <Label className="text-xs font-semibold">Target Time</Label>
+                    <Input
+                      type="time"
+                      value={expectedTime}
+                      onChange={(e) => setExpectedTime(e.target.value)}
+                      className="h-9 text-xs"
+                    />
                   </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
-            {/* Multi-mechanic assignment */}
-            <div className={card}>
-              <div className="flex items-center justify-between mb-3">
+            {/* 5. Lead Technician Assignment */}
+            <Card className="rounded-xl border-blue-200 bg-white shadow-xs">
+              <div className="border-b border-border bg-blue-50/70 px-5 py-3 rounded-t-xl flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Users className="size-4 text-primary" />
-                  <h3 className="text-xs font-semibold uppercase tracking-[0.6px] text-[#64748b]">Assign Mechanics</h3>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                    {selectedMechanicIds.length === 0 ? "Optional" : `${selectedMechanicIds.length} selected`}
+                  <Users className="size-4 text-[#0052cc]" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#0052cc]">
+                    Assign Technician(s)
                   </span>
                 </div>
-                <div className="relative w-44">
-                  <Search className="absolute top-1/2 left-2.5 size-3 -translate-y-1/2 text-[#9ca3af]" />
-                  <Input
+                <span className="text-[11px] font-semibold text-[#0052cc]">
+                  {selectedMechanicIds.length} chosen
+                </span>
+              </div>
+
+              <CardContent className="flex flex-col gap-3.5 p-5">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
                     value={mechanicSearch}
                     onChange={(e) => setMechanicSearch(e.target.value)}
-                    placeholder="Search mechanics..."
-                    className="h-8 rounded border-[#e5e7eb] bg-white pl-7 text-xs"
+                    placeholder="Filter certified technicians..."
+                    className="h-8 w-full rounded-md border border-border bg-[#f8f9fa] pl-8 pr-2 text-xs outline-none focus:border-[#0052cc] focus:bg-white"
                   />
                 </div>
-              </div>
 
-              {selectedMechanics.length > 0 && (
-                <div className="mb-3 flex flex-wrap gap-1.5 rounded-lg border border-primary/20 bg-[#eff6ff] px-3 py-2">
-                  <span className="self-center text-[11px] font-semibold text-primary">Assigned:</span>
-                  {selectedMechanics.map((m) => (
-                    <span
-                      key={m.id}
-                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 py-0.5 pr-1.5 pl-2 text-[11px] font-medium text-primary"
-                    >
-                      {m.name}
-                      <button
-                        type="button"
-                        onClick={() => removeMechanic(m.id)}
-                        className="flex size-3.5 items-center justify-center rounded-full hover:bg-primary/20"
-                      >
-                        <X className="size-2.5" />
-                      </button>
-                    </span>
-                  ))}
+                <div className="max-h-40 overflow-y-auto rounded-lg border border-border p-1 divide-y divide-slate-100 bg-[#f8f9fa]">
+                  {filteredMechanics.length === 0 ? (
+                    <div className="p-3 text-center text-xs text-muted-foreground">
+                      No technicians available matching search.
+                    </div>
+                  ) : (
+                    filteredMechanics.map((m) => {
+                      const isSelected = selectedMechanicIds.includes(m.id);
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => toggleMechanic(m.id)}
+                          className={cn(
+                            "flex w-full items-center justify-between rounded-md p-2 text-left text-xs transition-colors",
+                            isSelected ? "bg-blue-50 border border-[#0052cc]" : "hover:bg-white",
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={cn(
+                                "flex size-7 items-center justify-center rounded-full text-[11px] font-bold text-white",
+                                isSelected ? "bg-[#0052cc]" : "bg-slate-500",
+                              )}
+                            >
+                              {m.name.slice(0, 2).toUpperCase()}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-foreground">{m.name}</span>
+                              <span className="text-[10px] text-muted-foreground">
+                                {m.specialization || "General Mechanic"}
+                              </span>
+                            </div>
+                          </div>
+                          <div
+                            className={cn(
+                              "size-4 rounded border flex items-center justify-center text-white",
+                              isSelected ? "bg-[#0052cc] border-[#0052cc]" : "border-slate-300 bg-white",
+                            )}
+                          >
+                            {isSelected && <Check className="size-3" />}
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
-              )}
 
-              <div className="grid max-h-52 grid-cols-3 gap-2 overflow-y-auto">
-                {filteredMechanics.map((m) => {
-                  const isSelected = selectedMechanicIds.includes(m.id);
-                  const workload = workloadOf(m.id);
-                  const isFull = workload >= WORKLOAD_LIMIT;
-                  return (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => toggleMechanic(m.id)}
-                      className={cn(
-                        "flex items-center gap-2 rounded-lg border p-2.5 text-left transition-all",
-                        isSelected
-                          ? "border-primary bg-[#eff6ff]"
-                          : "border-[#e5e7eb] bg-white hover:border-primary/40",
-                      )}
-                    >
-                      <Avatar className="size-7 shrink-0 rounded-lg">
-                        <AvatarImage src={m.avatar} alt={m.name} className="rounded-lg object-cover" />
-                        <AvatarFallback className="rounded-lg bg-primary/10 text-[10px] font-bold text-primary">
-                          {initials(m.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[11px] font-semibold text-[#191c1d]">{m.name}</p>
-                        <p className={cn(
-                          "text-[10px] font-medium",
-                          isFull ? "text-[#ba1a1a]" : workload >= 3 ? "text-[#8b5000]" : "text-[#2e7d32]",
-                        )}>
-                          {workload}/{WORKLOAD_LIMIT}
-                        </p>
-                      </div>
-                      <span className={cn(
-                        "flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors",
-                        isSelected ? "border-primary bg-primary text-white" : "border-[#cbd5e1]",
-                      )}>
-                        {isSelected && <Check className="size-2.5" />}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {selectedMechanicIds.length > 0 && (
-                <div className="mt-3 border-t border-[#e5e7eb] pt-3">
-                  <Label className="text-[11px] text-[#64748b]">Notes for mechanics</Label>
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-semibold">Technician Instructions / Bay Notes</Label>
                   <Input
                     value={assignmentNotes}
                     onChange={(e) => setAssignmentNotes(e.target.value)}
-                    placeholder="e.g. Check brake pads first..."
-                    className="mt-1 h-8 rounded border-[#e5e7eb] text-xs"
+                    placeholder="e.g. Inspect front left rotor first before pads..."
+                    className="h-8 text-xs"
                   />
                 </div>
-              )}
-            </div>
+              </CardContent>
+            </Card>
 
-            {/* Footer actions */}
-            <div className="flex items-center justify-end gap-3 border-t border-[#e5e7eb] pt-2">
-              <button
-                type="button"
-                onClick={() => router.push("/advisor/receive")}
-                className="rounded-lg border border-[#e5e7eb] bg-white px-5 py-[9px] text-xs font-semibold text-[#424753]"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => void submit()}
-                disabled={submitting}
-                className={primaryBtn}
-              >
-                <Plus className="size-3.5" />
-                {submitting ? "Creating..." : "Create Task"}
-              </button>
-            </div>
+            {/* 6. Sticky Intake Summary Card */}
+            <Card className="rounded-xl border-border bg-white shadow-xs">
+              <CardContent className="flex flex-col gap-3.5 p-5">
+                <SectionTitle>6. Task Card Summary</SectionTitle>
+
+                <div className="flex flex-col gap-2 rounded-lg border border-border bg-[#f8f9fa] p-3 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Customer:</span>
+                    <span className="font-bold text-foreground">{selectedCustomer?.name || "Unselected"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Vehicle:</span>
+                    <span className="font-bold text-foreground">
+                      {selectedVehicle
+                        ? `${selectedVehicle.year} ${selectedVehicle.make} [${selectedVehicle.regNo}]`
+                        : "Unselected"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Odometer:</span>
+                    <span className="font-semibold text-foreground">{mileage ? `${mileage} mi` : "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Station:</span>
+                    <span className="font-semibold text-foreground">{station}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Technicians:</span>
+                    <span className="font-semibold text-foreground">
+                      {selectedMechanicIds.length > 0 ? `${selectedMechanicIds.length} assigned` : "Awaiting Bay"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Price Breakdown */}
+                <div className="flex flex-col gap-1.5 border-t border-border pt-3 text-xs">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Labor & Catalog:</span>
+                    <span>${serviceCost.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Estimated Tax (8.5%):</span>
+                    <span>${tax.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-bold text-foreground border-t border-border pt-1.5 mt-0.5">
+                    <span>Initial Estimate:</span>
+                    <span className="text-base text-[#0052cc]">${total.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={submit}
+                  disabled={submitting}
+                  className="mt-2 w-full gap-2 rounded-xl bg-[#0052cc] text-xs font-bold text-white shadow-xs hover:bg-[#0047b3] disabled:opacity-50 h-11"
+                >
+                  <Sparkles className="size-4" />
+                  {submitting ? "Dispatching..." : "Dispatch Task Card & Start Service"}
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
+
+      {/* New Customer Modal */}
+      <Dialog open={newCustomerOpen} onOpenChange={setNewCustomerOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <form onSubmit={handleNewCustomer}>
+            <DialogHeader>
+              <DialogTitle className="text-base font-bold">Register Walk-in Client</DialogTitle>
+              <DialogDescription className="text-xs">
+                Enter contact details to create a verified vehicle owner profile.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-3 py-3 text-xs">
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-semibold">Full Name *</Label>
+                <Input
+                  value={newCustomerForm.name}
+                  onChange={(e) => setNewCustomerForm((f) => ({ ...f, name: e.target.value }))}
+                  required
+                  placeholder="e.g. Michael Scott"
+                  className="h-9 text-xs"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-semibold">Phone Number *</Label>
+                <Input
+                  value={newCustomerForm.phone}
+                  onChange={(e) => setNewCustomerForm((f) => ({ ...f, phone: e.target.value }))}
+                  required
+                  placeholder="e.g. +1 555-0199"
+                  className="h-9 text-xs"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-semibold">Email Address (Optional)</Label>
+                <Input
+                  type="email"
+                  value={newCustomerForm.email}
+                  onChange={(e) => setNewCustomerForm((f) => ({ ...f, email: e.target.value }))}
+                  placeholder="e.g. michael@example.com"
+                  className="h-9 text-xs"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" size="sm" onClick={() => setNewCustomerOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" disabled={customerBusy} className="bg-[#0052cc] text-white hover:bg-[#0047b3]">
+                {customerBusy ? "Saving..." : "Save Client"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Vehicle Modal */}
+      <Dialog open={newVehicleOpen} onOpenChange={setNewVehicleOpen}>
+        <DialogContent className="sm:max-w-[460px]">
+          <form onSubmit={handleNewVehicle}>
+            <DialogHeader>
+              <DialogTitle className="text-base font-bold">Register Vehicle to Client</DialogTitle>
+              <DialogDescription className="text-xs">
+                Add an automobile profile to client {selectedCustomer?.name}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-3 py-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-semibold">Make *</Label>
+                  <Input
+                    value={newVehicleMake}
+                    onChange={(e) => setNewVehicleMake(e.target.value)}
+                    required
+                    placeholder="e.g. Ford, Toyota"
+                    className="h-9 text-xs"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-semibold">Model *</Label>
+                  <Input
+                    value={newVehicleModel}
+                    onChange={(e) => setNewVehicleModel(e.target.value)}
+                    required
+                    placeholder="e.g. F-150, Camry"
+                    className="h-9 text-xs"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-semibold">Year *</Label>
+                  <Input
+                    type="number"
+                    value={newVehicleYear}
+                    onChange={(e) => setNewVehicleYear(e.target.value)}
+                    required
+                    className="h-9 text-xs"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-semibold">License Plate *</Label>
+                  <Input
+                    value={newVehicleReg}
+                    onChange={(e) => setNewVehicleReg(e.target.value)}
+                    required
+                    placeholder="e.g. A9C-1234"
+                    className="h-9 text-xs uppercase"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-semibold">Fuel Type</Label>
+                  <select
+                    value={newVehicleFuel}
+                    onChange={(e) =>
+                      setNewVehicleFuel(e.target.value as "gasoline" | "diesel" | "hybrid" | "electric")
+                    }
+                    className="h-9 rounded-md border border-border bg-white px-2.5 text-xs"
+                  >
+                    <option value="gasoline">Gasoline</option>
+                    <option value="diesel">Diesel</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="electric">Electric</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-semibold">Mileage</Label>
+                  <Input
+                    type="number"
+                    value={newVehicleMileage}
+                    onChange={(e) => setNewVehicleMileage(e.target.value)}
+                    className="h-9 text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" size="sm" onClick={() => setNewVehicleOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" disabled={vehicleBusy} className="bg-[#0052cc] text-white hover:bg-[#0047b3]">
+                {vehicleBusy ? "Saving..." : "Save Vehicle"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+export default function CreateTaskPage() {
+  return (
+    <Suspense fallback={<DetailLoading label="Loading task creator..." />}>
+      <CreateTaskContent />
+    </Suspense>
   );
 }

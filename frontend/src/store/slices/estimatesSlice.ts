@@ -18,6 +18,10 @@ export const fetchEstimates = createAsyncThunk("estimates/fetchAll", async () =>
   return await api.get<Estimate[]>("/estimates");
 });
 
+export const fetchEstimate = createAsyncThunk("estimates/fetchOne", async (id: string) => {
+  return await api.get<Estimate>(`/estimates/${id}`);
+});
+
 export const createEstimate = createAsyncThunk(
   "estimates/create",
   async (data: {
@@ -56,6 +60,14 @@ const estimatesSlice = createSlice({
       .addCase(fetchEstimates.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error.message ?? "Failed to load estimates";
+      })
+      .addCase(fetchEstimate.fulfilled, (state, action) => {
+        const index = state.items.findIndex((e) => e.id === action.payload.id);
+        if (index >= 0) {
+          state.items[index] = action.payload;
+        } else {
+          state.items.push(action.payload);
+        }
       })
       .addCase(createEstimate.fulfilled, (state, action) => {
         state.items.unshift(action.payload);
