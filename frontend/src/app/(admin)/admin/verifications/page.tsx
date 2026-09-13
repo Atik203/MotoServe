@@ -8,8 +8,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
-  Eye,
   Mail,
+  MoreHorizontal,
   Phone,
   RefreshCw,
   Search,
@@ -20,6 +20,13 @@ import {
   UserX,
   X,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchCustomers, verifyCustomer } from "@/store/slices/customersSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
@@ -287,7 +294,7 @@ export default function CustomerManagementPage() {
                 <TableHead className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-[#424753]">National ID & Vehicles</TableHead>
                 <TableHead className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-[#424753]">Registration</TableHead>
                 <TableHead className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-[#424753]">Status</TableHead>
-                <TableHead className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-[#424753]">Actions</TableHead>
+                <TableHead className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-[#424753] w-[110px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -302,25 +309,39 @@ export default function CustomerManagementPage() {
                   .toUpperCase();
 
                 return (
-                  <TableRow key={customer.id} className="border-t border-[#e2e8f0] transition-colors hover:bg-[#f8f9fa]">
+                  <TableRow
+                    key={customer.id}
+                    onClick={() => setQuickView(customer)}
+                    className="group border-t border-[#e2e8f0] cursor-pointer transition-colors hover:bg-[#f8f9fa]"
+                  >
                     <TableCell className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-[#eff6ff] text-xs font-bold text-primary">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-[#eff6ff] text-xs font-bold text-primary group-hover:bg-[#dbeafe] transition-colors">
                           {initials || "CU"}
                         </span>
                         <div>
-                          <p className="text-xs font-bold text-foreground">{customer.name}</p>
+                          <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
+                            {customer.name}
+                          </p>
                           <p className="text-[11px] font-mono text-muted-foreground">{customer.id.toUpperCase()}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="px-5 py-3.5">
                       <div className="flex flex-col gap-0.5 text-xs">
-                        <a href={`mailto:${customer.email}`} className="flex items-center gap-1 text-foreground hover:text-primary hover:underline">
+                        <a
+                          href={`mailto:${customer.email}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex items-center gap-1 text-foreground hover:text-primary hover:underline"
+                        >
                           <Mail className="size-3 text-muted-foreground" />
                           <span>{customer.email}</span>
                         </a>
-                        <a href={`tel:${customer.phone}`} className="flex items-center gap-1 text-muted-foreground hover:text-primary">
+                        <a
+                          href={`tel:${customer.phone}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex items-center gap-1 text-muted-foreground hover:text-primary"
+                        >
                           <Phone className="size-3" />
                           <span>{customer.phone}</span>
                         </a>
@@ -357,50 +378,69 @@ export default function CustomerManagementPage() {
                         {customer.status}
                       </span>
                     </TableCell>
-                    <TableCell className="px-5 py-3.5 text-right">
+                    <TableCell className="px-5 py-3.5 text-right w-[110px]" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setQuickView(customer)}
-                          className="h-8 px-2 text-xs font-semibold text-[#424753] hover:text-[#004492]"
-                          title="Quick View"
-                        >
-                          <Eye className="size-3.5 mr-1" />
-                          View
-                        </Button>
-                        <Button
-                          asChild
-                          variant="outline"
-                          size="sm"
-                          className="h-8 px-2.5 text-xs font-semibold text-[#004492] hover:bg-[#eff6ff]"
-                        >
-                          <Link href={`/admin/verifications/${customer.id}`}>
-                            Review
-                            <ExternalLink className="size-3 ml-1" />
-                          </Link>
-                        </Button>
-                        {customer.status !== "approved" && (
+                        {customer.status === "pending" && (
                           <Button
+                            asChild
                             size="sm"
-                            disabled={actionBusyId === customer.id}
-                            onClick={() => void setStatus(customer.id, "approved")}
-                            className="h-8 rounded-md bg-[#15803d] px-2.5 text-xs font-semibold text-white hover:bg-[#15803d]/90"
+                            className="h-8 rounded-md bg-[#004492] px-3 text-xs font-semibold text-white shadow-2xs hover:bg-[#003675] transition-colors"
                           >
-                            Approve
+                            <Link href={`/admin/verifications/${customer.id}`}>
+                              Review
+                              <ExternalLink className="size-3 ml-1" />
+                            </Link>
                           </Button>
                         )}
-                        {customer.status !== "rejected" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={actionBusyId === customer.id}
-                            onClick={() => void setStatus(customer.id, "rejected")}
-                            className="h-8 rounded-md border-rose-200 px-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50"
-                          >
-                            Reject
-                          </Button>
-                        )}
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              disabled={actionBusyId === customer.id}
+                              className="size-8 rounded-md border border-[#e2e8f0] bg-white text-[#64748b] hover:bg-secondary hover:text-foreground transition-colors"
+                              aria-label={`More actions for ${customer.name}`}
+                            >
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48 p-1.5 rounded-xl border border-[#e2e8f0] bg-white shadow-lg">
+                            <DropdownMenuItem asChild>
+                              <Link
+                                href={`/admin/verifications/${customer.id}`}
+                                className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer rounded-lg text-[#424753] hover:text-foreground hover:bg-[#f8f9fa]"
+                              >
+                                <ExternalLink className="size-3.5 text-muted-foreground" />
+                                <span>Verification Details</span>
+                              </Link>
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator className="my-1 border-[#e2e8f0]" />
+
+                            {customer.status !== "approved" && (
+                              <DropdownMenuItem
+                                disabled={actionBusyId === customer.id}
+                                onClick={() => void setStatus(customer.id, "approved")}
+                                className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold cursor-pointer rounded-lg text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 focus:bg-emerald-50 focus:text-emerald-800"
+                              >
+                                <UserCheck className="size-3.5 text-emerald-600" />
+                                <span>Approve Account</span>
+                              </DropdownMenuItem>
+                            )}
+
+                            {customer.status !== "rejected" && (
+                              <DropdownMenuItem
+                                disabled={actionBusyId === customer.id}
+                                onClick={() => void setStatus(customer.id, "rejected")}
+                                className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold cursor-pointer rounded-lg text-rose-700 hover:text-rose-800 hover:bg-rose-50 focus:bg-rose-50 focus:text-rose-800"
+                              >
+                                <UserX className="size-3.5 text-rose-600" />
+                                <span>Reject Account</span>
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>
