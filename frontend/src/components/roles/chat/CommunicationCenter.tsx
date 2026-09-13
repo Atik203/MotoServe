@@ -13,6 +13,8 @@ import {
   setActiveThread,
 } from "@/store/slices/chatSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
+import { fetchCustomers } from "@/store/slices/customersSlice";
+import { getSocket } from "@/lib/socket";
 import { useFileUrl } from "@/hooks/useFileUrl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -72,33 +74,48 @@ function Avatar({ name, src }: { name: string; src?: string | null }) {
 
 export function CommunicationCenter({ role }: CommunicationCenterProps) {
   const dispatch = useAppDispatch();
+  const currentUser = useAppSelector((s) => s.auth.user);
   const threads = useAppSelector((s) => s.chat.threads);
   const chatStatus = useAppSelector((s) => s.chat.status);
   const activeThreadId = useAppSelector((s) => s.chat.activeThreadId);
   const employees = useAppSelector((s) => s.employees.items);
+  const customers = useAppSelector((s) => s.customers.items);
+
   const [search, setSearch] = useState("");
   const [text, setText] = useState("");
   const [newOpen, setNewOpen] = useState(false);
   const [advisorId, setAdvisorId] = useState("");
+  const [customerId, setCustomerId] = useState("");
   const [subject, setSubject] = useState("Vehicle service inquiry");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [typingUser, setTypingUser] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(() => getSocket()?.connected ?? false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef(false);
 
   useEffect(() => {
     dispatch(fetchThreads());
-    if (role === "owner") dispatch(fetchEmployees());
+    if (role === "owner") {
+      dispatch(fetchEmployees());
+    } else {
+      dispatch(fetchCustomers());
+    }
   }, [dispatch, role]);
 
   useEffect(() => {
     const timer = setInterval(() => {
       void dispatch(fetchThreads()).catch(() => {});
-    }, 8000);
+    }, 12000);
     return () => clearInterval(timer);
   }, [dispatch]);
 
   useEffect(() => {
-    if (!activeThreadId && threads.length > 0) dispatch(setActiveThread(threads[0].id));
+    if (!activeThreadId && threads.length > 0) {
+      dispatch(setActiveThread(threads[0].id));
+    }
   }, [activeThreadId, threads, dispatch]);
 
   const activeThread = threads.find((t) => t.id === activeThreadId) ?? null;
@@ -108,6 +125,50 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [activeThreadId, activeThread?.messages.length]);
+
+  // Real-time socket listeners for live connection status, typing, and thread joining
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const onConnect = () => setIsConnected(true);
+    const onDisconnect = () => setIsConnected(false);
+
+    const onTypingStart = (data: { threadId: string; senderName?: string; userId?: string }) => {
+      if (data.threadId === activeThreadId && data.userId !== currentUser?.id) {
+        setTypingUser(data.senderName || (role === "owner" ? "Service Advisor" : "Vehicle Owner"));
+      }
+    };
+
+    const onTypingStop = (data: { threadId: string; userId?: string }) => {
+      if (data.threadId === activeThreadId && data.userId !== currentUser?.id) {
+        setTypingUser(null);
+      }
+    };
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("typing:start", onTypingStart);
+    socket.on("typing:stop", onTypingStop);
+
+    if (activeThreadId) {
+      socket.emit("thread:join", activeThreadId);
+    }
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("typing:start", onTypingStart);
+      socket.off("typing:stop", onTypingStop);
+    };
+  }, [activeThreadId, currentUser?.id, role]);
+
+  // Auto-mark active thread as read if it has unread messages
+  useEffect(() => {
+    if (activeThread && activeThread.unread > 0) {
+      void dispatch(markThreadRead(activeThread.id)).catch(() => {});
+    }
+  }, [activeThread, dispatch]);
 
   const otherName = (thread: ChatThread) =>
     role === "owner" ? (thread.advisor?.name ?? "Service Advisor") : (thread.owner?.name ?? "Vehicle Owner");
@@ -119,8 +180,11 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return threads;
-    return threads.filter((thread) => {
+    const sorted = [...threads].sort(
+      (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime(),
+    );
+    if (!q) return sorted;
+    return sorted.filter((thread) => {
       const name = otherName(thread).toLowerCase();
       const lastText = (thread.messages.at(-1)?.text ?? "").toLowerCase();
       return thread.subject.toLowerCase().includes(q) || name.includes(q) || lastText.includes(q);
@@ -129,38 +193,85 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
   }, [threads, search, role]);
 
   const selectThread = (thread: ChatThread) => {
+    setTypingUser(null);
     dispatch(setActiveThread(thread.id));
+    getSocket()?.emit("thread:join", thread.id);
     if (thread.unread > 0) {
       void dispatch(markThreadRead(thread.id)).catch(() => {});
     }
+  };
+
+  const handleInputChange = (val: string) => {
+    setText(val);
+    const socket = getSocket();
+    if (!socket || !activeThread) return;
+
+    if (!isTypingRef.current && val.trim().length > 0) {
+      isTypingRef.current = true;
+      socket.emit("typing:start", {
+        threadId: activeThread.id,
+        senderName: currentUser?.name || (role === "owner" ? "Vehicle Owner" : "Service Advisor"),
+      });
+    }
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      isTypingRef.current = false;
+      socket.emit("typing:stop", { threadId: activeThread.id });
+    }, 2200);
   };
 
   const handleSend = (e: FormEvent) => {
     e.preventDefault();
     const trimmed = text.trim();
     if (!trimmed || !activeThread) return;
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    if (isTypingRef.current) {
+      isTypingRef.current = false;
+      getSocket()?.emit("typing:stop", { threadId: activeThread.id });
+    }
+
     dispatch(sendMessage({ threadId: activeThread.id, text: trimmed }));
     setText("");
   };
 
   const handleNewThread = async (e: FormEvent) => {
     e.preventDefault();
-    if (!advisorId || !message.trim()) {
-      toast.error("Select an advisor and write a first message");
+    if (role === "owner" && !advisorId) {
+      toast.error("Please select a service advisor");
       return;
     }
+    if (role === "advisor" && !customerId) {
+      toast.error("Please select a customer");
+      return;
+    }
+    if (!message.trim()) {
+      toast.error("Please enter a first message");
+      return;
+    }
+
     setSending(true);
     try {
       const thread = await dispatch(
         createThread({
-          advisorId,
+          advisorId: role === "owner" ? advisorId : undefined,
+          customerId: role === "advisor" ? customerId : undefined,
           subject: subject.trim() || "Vehicle service inquiry",
           text: message.trim(),
         }),
       ).unwrap();
-      toast.success(`Conversation started with ${thread.advisor?.name ?? "advisor"}`);
+
+      const recipientName = role === "owner" ? (thread.advisor?.name ?? "advisor") : (thread.owner?.name ?? "customer");
+      toast.success(`Conversation started with ${recipientName}`);
       setNewOpen(false);
       setAdvisorId("");
+      setCustomerId("");
       setMessage("");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to start conversation");
@@ -177,17 +288,36 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
     <div className="flex h-[calc(100vh-64px)] flex-col">
       <div className="flex shrink-0 items-center justify-between border-b border-border bg-white px-6 py-4">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Communication Center</h1>
-          <p className="text-sm text-muted-foreground">
-            {role === "owner" ? "Chat with your service advisor" : "Chat with your vehicle owners"}
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold text-foreground">Chat</h1>
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors",
+                isConnected
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-amber-50 text-amber-700 border-amber-200",
+              )}
+              title={isConnected ? "Real-time socket connected" : "Connecting to real-time server..."}
+            >
+              <span
+                className={cn(
+                  "size-1.5 rounded-full",
+                  isConnected ? "bg-emerald-500 animate-pulse" : "bg-amber-500",
+                )}
+              />
+              {isConnected ? "Live" : "Connecting"}
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {role === "owner"
+              ? "Real-time direct messaging with your service advisor"
+              : "Real-time direct messaging with vehicle owners"}
           </p>
         </div>
-        {role === "owner" && (
-          <Button size="sm" onClick={() => setNewOpen(true)} className="gap-2 rounded-lg">
-            <Plus className="size-4" />
-            New Conversation
-          </Button>
-        )}
+        <Button size="sm" onClick={() => setNewOpen(true)} className="gap-2 rounded-lg">
+          <Plus className="size-4" />
+          New Conversation
+        </Button>
       </div>
 
       <div className="flex min-h-0 flex-1">
@@ -211,7 +341,7 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
                 <p className="text-sm font-medium text-muted-foreground">
                   {threads.length === 0 ? "No conversations yet" : "No conversations match your search"}
                 </p>
-                {threads.length === 0 && role === "owner" && (
+                {threads.length === 0 && (
                   <Button size="sm" variant="outline" onClick={() => setNewOpen(true)} className="gap-2 rounded-lg">
                     <Plus className="size-3.5" />
                     Start a Conversation
@@ -261,13 +391,15 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
         <section className="flex min-w-0 flex-1 flex-col bg-[#f8f9fa]">
           {activeThread ? (
             <>
-              <div className="flex shrink-0 items-center gap-3 border-b border-border bg-white px-6 py-3">
-                <Avatar name={otherName(activeThread)} src={otherAvatar(activeThread)} />
-                <div className="flex min-w-0 flex-col">
-                  <p className="truncate text-sm font-semibold text-foreground">{otherName(activeThread)}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {role === "owner" ? "Service Advisor" : "Vehicle Owner"} • {activeThread.subject}
-                  </p>
+              <div className="flex shrink-0 items-center justify-between border-b border-border bg-white px-6 py-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Avatar name={otherName(activeThread)} src={otherAvatar(activeThread)} />
+                  <div className="flex min-w-0 flex-col">
+                    <p className="truncate text-sm font-semibold text-foreground">{otherName(activeThread)}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {role === "owner" ? "Service Advisor" : "Vehicle Owner"} • {activeThread.subject}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -276,7 +408,7 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
                   {activeThread.messages.map((msg, i) => {
                     const prev = activeThread.messages[i - 1];
                     const showDate = !prev || formatDay(msg.time) !== formatDay(prev.time);
-                    const mine = msg.sender === "advisor";
+                    const mine = msg.sender === role;
                     const grouped = prev && !showDate && prev.sender === msg.sender;
                     return (
                       <Fragment key={msg.id}>
@@ -294,11 +426,11 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
                                 : "rounded-bl-sm border border-border bg-white text-foreground",
                             )}
                           >
-                            <p>{msg.text}</p>
+                            <p className="whitespace-pre-wrap break-words">{msg.text}</p>
                             <p
                               className={cn(
                                 "mt-1 flex items-center justify-end gap-1 text-[10px]",
-                                mine ? "text-white/70" : "text-muted-foreground",
+                                mine ? "text-white/75" : "text-muted-foreground",
                               )}
                             >
                               {formatTime(msg.time)}
@@ -312,6 +444,17 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
                 </div>
               </div>
 
+              {typingUser && (
+                <div className="flex items-center gap-2 bg-white/90 px-6 py-1.5 text-xs text-muted-foreground border-t border-border/40">
+                  <span className="flex items-center gap-1">
+                    <span className="size-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+                    <span className="size-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+                    <span className="size-1.5 rounded-full bg-primary animate-bounce" />
+                  </span>
+                  <span><strong className="font-semibold text-foreground">{typingUser}</strong> is typing...</span>
+                </div>
+              )}
+
               <form onSubmit={handleSend} className="shrink-0 border-t border-border bg-white p-4">
                 <div className="flex items-center gap-2 rounded-2xl border border-border bg-[#f8f9fa] px-3 py-2">
                   <button
@@ -323,7 +466,7 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
                   </button>
                   <input
                     value={text}
-                    onChange={(e) => setText(e.target.value)}
+                    onChange={(e) => handleInputChange(e.target.value)}
                     placeholder="Type a message..."
                     className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
                   />
@@ -351,12 +494,10 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
                 <MessageSquare className="size-7 text-primary" />
               </span>
               <p className="text-sm font-medium">Select a conversation to start messaging</p>
-              {threads.length === 0 && role === "owner" && (
-                <Button size="sm" onClick={() => setNewOpen(true)} className="gap-2 rounded-lg">
-                  <Plus className="size-3.5" />
-                  New Conversation
-                </Button>
-              )}
+              <Button size="sm" onClick={() => setNewOpen(true)} className="gap-2 rounded-lg">
+                <Plus className="size-3.5" />
+                New Conversation
+              </Button>
             </div>
           )}
         </section>
@@ -367,27 +508,49 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-foreground">New Conversation</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              Choose a service advisor to start a chat with.
+              {role === "owner"
+                ? "Choose a service advisor to start a chat with."
+                : "Choose a vehicle owner / customer to message."}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleNewThread} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-semibold text-foreground">Service Advisor *</Label>
-              <select
-                value={advisorId}
-                onChange={(e) => setAdvisorId(e.target.value)}
-                className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-foreground outline-none focus:border-primary"
-              >
-                <option value="" disabled>
-                  Select advisor...
-                </option>
-                {advisors.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
+            {role === "owner" ? (
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-semibold text-foreground">Service Advisor *</Label>
+                <select
+                  value={advisorId}
+                  onChange={(e) => setAdvisorId(e.target.value)}
+                  className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-foreground outline-none focus:border-primary"
+                >
+                  <option value="" disabled>
+                    Select advisor...
                   </option>
-                ))}
-              </select>
-            </div>
+                  {advisors.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-semibold text-foreground">Vehicle Owner / Customer *</Label>
+                <select
+                  value={customerId}
+                  onChange={(e) => setCustomerId(e.target.value)}
+                  className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-foreground outline-none focus:border-primary"
+                >
+                  <option value="" disabled>
+                    Select customer...
+                  </option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.email ? `(${c.email})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="flex flex-col gap-1.5">
               <Label className="text-xs font-semibold text-foreground">Subject</Label>
               <Input

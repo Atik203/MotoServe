@@ -50,7 +50,7 @@ export const roleNav: Record<Role, RoleNavConfig> = {
       { label: "Appointments", href: "/dashboard/appointments", icon: CalendarDays },
       { label: "Service Tracking", href: "/dashboard/services", icon: Gauge },
       { label: "Estimates", href: "/dashboard/estimates", icon: FileCheck },
-      { label: "Communication Center", href: "/dashboard/chat", icon: MessageSquare },
+      { label: "Chat", href: "/dashboard/chat", icon: MessageSquare },
       { label: "Service History", href: "/dashboard/history", icon: History },
       { label: "Payments & Invoices", href: "/dashboard/payments", icon: Wallet },
     ],
@@ -69,7 +69,7 @@ export const roleNav: Record<Role, RoleNavConfig> = {
       { label: "Create Task", href: "/advisor/tasks/new", icon: FileText },
       { label: "Assign Mechanic", href: "/advisor/task-cards/assign", icon: Users },
       { label: "Send Estimate", href: "/advisor/estimates/new", icon: FileCheck },
-      { label: "Communication Center", href: "/advisor/chat", icon: MessageSquare },
+      { label: "Chat", href: "/advisor/chat", icon: MessageSquare },
     ],
     bottomItems: [
       { label: "Help", href: "/faqs", icon: LifeBuoy },

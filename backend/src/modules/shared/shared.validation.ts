@@ -16,3 +16,12 @@ export const updateAppointmentSchema = z.object({
   }),
 });
 
+export const createThreadSchema = z.object({
+  body: z.object({
+    advisorId: z.string().min(1).optional(),
+    customerId: z.string().min(1).optional(),
+    subject: z.string().min(1).max(120).optional(),
+    text: z.string().min(1).max(2000),
+  }),
+});
+

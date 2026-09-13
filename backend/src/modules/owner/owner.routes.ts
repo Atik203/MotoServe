@@ -5,7 +5,6 @@ import {
   archiveTaskController,
   bookAppointmentController,
   bulkArchiveTasksController,
-  createThreadController,
   createVehicleController,
   decideEstimateController,
   deleteRatingController,
@@ -18,7 +17,6 @@ import {
 import {
   bookAppointmentSchema,
   bulkArchiveTasksSchema,
-  createThreadSchema,
   createVehicleSchema,
   decideEstimateSchema,
   payInvoiceSchema,
@@ -47,6 +45,4 @@ router.patch("/tasks/:id/archive", requireAuth, requireRole("owner"), archiveTas
 router.patch("/tasks/:id/restore", requireAuth, requireRole("owner"), restoreTaskController);
 
 router.post("/tasks/archive", requireAuth, requireRole("owner"), validate(bulkArchiveTasksSchema), bulkArchiveTasksController);
-
-router.post("/chat/threads", requireAuth, requireRole("owner"), validate(createThreadSchema), createThreadController);
 

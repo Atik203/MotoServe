@@ -21,11 +21,12 @@ import {
   getVehicles,
   markThreadReadController,
   sendMessage,
+  createThreadController,
   updateAppointmentController,
   deleteAppointmentController,
 } from "./shared.controller.js";
 
-import { sendMessageSchema, updateAppointmentSchema } from "./shared.validation.js";
+import { createThreadSchema, sendMessageSchema, updateAppointmentSchema } from "./shared.validation.js";
 
 export const router = Router();
 
@@ -54,6 +55,7 @@ router.get("/estimates", requireAuth, getEstimates);
 router.get("/invoices", requireAuth, getInvoices);
 
 router.get("/chat/threads", requireAuth, getThreads);
+router.post("/chat/threads", requireAuth, requireRole("owner", "advisor"), validate(createThreadSchema), createThreadController);
 router.post("/chat/messages", requireAuth, validate(sendMessageSchema), sendMessage);
 router.post("/chat/threads/:id/read", requireAuth, requireRole("owner", "advisor"), markThreadReadController);
 

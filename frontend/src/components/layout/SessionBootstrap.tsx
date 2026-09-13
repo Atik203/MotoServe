@@ -51,11 +51,16 @@ export function SessionBootstrap({ requiredRole }: SessionBootstrapProps) {
     const onThread = () => {
       dispatch(fetchThreads());
     };
+    const onThreadRead = () => {
+      dispatch(fetchThreads());
+    };
     socket.on("message:new", onMessage);
     socket.on("thread:new", onThread);
+    socket.on("thread:read", onThreadRead);
     return () => {
       socket.off("message:new", onMessage);
       socket.off("thread:new", onThread);
+      socket.off("thread:read", onThreadRead);
     };
   }, [user, dispatch]);
 
