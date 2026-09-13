@@ -1,9 +1,20 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
-import { CheckCheck, MessageSquare, Paperclip, Plus, Search, Send, Smile } from "lucide-react";
+import {
+  CheckCheck,
+  MessageSquare,
+  Paperclip,
+  Phone,
+  Plus,
+  Search,
+  Send,
+  Smile,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   createThread,
@@ -46,7 +57,7 @@ const formatDay = (iso: string) => {
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
   if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
-  return date.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
+  return date.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
 };
 
 const getInitials = (name: string) =>
@@ -57,20 +68,60 @@ const getInitials = (name: string) =>
     .slice(0, 2)
     .toUpperCase();
 
-function Avatar({ name, src }: { name: string; src?: string | null }) {
+function Avatar({
+  name,
+  src,
+  showOnline = false,
+  size = "md",
+}: {
+  name: string;
+  src?: string | null;
+  showOnline?: boolean;
+  size?: "sm" | "md" | "lg";
+}) {
   const url = useFileUrl(src);
-  const fallback = (
-    <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-bold text-primary">
-      {getInitials(name)}
-    </span>
-  );
-  if (!url) return fallback;
+  const sizeClasses = {
+    sm: "size-8 text-xs",
+    md: "size-11 text-sm",
+    lg: "size-12 text-base",
+  }[size];
+
   return (
-    <span className="relative block size-11 shrink-0 overflow-hidden rounded-full">
-      <Image src={url} alt={name} fill className="object-cover" />
+    <span className="relative inline-block shrink-0">
+      {url ? (
+        <span className={cn("relative block overflow-hidden rounded-full ring-1 ring-border/50", sizeClasses)}>
+          <Image src={url} alt={name} fill className="object-cover" />
+        </span>
+      ) : (
+        <span
+          className={cn(
+            "flex items-center justify-center rounded-full bg-primary-soft font-bold text-primary ring-1 ring-primary/20",
+            sizeClasses,
+          )}
+        >
+          {getInitials(name)}
+        </span>
+      )}
+      {showOnline && (
+        <span className="absolute bottom-0 right-0 size-3 rounded-full bg-emerald-500 ring-2 ring-white" />
+      )}
     </span>
   );
 }
+
+const OWNER_QUICK_REPLIES = [
+  "When will my vehicle be ready?",
+  "Can I get an update on the inspection?",
+  "Approved, please proceed with the service.",
+  "Please send the updated estimate.",
+];
+
+const ADVISOR_QUICK_REPLIES = [
+  "Your vehicle is currently in inspection.",
+  "The estimate is ready for your review.",
+  "Good news! Your vehicle is ready for pickup.",
+  "Please give us a quick call when you have a moment.",
+];
 
 export function CommunicationCenter({ role }: CommunicationCenterProps) {
   const dispatch = useAppDispatch();
@@ -82,6 +133,7 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
   const customers = useAppSelector((s) => s.customers.items);
 
   const [search, setSearch] = useState("");
+  const [filterTab, setFilterTab] = useState<"all" | "unread">("all");
   const [text, setText] = useState("");
   const [newOpen, setNewOpen] = useState(false);
   const [advisorId, setAdvisorId] = useState("");
@@ -95,6 +147,9 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTypingRef = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const quickReplies = role === "owner" ? OWNER_QUICK_REPLIES : ADVISOR_QUICK_REPLIES;
 
   useEffect(() => {
     dispatch(fetchThreads());
@@ -178,11 +233,20 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
 
   const advisors = useMemo(() => employees.filter((e) => e.role === "advisor"), [employees]);
 
+  const unreadThreadsCount = useMemo(() => {
+    return threads.reduce((acc, t) => acc + (t.unread > 0 ? 1 : 0), 0);
+  }, [threads]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const sorted = [...threads].sort(
+    let sorted = [...threads].sort(
       (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime(),
     );
+
+    if (filterTab === "unread") {
+      sorted = sorted.filter((t) => t.unread > 0);
+    }
+
     if (!q) return sorted;
     return sorted.filter((thread) => {
       const name = otherName(thread).toLowerCase();
@@ -190,7 +254,7 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
       return thread.subject.toLowerCase().includes(q) || name.includes(q) || lastText.includes(q);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [threads, search, role]);
+  }, [threads, search, filterTab, role]);
 
   const selectThread = (thread: ChatThread) => {
     setTypingUser(null);
@@ -224,8 +288,8 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
     }, 2200);
   };
 
-  const handleSend = (e: FormEvent) => {
-    e.preventDefault();
+  const handleSend = (e?: FormEvent) => {
+    if (e) e.preventDefault();
     const trimmed = text.trim();
     if (!trimmed || !activeThread) return;
 
@@ -239,6 +303,19 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
 
     dispatch(sendMessage({ threadId: activeThread.id, text: trimmed }));
     setText("");
+    inputRef.current?.focus();
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleChipClick = (suggestion: string) => {
+    setText(suggestion);
+    inputRef.current?.focus();
   };
 
   const handleNewThread = async (e: FormEvent) => {
@@ -267,7 +344,8 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
         }),
       ).unwrap();
 
-      const recipientName = role === "owner" ? (thread.advisor?.name ?? "advisor") : (thread.owner?.name ?? "customer");
+      const recipientName =
+        role === "owner" ? (thread.advisor?.name ?? "advisor") : (thread.owner?.name ?? "customer");
       toast.success(`Conversation started with ${recipientName}`);
       setNewOpen(false);
       setAdvisorId("");
@@ -285,14 +363,15 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
   }
 
   return (
-    <div className="flex h-[calc(100vh-64px)] flex-col">
+    <div className="flex h-[calc(100vh-64px)] flex-col bg-background">
+      {/* Header Bar */}
       <div className="flex shrink-0 items-center justify-between border-b border-border bg-white px-6 py-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold text-foreground">Chat</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Chat</h1>
             <span
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors",
+                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors shadow-2xs",
                 isConnected
                   ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                   : "bg-amber-50 text-amber-700 border-amber-200",
@@ -310,41 +389,100 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">
             {role === "owner"
-              ? "Real-time direct messaging with your service advisor"
-              : "Real-time direct messaging with vehicle owners"}
+              ? "Real-time direct messaging with your designated service advisor"
+              : "Real-time direct messaging with vehicle owners and customers"}
           </p>
         </div>
-        <Button size="sm" onClick={() => setNewOpen(true)} className="gap-2 rounded-lg">
+        <Button size="sm" onClick={() => setNewOpen(true)} className="gap-2 rounded-xl shadow-xs font-semibold">
           <Plus className="size-4" />
           New Conversation
         </Button>
       </div>
 
       <div className="flex min-h-0 flex-1">
-        <aside className="flex w-[340px] shrink-0 flex-col border-r border-border bg-white">
-          <div className="p-4">
+        {/* Left Sidebar: Threads List */}
+        <aside className="flex w-[350px] shrink-0 flex-col border-r border-border bg-white">
+          <div className="p-3.5 pb-2">
             <div className="relative">
               <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search conversations..."
-                className="h-[38px] w-full rounded-lg bg-[#edeeef] pr-3.5 pl-9 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                className="h-10 w-full rounded-xl bg-[#f1f3f5] pr-8 pl-9 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-border border border-transparent"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute top-1/2 right-2.5 -translate-y-1/2 size-4 text-muted-foreground hover:text-foreground cursor-pointer"
+                  aria-label="Clear search"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )}
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
+          {/* Filter Tabs (All / Unread) */}
+          <div className="flex items-center gap-1.5 px-3.5 py-1.5 border-b border-border/60">
+            <button
+              type="button"
+              onClick={() => setFilterTab("all")}
+              className={cn(
+                "rounded-lg px-3 py-1 text-xs font-semibold transition-all cursor-pointer",
+                filterTab === "all"
+                  ? "bg-primary text-white shadow-2xs"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+              )}
+            >
+              All ({threads.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterTab("unread")}
+              className={cn(
+                "rounded-lg px-3 py-1 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer",
+                filterTab === "unread"
+                  ? "bg-primary text-white shadow-2xs"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+              )}
+            >
+              Unread
+              {unreadThreadsCount > 0 && (
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 py-0.2 text-[10px] font-bold",
+                    filterTab === "unread" ? "bg-white text-primary" : "bg-primary text-white",
+                  )}
+                >
+                  {unreadThreadsCount}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Threads List */}
+          <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
             {filtered.length === 0 ? (
-              <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-                <MessageSquare className="size-8 text-muted-foreground" />
-                <p className="text-sm font-medium text-muted-foreground">
-                  {threads.length === 0 ? "No conversations yet" : "No conversations match your search"}
-                </p>
+              <div className="flex flex-col items-center justify-center gap-3 px-6 py-20 text-center">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-secondary text-muted-foreground">
+                  <MessageSquare className="size-6" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    {threads.length === 0 ? "No conversations yet" : "No conversations found"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {threads.length === 0
+                      ? "Start a new conversation to communicate in real time."
+                      : "Try searching with a different name or subject."}
+                  </p>
+                </div>
                 {threads.length === 0 && (
-                  <Button size="sm" variant="outline" onClick={() => setNewOpen(true)} className="gap-2 rounded-lg">
+                  <Button size="sm" variant="outline" onClick={() => setNewOpen(true)} className="gap-2 rounded-xl mt-1">
                     <Plus className="size-3.5" />
-                    Start a Conversation
+                    Start Conversation
                   </Button>
                 )}
               </div>
@@ -352,35 +490,53 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
               filtered.map((thread) => {
                 const active = thread.id === activeThreadId;
                 const last = thread.messages[thread.messages.length - 1];
+                const hasUnread = thread.unread > 0;
                 return (
                   <button
                     key={thread.id}
                     type="button"
                     onClick={() => selectThread(thread)}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors",
-                      active ? "bg-primary-soft" : "hover:bg-[#f3f4f5]",
+                      "group relative flex w-full items-center gap-3 rounded-xl p-3 text-left transition-all mb-1 cursor-pointer",
+                      active
+                        ? "bg-primary-soft/80 border border-primary/20 shadow-2xs"
+                        : "hover:bg-secondary/70 border border-transparent",
                     )}
                   >
-                    <span className="relative shrink-0">
-                      <Avatar name={otherName(thread)} src={otherAvatar(thread)} />
-                      {thread.unread > 0 && (
-                        <span className="absolute -right-0.5 -bottom-0.5 flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold text-white ring-2 ring-white">
-                          {thread.unread}
+                    <Avatar name={otherName(thread)} src={otherAvatar(thread)} showOnline={isConnected} size="md" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span
+                          className={cn(
+                            "truncate text-sm font-semibold",
+                            active ? "text-primary" : "text-foreground",
+                          )}
+                        >
+                          {otherName(thread)}
                         </span>
-                      )}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-baseline justify-between gap-2">
-                        <span className="truncate text-sm font-semibold text-foreground">{otherName(thread)}</span>
-                        <span className={cn("shrink-0 text-[11px]", thread.unread > 0 ? "font-semibold text-primary" : "text-muted-foreground")}>
+                        <span
+                          className={cn(
+                            "shrink-0 text-[11px]",
+                            hasUnread ? "font-bold text-primary" : "text-muted-foreground",
+                          )}
+                        >
                           {formatTime(thread.lastMessageAt)}
                         </span>
-                      </span>
-                      <span className="mt-0.5 block truncate text-sm text-muted-foreground">
+                      </div>
+                      <p
+                        className={cn(
+                          "truncate text-xs mt-0.5",
+                          hasUnread ? "font-semibold text-foreground" : "text-muted-foreground",
+                        )}
+                      >
                         {last?.text ?? thread.subject}
+                      </p>
+                    </div>
+                    {hasUnread && (
+                      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white shadow-xs">
+                        {thread.unread}
                       </span>
-                    </span>
+                    )}
                   </button>
                 );
               })
@@ -388,22 +544,40 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
           </div>
         </aside>
 
+        {/* Right Canvas: Chat Content */}
         <section className="flex min-w-0 flex-1 flex-col bg-[#f8f9fa]">
           {activeThread ? (
             <>
-              <div className="flex shrink-0 items-center justify-between border-b border-border bg-white px-6 py-3">
+              {/* Active Conversation Topbar */}
+              <div className="flex shrink-0 items-center justify-between border-b border-border bg-white px-6 py-3.5 shadow-2xs">
                 <div className="flex items-center gap-3 min-w-0">
-                  <Avatar name={otherName(activeThread)} src={otherAvatar(activeThread)} />
+                  <Avatar name={otherName(activeThread)} src={otherAvatar(activeThread)} showOnline={isConnected} size="md" />
                   <div className="flex min-w-0 flex-col">
-                    <p className="truncate text-sm font-semibold text-foreground">{otherName(activeThread)}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {role === "owner" ? "Service Advisor" : "Vehicle Owner"} • {activeThread.subject}
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-sm font-bold text-foreground">{otherName(activeThread)}</p>
+                      <span className="rounded-md bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        {role === "owner" ? "Service Advisor" : "Vehicle Owner"}
+                      </span>
+                    </div>
+                    <p className="truncate text-xs text-muted-foreground mt-0.5 font-medium">
+                      Subject: {activeThread.subject}
                     </p>
                   </div>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <a
+                    href="tel:5550192834"
+                    className="flex size-9 items-center justify-center rounded-xl border border-border bg-white text-muted-foreground shadow-2xs transition-colors hover:border-primary/40 hover:text-primary"
+                    title="Quick Call"
+                  >
+                    <Phone className="size-4" />
+                  </a>
+                </div>
               </div>
 
-              <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+              {/* Messages Scroll Area */}
+              <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-6 space-y-3">
                 <div className="mx-auto flex max-w-3xl flex-col gap-1.5">
                   {activeThread.messages.map((msg, i) => {
                     const prev = activeThread.messages[i - 1];
@@ -413,23 +587,30 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
                     return (
                       <Fragment key={msg.id}>
                         {showDate && (
-                          <div className="py-2 text-center text-[11px] font-medium text-muted-foreground">
-                            {formatDay(msg.time)}
+                          <div className="flex justify-center my-3">
+                            <span className="rounded-full bg-white/90 px-3.5 py-1 text-[11px] font-medium text-muted-foreground shadow-2xs border border-border/60">
+                              {formatDay(msg.time)}
+                            </span>
                           </div>
                         )}
-                        <div className={cn("flex", mine ? "justify-end" : "justify-start", !grouped && "mt-2")}>
+                        <div className={cn("flex items-end gap-2", mine ? "justify-end" : "justify-start", !grouped && "mt-2")}>
+                          {!mine && !grouped && (
+                            <Avatar name={otherName(activeThread)} src={otherAvatar(activeThread)} size="sm" />
+                          )}
+                          {!mine && grouped && <span className="size-8 shrink-0" />}
+
                           <div
                             className={cn(
-                              "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-[0_1px_1px_rgba(0,0,0,0.05)]",
+                              "max-w-[76%] px-4 py-2.5 text-sm leading-relaxed transition-all",
                               mine
-                                ? "rounded-br-sm bg-primary text-white"
-                                : "rounded-bl-sm border border-border bg-white text-foreground",
+                                ? "rounded-2xl rounded-br-xs bg-[#0052cc] text-white shadow-xs"
+                                : "rounded-2xl rounded-bl-xs border border-border/80 bg-white text-foreground shadow-2xs",
                             )}
                           >
                             <p className="whitespace-pre-wrap break-words">{msg.text}</p>
                             <p
                               className={cn(
-                                "mt-1 flex items-center justify-end gap-1 text-[10px]",
+                                "mt-1 flex items-center justify-end gap-1 text-[10px] select-none",
                                 mine ? "text-white/75" : "text-muted-foreground",
                               )}
                             >
@@ -444,57 +625,88 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
                 </div>
               </div>
 
+              {/* Typing Indicator Bar */}
               {typingUser && (
-                <div className="flex items-center gap-2 bg-white/90 px-6 py-1.5 text-xs text-muted-foreground border-t border-border/40">
+                <div className="flex items-center gap-2 bg-white/80 backdrop-blur-xs px-6 py-1.5 text-xs text-muted-foreground border-t border-border/40">
                   <span className="flex items-center gap-1">
                     <span className="size-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
                     <span className="size-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
                     <span className="size-1.5 rounded-full bg-primary animate-bounce" />
                   </span>
-                  <span><strong className="font-semibold text-foreground">{typingUser}</strong> is typing...</span>
+                  <span>
+                    <strong className="font-semibold text-foreground">{typingUser}</strong> is typing...
+                  </span>
                 </div>
               )}
 
-              <form onSubmit={handleSend} className="shrink-0 border-t border-border bg-white p-4">
-                <div className="flex items-center gap-2 rounded-2xl border border-border bg-[#f8f9fa] px-3 py-2">
-                  <button
-                    type="button"
-                    className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-[#edeeef] hover:text-primary"
-                    aria-label="Attach file"
-                  >
-                    <Paperclip className="size-[18px]" />
-                  </button>
-                  <input
-                    value={text}
-                    onChange={(e) => handleInputChange(e.target.value)}
-                    placeholder="Type a message..."
-                    className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
-                  />
-                  <button
-                    type="button"
-                    className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-[#edeeef] hover:text-primary"
-                    aria-label="Emoji"
-                  >
-                    <Smile className="size-[18px]" />
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={!text.trim()}
-                    className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-colors hover:bg-primary/90 disabled:opacity-50"
-                    aria-label="Send message"
-                  >
-                    <Send className="size-4" />
-                  </button>
+              {/* Bottom Quick-Replies & Input Area */}
+              <div className="shrink-0 border-t border-border bg-white p-4">
+                {/* Quick Reply Chips */}
+                <div className="mx-auto max-w-3xl mb-3 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  <span className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground shrink-0 mr-1">
+                    <Sparkles className="size-3 text-primary" /> Suggestions:
+                  </span>
+                  {quickReplies.map((reply, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleChipClick(reply)}
+                      className="whitespace-nowrap rounded-full border border-border bg-[#f8f9fa] px-3 py-1 text-xs font-medium text-foreground hover:border-primary/40 hover:bg-primary-soft hover:text-primary transition-all cursor-pointer shadow-2xs"
+                    >
+                      {reply}
+                    </button>
+                  ))}
                 </div>
-              </form>
+
+                {/* Main Message Input Bar */}
+                <form onSubmit={handleSend} className="mx-auto max-w-3xl">
+                  <div className="flex items-center gap-2 rounded-2xl border border-border bg-[#f8f9fa] px-3.5 py-2 shadow-2xs focus-within:border-primary focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                    <button
+                      type="button"
+                      className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-primary cursor-pointer"
+                      aria-label="Attach file"
+                    >
+                      <Paperclip className="size-[18px]" />
+                    </button>
+                    <input
+                      ref={inputRef}
+                      value={text}
+                      onChange={(e) => handleInputChange(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Type your message... (Press Enter to send)"
+                      className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                    />
+                    <button
+                      type="button"
+                      className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-primary cursor-pointer"
+                      aria-label="Emoji"
+                    >
+                      <Smile className="size-[18px]" />
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!text.trim()}
+                      className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-xs transition-all hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      aria-label="Send message"
+                    >
+                      <Send className="size-4" />
+                    </button>
+                  </div>
+                </form>
+              </div>
             </>
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
               <span className="flex size-16 items-center justify-center rounded-2xl bg-primary-soft">
                 <MessageSquare className="size-7 text-primary" />
               </span>
-              <p className="text-sm font-medium">Select a conversation to start messaging</p>
-              <Button size="sm" onClick={() => setNewOpen(true)} className="gap-2 rounded-lg">
+              <div className="text-center">
+                <p className="text-base font-semibold text-foreground">Select a conversation</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Choose a contact from the left or start a new conversation.
+                </p>
+              </div>
+              <Button size="sm" onClick={() => setNewOpen(true)} className="gap-2 rounded-xl mt-2 font-semibold shadow-xs">
                 <Plus className="size-3.5" />
                 New Conversation
               </Button>
@@ -503,31 +715,32 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
         </section>
       </div>
 
+      {/* New Conversation Dialog */}
       <Dialog open={newOpen} onOpenChange={setNewOpen}>
-        <DialogContent className="max-w-md rounded-xl">
+        <DialogContent className="max-w-md rounded-2xl shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-foreground">New Conversation</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-foreground">New Conversation</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
               {role === "owner"
-                ? "Choose a service advisor to start a chat with."
-                : "Choose a vehicle owner / customer to message."}
+                ? "Choose a service advisor to start a direct chat with."
+                : "Choose a vehicle owner / customer to send a message."}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleNewThread} className="flex flex-col gap-4">
+          <form onSubmit={handleNewThread} className="flex flex-col gap-4 pt-1">
             {role === "owner" ? (
               <div className="flex flex-col gap-1.5">
                 <Label className="text-xs font-semibold text-foreground">Service Advisor *</Label>
                 <select
                   value={advisorId}
                   onChange={(e) => setAdvisorId(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-foreground outline-none focus:border-primary"
+                  className="h-10 w-full rounded-xl border border-border bg-white px-3 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="" disabled>
                     Select advisor...
                   </option>
                   {advisors.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {a.name}
+                      {a.name} ({a.station || "Service Station"})
                     </option>
                   ))}
                 </select>
@@ -538,7 +751,7 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
                 <select
                   value={customerId}
                   onChange={(e) => setCustomerId(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-foreground outline-none focus:border-primary"
+                  className="h-10 w-full rounded-xl border border-border bg-white px-3 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="" disabled>
                     Select customer...
@@ -556,8 +769,8 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
               <Input
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="Vehicle service inquiry"
-                className="h-10 rounded-lg border-border bg-white"
+                placeholder="e.g. Brake inspection inquiry"
+                className="h-10 rounded-xl border-border bg-white"
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -566,14 +779,14 @@ export function CommunicationCenter({ role }: CommunicationCenterProps) {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Hi, I need help with..."
-                className="min-h-24 rounded-lg border-border bg-white resize-none"
+                className="min-h-24 rounded-xl border-border bg-white resize-none"
               />
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setNewOpen(false)} className="rounded-lg">
+            <DialogFooter className="gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setNewOpen(false)} className="rounded-xl">
                 Cancel
               </Button>
-              <Button type="submit" disabled={sending} className="gap-2 rounded-lg">
+              <Button type="submit" disabled={sending} className="gap-2 rounded-xl font-semibold shadow-xs">
                 <Plus className="size-3.5" />
                 {sending ? "Starting..." : "Start Conversation"}
               </Button>

@@ -11,7 +11,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchThreads, markThreadRead } from "@/store/slices/chatSlice";
+import { fetchThreads, markThreadRead, setActiveThread } from "@/store/slices/chatSlice";
 import { fetchTasks } from "@/store/slices/tasksSlice";
 import { fetchEstimates } from "@/store/slices/estimatesSlice";
 import { fetchInvoices } from "@/store/slices/invoicesSlice";
@@ -143,14 +143,16 @@ function buildActiveNotifications({
   for (const t of threads) {
     if (t.unread > 0) {
       const otherParty = role === "owner" ? t.advisor?.name ?? "Advisor" : t.owner?.name ?? "Customer";
+      const lastMsg = t.messages?.[t.messages.length - 1];
+      const previewText = lastMsg?.text ? `"${lastMsg.text}"` : `${t.unread} new unread message${t.unread > 1 ? "s" : ""}`;
       list.push({
-        id: `chat-${t.id}`,
+        id: `chat-${t.id}-${t.lastMessageAt}`,
         type: "chat",
         title: `Message from ${otherParty}`,
-        subtitle: `${t.unread} new unread message${t.unread > 1 ? "s" : ""}`,
+        subtitle: previewText,
         href: role === "owner" ? "/dashboard/chat" : `/${role}/chat`,
         timestamp: timeAgo(t.lastMessageAt),
-        unread: !readIds.has(`chat-${t.id}`),
+        unread: true,
         icon: MessageSquare,
         iconBg: "bg-blue-50",
         iconColor: "text-primary",
@@ -581,6 +583,7 @@ export function useNotifications() {
     next.add(id);
     updateReadIds(next);
     if (threadId) {
+      dispatch(setActiveThread(threadId));
       void dispatch(markThreadRead(threadId));
     }
   };
@@ -630,6 +633,9 @@ export function useNotifications() {
       allActivities.forEach((a) => next.add(a.id));
     }
     updateReadIds(next);
+    threads.filter((t) => t.unread > 0).forEach((t) => {
+      void dispatch(markThreadRead(t.id));
+    });
   };
 
   const clearAllRead = () => {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchMe } from "@/store/slices/authSlice";
 import { fetchThreads, receiveMessage } from "@/store/slices/chatSlice";
@@ -43,10 +44,29 @@ export function SessionBootstrap({ requiredRole }: SessionBootstrapProps) {
       disconnectSocket();
       return;
     }
+
+    void dispatch(fetchThreads());
+
     const socket = connectSocket();
     if (!socket) return;
     const onMessage = (msg: SocketMessage) => {
       dispatch(receiveMessage({ threadId: msg.threadId, message: msg }));
+      void dispatch(fetchThreads());
+
+      if (typeof window !== "undefined") {
+        const isChatPage = window.location.pathname.endsWith("/chat");
+        const isFromMe = msg.sender === user.role.toLowerCase();
+        if (!isChatPage && !isFromMe) {
+          const senderLabel = user.role === "owner" ? "Service Advisor" : "Vehicle Owner";
+          toast.info(`New message from ${senderLabel}`, {
+            description: msg.text,
+            action: {
+              label: "Open Chat",
+              onClick: () => router.push(user.role === "owner" ? "/dashboard/chat" : `/${user.role}/chat`),
+            },
+          });
+        }
+      }
     };
     const onThread = () => {
       dispatch(fetchThreads());
@@ -62,7 +82,7 @@ export function SessionBootstrap({ requiredRole }: SessionBootstrapProps) {
       socket.off("thread:new", onThread);
       socket.off("thread:read", onThreadRead);
     };
-  }, [user, dispatch]);
+  }, [user, dispatch, router]);
 
   return null;
 }
