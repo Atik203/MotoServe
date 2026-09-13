@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -9,7 +9,6 @@ import {
   Calendar,
   Car,
   CheckCircle2,
-  ChevronRight,
   Clock,
   Download,
   ExternalLink,
@@ -45,7 +44,7 @@ import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DetailLoading } from "@/components/ui/loading";
-import type { TaskPriority, TaskStatus } from "@/types";
+import type { TaskStatus } from "@/types";
 
 const STATUS_ORDER: TaskStatus[] = [
   "received",
@@ -76,7 +75,6 @@ const initials = (name: string) =>
 export default function AdvisorTaskDetailPage() {
   const params = useParams<{ id: string }>();
   const taskId = params?.id;
-  const router = useRouter();
   const dispatch = useAppDispatch();
 
   const tasks = useAppSelector((s) => s.tasks.items);

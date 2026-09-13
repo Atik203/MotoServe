@@ -26,7 +26,6 @@ import { RowsLoading } from "@/components/ui/loading";
 import type { TaskStatus } from "@/types";
 
 const IN_PROGRESS_STATUSES: TaskStatus[] = ["received", "inspecting", "repairing", "testing"];
-const DONE_STATUSES: TaskStatus[] = ["ready", "completed"];
 
 const STATUS_COLORS: Record<string, string> = {
   received: "bg-[rgba(0,82,204,0.08)] text-[#0052cc]",

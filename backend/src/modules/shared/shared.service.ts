@@ -96,6 +96,7 @@ export function listAppointments(ownerId?: string) {
     include: {
       vehicle: true,
       owner: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+      taskCard: { select: { id: true, status: true, priority: true } },
     },
     orderBy: [{ date: "desc" }, { time: "desc" }],
   });
@@ -107,6 +108,7 @@ export function findAppointmentById(id: string) {
     include: {
       vehicle: true,
       owner: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+      taskCard: { select: { id: true, status: true, priority: true } },
     },
   });
 }
@@ -134,6 +136,7 @@ export async function updateAppointment(
     include: {
       vehicle: true,
       owner: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+      taskCard: { select: { id: true, status: true, priority: true } },
     },
   });
 }
