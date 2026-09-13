@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  addAppointment,
   fetchAppointments,
   updateAppointment,
   updateAppointmentStatus,
@@ -99,16 +98,6 @@ export default function AdvisorAppointmentsPage() {
   const [dateFilter, setDateFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // New Booking Modal State
-  const [isNewOpen, setIsNewOpen] = useState(false);
-  const [selectedCustomerId, setSelectedCustomerId] = useState("");
-  const [selectedVehicleId, setSelectedVehicleId] = useState("");
-  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
-  const [bookDate, setBookDate] = useState("");
-  const [bookTime, setBookTime] = useState(TIME_SLOTS[2]); // 09:00 AM
-  const [bookNotes, setBookNotes] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Reschedule Modal State
   const [rescheduleAppointment, setRescheduleAppointment] = useState<Appointment | null>(null);
@@ -242,58 +231,7 @@ export default function AdvisorAppointmentsPage() {
     }
   };
 
-  // Create Appointment Form
-  const customerVehicles = useMemo(() => {
-    if (!selectedCustomerId) return [];
-    return vehicles.filter((v) => v.ownerId === selectedCustomerId);
-  }, [vehicles, selectedCustomerId]);
 
-  const handleCreateAppointment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedCustomerId) {
-      toast.error("Please select a customer");
-      return;
-    }
-    if (!selectedVehicleId) {
-      toast.error("Please select a vehicle");
-      return;
-    }
-    if (selectedServiceIds.length === 0) {
-      toast.error("Please select at least one service");
-      return;
-    }
-    if (!bookDate || !bookTime) {
-      toast.error("Please select date and time");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await dispatch(
-        addAppointment({
-          ownerId: selectedCustomerId,
-          vehicleId: selectedVehicleId,
-          serviceIds: selectedServiceIds,
-          date: bookDate,
-          time: bookTime,
-          notes: bookNotes.trim(),
-          status: "confirmed",
-        }),
-      ).unwrap();
-      toast.success("Appointment booked successfully");
-      setIsNewOpen(false);
-      setSelectedCustomerId("");
-      setSelectedVehicleId("");
-      setSelectedServiceIds([]);
-      setBookDate("");
-      setBookNotes("");
-      dispatch(fetchAppointments());
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to book appointment");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   if ((appointmentsStatus === "idle" || appointmentsStatus === "loading") && appointments.length === 0) {
     return <TableLoading label="Loading advisor appointments roster..." />;
@@ -327,17 +265,13 @@ export default function AdvisorAppointmentsPage() {
               <RefreshCw className={cn("size-3.5 text-primary", isRefreshing && "animate-spin")} />
               Refresh
             </Button>
-            <Button
-              size="sm"
-              onClick={() => {
-                setBookDate(new Date().toISOString().slice(0, 10));
-                setIsNewOpen(true);
-              }}
-              className="gap-1.5 rounded-xl bg-primary px-3.5 text-xs font-semibold text-white shadow-xs hover:bg-primary/90 cursor-pointer"
+            <Link
+              href="/advisor/appointments/book"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-primary px-3.5 text-xs font-semibold text-white shadow-xs hover:bg-primary/90 cursor-pointer transition-colors"
             >
               <CalendarPlus className="size-3.5" />
               Book Appointment
-            </Button>
+            </Link>
           </div>
         </div>
 
@@ -827,150 +761,7 @@ export default function AdvisorAppointmentsPage() {
         )}
       </div>
 
-      {/* Book New Appointment Dialog */}
-      <Dialog open={isNewOpen} onOpenChange={setIsNewOpen}>
-        <DialogContent className="max-w-lg rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-foreground">Schedule Customer Appointment</DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              Create a confirmed or pending booking on behalf of a vehicle owner.
-            </DialogDescription>
-          </DialogHeader>
 
-          <form onSubmit={handleCreateAppointment} className="flex flex-col gap-4 py-2 text-xs">
-            {/* Customer Select */}
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-bold text-foreground">Select Customer *</Label>
-              <select
-                value={selectedCustomerId}
-                onChange={(e) => {
-                  setSelectedCustomerId(e.target.value);
-                  setSelectedVehicleId("");
-                }}
-                required
-                className="h-9 rounded-xl border border-border bg-[#f8f9fa] px-3 text-xs font-medium text-foreground outline-none focus:bg-white cursor-pointer"
-              >
-                <option value="">-- Choose Customer --</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} {c.phone ? `(${c.phone})` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Vehicle Select */}
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-bold text-foreground">Select Vehicle *</Label>
-              <select
-                value={selectedVehicleId}
-                onChange={(e) => setSelectedVehicleId(e.target.value)}
-                required
-                disabled={!selectedCustomerId}
-                className="h-9 rounded-xl border border-border bg-[#f8f9fa] px-3 text-xs font-medium text-foreground outline-none focus:bg-white cursor-pointer disabled:opacity-50"
-              >
-                <option value="">
-                  {selectedCustomerId ? "-- Choose Customer Vehicle --" : "-- Select Customer First --"}
-                </option>
-                {customerVehicles.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.year} {v.make} {v.model} ({v.regNo})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Services Multi-Select */}
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-bold text-foreground">Requested Services *</Label>
-              <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto p-2 rounded-xl border border-border bg-[#f8f9fa]">
-                {services.map((srv) => {
-                  const checked = selectedServiceIds.includes(srv.id);
-                  return (
-                    <label
-                      key={srv.id}
-                      className={cn(
-                        "flex items-center gap-2 rounded-lg border p-2 text-xs transition-colors cursor-pointer",
-                        checked ? "border-primary bg-blue-50/60 font-semibold text-primary" : "border-border bg-white text-foreground",
-                      )}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => {
-                          setSelectedServiceIds((prev) =>
-                            checked ? prev.filter((item) => item !== srv.id) : [...prev, srv.id],
-                          );
-                        }}
-                        className="rounded accent-primary"
-                      />
-                      <span className="truncate">{srv.name}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Date & Time */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <Label className="text-xs font-bold text-foreground">Date *</Label>
-                <Input
-                  type="date"
-                  value={bookDate}
-                  onChange={(e) => setBookDate(e.target.value)}
-                  required
-                  className="h-9 rounded-xl border-border bg-[#f8f9fa] text-xs focus:bg-white"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label className="text-xs font-bold text-foreground">Time Slot *</Label>
-                <select
-                  value={bookTime}
-                  onChange={(e) => setBookTime(e.target.value)}
-                  required
-                  className="h-9 rounded-xl border border-border bg-[#f8f9fa] px-3 text-xs font-medium text-foreground outline-none focus:bg-white cursor-pointer"
-                >
-                  {TIME_SLOTS.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Notes */}
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-bold text-foreground">Intake Concerns / Notes</Label>
-              <Textarea
-                value={bookNotes}
-                onChange={(e) => setBookNotes(e.target.value)}
-                placeholder="E.g. customer reported brake squeal and requested multipoint check..."
-                className="min-h-16 resize-none rounded-xl border-border bg-[#f8f9fa] text-xs"
-              />
-            </div>
-
-            <DialogFooter className="mt-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsNewOpen(false)}
-                className="rounded-xl text-xs font-semibold"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="rounded-xl bg-primary text-xs font-semibold text-white shadow-2xs hover:bg-primary/90"
-              >
-                {isSubmitting ? "Booking..." : "Confirm & Save Appointment"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       {/* Reschedule Modal Dialog */}
       <Dialog open={rescheduleAppointment !== null} onOpenChange={(open) => !open && setRescheduleAppointment(null)}>
