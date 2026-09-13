@@ -14,6 +14,10 @@ import {
   getParts,
   getRatings,
   getServices,
+  getStations,
+  createStationController,
+  updateStationController,
+  deleteStationController,
   getTask,
   getTasks,
   getTestimonials,
@@ -65,3 +69,8 @@ router.get("/parts", requireAuth, getParts);
 router.get("/ratings", requireAuth, getRatings);
 router.get("/testimonials", getTestimonials);
 router.get("/content/:key", getContent);
+
+router.get("/stations", requireAuth, getStations);
+router.post("/stations", requireAuth, requireRole("admin"), createStationController);
+router.patch("/stations/:id", requireAuth, requireRole("admin"), updateStationController);
+router.delete("/stations/:id", requireAuth, requireRole("admin"), deleteStationController);

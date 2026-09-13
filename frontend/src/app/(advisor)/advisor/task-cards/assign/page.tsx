@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchTasks, assignMechanic } from "@/store/slices/tasksSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
+import { fetchStations } from "@/store/slices/stationsSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
@@ -39,16 +40,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Employee, TaskCard } from "@/types";
-
-const STATIONS = [
-  "Main Bay / Station 01",
-  "Main Bay / Station 02",
-  "Main Bay / Station 03",
-  "Station 04",
-  "Station 05",
-  "Quick Lube Bay",
-  "Diagnostics Center",
-];
 
 const WORKLOAD_LIMIT = 5;
 
@@ -71,10 +62,11 @@ function AssignMechanicContent() {
   const employees = useAppSelector((s) => s.employees.items);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const customers = useAppSelector((s) => s.customers.items);
+  const stations = useAppSelector((s) => s.stations.items);
 
   const [selectedTaskId, setSelectedTaskId] = useState<string>(urlTaskId ?? "");
   const [selectedMechanicIds, setSelectedMechanicIds] = useState<string[]>([]);
-  const [stationBay, setStationBay] = useState(STATIONS[0]);
+  const [stationBay, setStationBay] = useState("");
   const [mechanicSearch, setMechanicSearch] = useState("");
   const [taskSearch, setTaskSearch] = useState("");
   const [unassignedOnly, setUnassignedOnly] = useState(false);
@@ -87,7 +79,14 @@ function AssignMechanicContent() {
     dispatch(fetchTasks());
     dispatch(fetchVehicles());
     dispatch(fetchCustomers());
+    dispatch(fetchStations());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!stationBay && stations.length > 0) {
+      setStationBay(stations[0].name);
+    }
+  }, [stations, stationBay]);
 
   // Active workshop tasks eligible for assignment
   const activeTasks = useMemo(() => {
@@ -490,9 +489,9 @@ function AssignMechanicContent() {
                           onChange={(e) => setStationBay(e.target.value)}
                           className="h-9 rounded-lg border border-border bg-white px-3 text-xs outline-none focus:border-[#0052cc]"
                         >
-                          {STATIONS.map((s) => (
-                            <option key={s} value={s}>
-                              {s}
+                          {stations.map((s) => (
+                            <option key={s.id} value={s.name}>
+                              {s.name}
                             </option>
                           ))}
                         </select>

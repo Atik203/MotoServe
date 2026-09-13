@@ -158,6 +158,13 @@ export interface Part {
   stock: number;
 }
 
+export interface Station {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type PartRequestStatus = "pending" | "approved" | "fulfilled" | "rejected";
 
 export interface PartRequest {

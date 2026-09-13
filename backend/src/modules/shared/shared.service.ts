@@ -303,3 +303,19 @@ export function mapCustomerStatus(status: string): CustomerStatus {
   if (status === "PENDING") return "pending";
   return "inactive";
 }
+
+export function listStations() {
+  return prisma.station.findMany({ orderBy: { name: "asc" } });
+}
+
+export function createStation(name: string) {
+  return prisma.station.create({ data: { name } });
+}
+
+export function updateStation(id: string, name: string) {
+  return prisma.station.update({ where: { id }, data: { name } });
+}
+
+export function deleteStation(id: string) {
+  return prisma.station.delete({ where: { id } });
+}

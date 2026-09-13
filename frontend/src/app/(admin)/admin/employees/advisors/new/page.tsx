@@ -20,9 +20,9 @@ import Image from "next/image";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createEmployee, fetchEmployees } from "@/store/slices/employeesSlice";
 import { uploadDocument } from "@/store/slices/authSlice";
+import { fetchStations } from "@/store/slices/stationsSlice";
 
 const DEPARTMENTS = ["Service Advisory", "Customer Relations", "Workshop Operations"];
-const BRANCHES = ["Main HQ (Downtown)", "Main Bay / Station 01", "North Yard", "South Hub"];
 const EMPLOYMENT_TYPES = ["Full Time", "Part Time", "Contract"];
 const SHIFTS = ["Morning (8AM - 4PM)", "Evening (4PM - 12AM)", "Rotational"];
 
@@ -59,13 +59,8 @@ export default function AddAdvisorPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const employees = useAppSelector((s) => s.employees.items);
+  const stations = useAppSelector((s) => s.stations.items);
   const generatedId = `EMP-ADV-2026-${String(employees.filter((e) => e.role === "advisor").length + 1).padStart(3, "0")}`;
-
-  useEffect(() => {
-    if (employees.length === 0) {
-      dispatch(fetchEmployees());
-    }
-  }, [dispatch, employees.length]);
 
   const [form, setForm] = useState({
     fullName: "",
@@ -83,6 +78,19 @@ export default function AddAdvisorPage() {
     salary: "",
     experience: "",
   });
+
+  useEffect(() => {
+    if (employees.length === 0) {
+      dispatch(fetchEmployees());
+    }
+    dispatch(fetchStations());
+  }, [dispatch, employees.length]);
+
+  useEffect(() => {
+    if (!form.branch && stations.length > 0) {
+      setForm((prev) => (prev.branch ? prev : { ...prev, branch: stations[0].name }));
+    }
+  }, [stations, form.branch]);
   const [employmentType, setEmploymentType] = useState("Full Time");
   const [shift, setShift] = useState("Morning (8AM - 4PM)");
   const [password, setPassword] = useState("");
@@ -355,11 +363,11 @@ export default function AddAdvisorPage() {
                   </select>
                 </label>
                 <label className="flex flex-col gap-1">
-                  <span className={fieldLabel}>Workshop Branch *</span>
+                  <span className={fieldLabel}>Assigned Workshop Station / Bay</span>
                   <select value={form.branch} onChange={set("branch")} className={selectCls}>
-                    <option value="">Select Branch</option>
-                    {BRANCHES.map((b) => (
-                      <option key={b}>{b}</option>
+                    <option value="">Select Station / Bay</option>
+                    {stations.map((s) => (
+                      <option key={s.id} value={s.name}>{s.name}</option>
                     ))}
                   </select>
                 </label>

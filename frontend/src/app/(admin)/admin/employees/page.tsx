@@ -26,6 +26,7 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { deleteEmployee, fetchEmployees, updateEmployee } from "@/store/slices/employeesSlice";
 import { fetchFileUrl } from "@/store/slices/filesSlice";
+import { fetchStations } from "@/store/slices/stationsSlice";
 import type { Employee } from "@/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -103,10 +104,12 @@ export default function EmployeeManagementPage() {
 
   useEffect(() => {
     if (employees.length === 0) dispatch(fetchEmployees());
+    dispatch(fetchStations());
   }, [dispatch, employees.length]);
 
   const refresh = () => {
     dispatch(fetchEmployees());
+    dispatch(fetchStations());
     toast.success("Employee roster refreshed");
   };
 
@@ -589,6 +592,7 @@ function EmployeeDialog({
 }) {
   const dispatch = useAppDispatch();
   const urls = useAppSelector((s) => s.files.urls);
+  const stations = useAppSelector((s) => s.stations.items);
 
   const [name, setName] = useState(dialog?.employee.name ?? "");
   const [phone, setPhone] = useState(dialog?.employee.phone ?? "");
@@ -696,13 +700,26 @@ function EmployeeDialog({
             </div>
             <div className="flex flex-col gap-1.5">
               <Label className="text-xs font-semibold text-foreground">Workshop Station</Label>
-              <Input
-                value={station}
-                onChange={(e) => setStation(e.target.value)}
-                readOnly={mode === "view"}
-                placeholder="e.g. Main Bay / Station 01"
-                className="h-9 rounded-md border-[#e2e8f0] bg-white text-xs"
-              />
+              {mode === "view" ? (
+                <Input
+                  value={station || "—"}
+                  readOnly
+                  className="h-9 rounded-md border-[#e2e8f0] bg-[#f8f9fa] text-xs text-muted-foreground"
+                />
+              ) : (
+                <select
+                  value={station}
+                  onChange={(e) => setStation(e.target.value)}
+                  className="h-9 w-full rounded-md border border-[#e2e8f0] bg-white px-3 text-xs text-foreground outline-none focus:border-primary"
+                >
+                  <option value="">Unassigned</option>
+                  {stations.map((s) => (
+                    <option key={s.id} value={s.name}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
             {employee?.role === "mechanic" && (
               <div className="col-span-2 flex flex-col gap-1.5">

@@ -24,6 +24,7 @@ import { fetchCustomers } from "@/store/slices/customersSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
 import { fetchTasks, createTaskCard } from "@/store/slices/tasksSlice";
 import { addAppointment } from "@/store/slices/appointmentsSlice";
+import { fetchStations } from "@/store/slices/stationsSlice";
 import { AddVehicleCard, VehicleCard } from "@/components/roles/owner/VehicleCard";
 import { MonthCalendar } from "@/components/roles/owner/MonthCalendar";
 import { ServicePicker } from "@/components/roles/shared/ServicePicker";
@@ -56,15 +57,6 @@ const TIME_SLOTS = [
   "06:00 PM",
 ];
 
-const STATIONS = [
-  "Main Bay / Station 01",
-  "Main Bay / Station 02",
-  "Main Bay / Station 03",
-  "Station 04",
-  "Station 05",
-  "Quick Lube Bay",
-  "Diagnostics Center",
-];
 
 const PRIORITIES = [
   { key: "low", label: "Low", color: "border-slate-300 text-slate-600 bg-slate-50" },
@@ -90,6 +82,7 @@ export default function AdminBookAppointmentPage() {
   const customers = useAppSelector((s) => s.customers.items);
   const employees = useAppSelector((s) => s.employees.items);
   const tasks = useAppSelector((s) => s.tasks.items);
+  const stations = useAppSelector((s) => s.stations.items);
 
   // Form states
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
@@ -103,7 +96,7 @@ export default function AdminBookAppointmentPage() {
 
   // Admin Direct Controls
   const [bookingStatus, setBookingStatus] = useState<"confirmed" | "pending">("confirmed");
-  const [selectedStation, setSelectedStation] = useState(STATIONS[0]);
+  const [selectedStation, setSelectedStation] = useState("");
   const [selectedMechanicIds, setSelectedMechanicIds] = useState<string[]>([]);
   const [mechanicSearch, setMechanicSearch] = useState("");
   const [taskPriority, setTaskPriority] = useState<"low" | "medium" | "high" | "urgent">("medium");
@@ -127,7 +120,14 @@ export default function AdminBookAppointmentPage() {
     dispatch(fetchServices());
     dispatch(fetchEmployees());
     dispatch(fetchTasks());
+    dispatch(fetchStations());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!selectedStation && stations.length > 0) {
+      setSelectedStation(stations[0].name);
+    }
+  }, [stations, selectedStation]);
 
   // Available mechanics (active only)
   const mechanics = useMemo(
@@ -698,9 +698,9 @@ export default function AdminBookAppointmentPage() {
                     onChange={(e) => setSelectedStation(e.target.value)}
                     className="h-9 rounded-md border border-[#e2e8f0] bg-white px-3 text-xs text-foreground outline-none focus:border-[#004492]"
                   >
-                    {STATIONS.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
+                    {stations.map((s) => (
+                      <option key={s.id} value={s.name}>
+                        {s.name}
                       </option>
                     ))}
                   </select>

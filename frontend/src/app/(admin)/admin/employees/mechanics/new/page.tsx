@@ -20,8 +20,7 @@ import Image from "next/image";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createEmployee, fetchEmployees } from "@/store/slices/employeesSlice";
 import { uploadDocument } from "@/store/slices/authSlice";
-
-const BRANCHES = ["Main Bay / Station 01", "Main Bay / Station 02", "Main Bay / Station 03", "Main Bay / Station 04"];
+import { fetchStations } from "@/store/slices/stationsSlice";
 
 const SPECIALIZATIONS = [
   "Engine & Diagnostics",
@@ -68,13 +67,8 @@ export default function AddMechanicPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const employees = useAppSelector((s) => s.employees.items);
+  const stations = useAppSelector((s) => s.stations.items);
   const generatedId = `EMP-MEC-2026-${String(employees.filter((e) => e.role === "mechanic").length + 1).padStart(3, "0")}`;
-
-  useEffect(() => {
-    if (employees.length === 0) {
-      dispatch(fetchEmployees());
-    }
-  }, [dispatch, employees.length]);
 
   const [form, setForm] = useState({
     fullName: "",
@@ -91,6 +85,19 @@ export default function AddMechanicPage() {
     salary: "",
     experience: "",
   });
+
+  useEffect(() => {
+    if (employees.length === 0) {
+      dispatch(fetchEmployees());
+    }
+    dispatch(fetchStations());
+  }, [dispatch, employees.length]);
+
+  useEffect(() => {
+    if (!form.branch && stations.length > 0) {
+      setForm((prev) => (prev.branch ? prev : { ...prev, branch: stations[0].name }));
+    }
+  }, [stations, form.branch]);
   const [employmentType, setEmploymentType] = useState("Full Time");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -367,11 +374,11 @@ export default function AddMechanicPage() {
               </div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-4 pt-5">
                 <label className="flex flex-col gap-1">
-                  <span className={fieldLabel}>Assigned Bay / Station *</span>
+                  <span className={fieldLabel}>Assigned Workshop Station / Bay *</span>
                   <select value={form.branch} onChange={set("branch")} className={selectCls}>
-                    <option value="">Select Bay</option>
-                    {BRANCHES.map((b) => (
-                      <option key={b}>{b}</option>
+                    <option value="">Select Station / Bay</option>
+                    {stations.map((b) => (
+                      <option key={b.id} value={b.name}>{b.name}</option>
                     ))}
                   </select>
                 </label>

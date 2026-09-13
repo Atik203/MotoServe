@@ -37,6 +37,7 @@ import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
 import { fetchAppointments } from "@/store/slices/appointmentsSlice";
+import { fetchStations } from "@/store/slices/stationsSlice";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { TableLoading } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
@@ -72,16 +73,6 @@ const STAGE_COLORS: Record<string, { bg: string; text: string; border: string }>
   completed: { bg: "bg-slate-100", text: "text-slate-700", border: "border-slate-200" },
 };
 
-const STATIONS = [
-  "Main Bay / Station 01",
-  "Main Bay / Station 02",
-  "Main Bay / Station 03",
-  "Station 04",
-  "Station 05",
-  "Quick Lube Bay",
-  "Diagnostics Center",
-];
-
 function ReceiveVehicleContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -95,6 +86,7 @@ function ReceiveVehicleContent() {
   const customers = useAppSelector((s) => s.customers.items);
   const employees = useAppSelector((s) => s.employees.items);
   const appointments = useAppSelector((s) => s.appointments.items);
+  const stations = useAppSelector((s) => s.stations.items);
 
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("all");
@@ -109,7 +101,7 @@ function ReceiveVehicleContent() {
   const [intakeMileage, setIntakeMileage] = useState("");
   const [fuelLevel, setFuelLevel] = useState("1/2");
   const [keysReceived, setKeysReceived] = useState(true);
-  const [stationBay, setStationBay] = useState(STATIONS[0]);
+  const [stationBay, setStationBay] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high" | "urgent">("medium");
   const [issues, setIssues] = useState("");
   const [intakeBusy, setIntakeBusy] = useState(false);
@@ -120,7 +112,14 @@ function ReceiveVehicleContent() {
     dispatch(fetchCustomers());
     dispatch(fetchEmployees());
     dispatch(fetchAppointments());
+    dispatch(fetchStations());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!stationBay && stations.length > 0) {
+      setStationBay(stations[0].name);
+    }
+  }, [stations, stationBay]);
 
   // If appointment query parameter exists, open intake modal pre-filled
   useEffect(() => {
@@ -150,6 +149,7 @@ function ReceiveVehicleContent() {
         dispatch(fetchCustomers()).unwrap(),
         dispatch(fetchEmployees()).unwrap(),
         dispatch(fetchAppointments()).unwrap(),
+        dispatch(fetchStations()).unwrap(),
       ]);
       toast.success("Workshop intake roster updated");
     } catch {
@@ -832,9 +832,9 @@ function ReceiveVehicleContent() {
                     onChange={(e) => setStationBay(e.target.value)}
                     className="h-9 rounded-lg border border-border bg-white px-3 text-xs"
                   >
-                    {STATIONS.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
+                    {stations.map((s) => (
+                      <option key={s.id} value={s.name}>
+                        {s.name}
                       </option>
                     ))}
                   </select>

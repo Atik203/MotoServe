@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -30,6 +30,7 @@ import { fetchTasks } from "@/store/slices/tasksSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchRatings } from "@/store/slices/ratingsSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
+import { fetchStations } from "@/store/slices/stationsSlice";
 import { Button } from "@/components/ui/button";
 import { TableLoading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
@@ -147,6 +148,7 @@ export default function WorkloadReportsPage() {
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const ratings = useAppSelector((s) => s.ratings.items);
   const services = useAppSelector((s) => s.services.items);
+  const stations = useAppSelector((s) => s.stations.items);
   const user = useAppSelector((s) => s.auth.user);
 
   // Filter States
@@ -178,15 +180,16 @@ export default function WorkloadReportsPage() {
     dispatch(fetchVehicles());
     dispatch(fetchRatings());
     if (services.length === 0) dispatch(fetchServices());
+    dispatch(fetchStations());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
 
   // Derived Filter Options from Real Data
-  const availableStations = (() => {
+  const availableStations = useMemo(() => {
     const fromTasks = tasks.map((t) => t.station?.trim()).filter((s): s is string => Boolean(s && s.length > 0));
-    const defaults = ["Main Bay / Station 01", "Station 02", "Station 03", "Station 04", "Diagnostics Bay"];
-    return Array.from(new Set([...fromTasks, ...defaults])).sort();
-  })();
+    const fromStations = stations.map((s) => s.name.trim()).filter(Boolean);
+    return Array.from(new Set([...fromTasks, ...fromStations])).sort();
+  }, [tasks, stations]);
 
   const availableFuelTypes = (() => {
     const fuels = vehicles.map((v) => v.fuelType).filter(Boolean);

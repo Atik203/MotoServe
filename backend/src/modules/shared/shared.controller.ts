@@ -12,6 +12,10 @@ import {
   listParts,
   listRatings,
   listServices,
+  listStations,
+  createStation,
+  updateStation,
+  deleteStation,
   listTestimonials,
   getSiteContent,
   listThreads,
@@ -338,4 +342,27 @@ export async function getRatings(req: Request, res: Response): Promise<void> {
 
 export async function getTestimonials(_req: Request, res: Response): Promise<void> {
   res.json(await listTestimonials());
+}
+
+export async function getStations(_req: Request, res: Response): Promise<void> {
+  res.json(await listStations());
+}
+
+export async function createStationController(req: Request, res: Response): Promise<void> {
+  const { name } = req.body as { name: string };
+  if (!name?.trim()) throw new ApiError(400, "Station name is required");
+  const station = await createStation(name.trim());
+  res.status(201).json(station);
+}
+
+export async function updateStationController(req: Request, res: Response): Promise<void> {
+  const { name } = req.body as { name: string };
+  if (!name?.trim()) throw new ApiError(400, "Station name is required");
+  const station = await updateStation(req.params.id as string, name.trim());
+  res.json(station);
+}
+
+export async function deleteStationController(req: Request, res: Response): Promise<void> {
+  await deleteStation(req.params.id as string);
+  res.status(204).end();
 }

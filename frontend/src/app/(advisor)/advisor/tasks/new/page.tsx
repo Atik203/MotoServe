@@ -33,11 +33,12 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createTaskCard, fetchTasks } from "@/store/slices/tasksSlice";
+import { fetchServices } from "@/store/slices/servicesSlice";
 import { fetchVehicles, addVehicle } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers, createCustomer } from "@/store/slices/customersSlice";
-import { fetchAppointments } from "@/store/slices/appointmentsSlice";
-import { fetchServices } from "@/store/slices/servicesSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
+import { fetchAppointments } from "@/store/slices/appointmentsSlice";
+import { fetchStations } from "@/store/slices/stationsSlice";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { ServicePicker } from "@/components/roles/shared/ServicePicker";
 import { Button } from "@/components/ui/button";
@@ -53,16 +54,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Appointment, Customer, Vehicle } from "@/types";
-
-const STATIONS = [
-  "Main Bay / Station 01",
-  "Main Bay / Station 02",
-  "Main Bay / Station 03",
-  "Station 04",
-  "Station 05",
-  "Quick Lube Bay",
-  "Diagnostics Center",
-];
 
 const PRIORITIES = [
   { key: "low", label: "Low", color: "border-slate-300 text-slate-600 bg-slate-50" },
@@ -91,6 +82,7 @@ function CreateTaskContent() {
   const employees = useAppSelector((s) => s.employees.items);
   const tasks = useAppSelector((s) => s.tasks.items);
   const user = useAppSelector((s) => s.auth.user);
+  const stations = useAppSelector((s) => s.stations.items);
 
   // Mode: Booked Appointment vs Walk-In
   const [mode, setMode] = useState<"appointment" | "walkin">(urlAppointmentId ? "appointment" : "appointment");
@@ -132,7 +124,7 @@ function CreateTaskContent() {
     return d.toISOString().slice(0, 10);
   });
   const [expectedTime, setExpectedTime] = useState("05:00 PM");
-  const [station, setStation] = useState(STATIONS[0]);
+  const [station, setStation] = useState("");
 
   // Mechanic assignment
   const [selectedMechanicIds, setSelectedMechanicIds] = useState<string[]>([]);
@@ -148,7 +140,14 @@ function CreateTaskContent() {
     dispatch(fetchEmployees());
     dispatch(fetchTasks());
     dispatch(fetchAppointments());
+    dispatch(fetchStations());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!station && stations.length > 0) {
+      setStation(stations[0].name);
+    }
+  }, [stations, station]);
 
   // When url appointment is loaded, pre-populate
   useEffect(() => {
@@ -319,7 +318,7 @@ function CreateTaskContent() {
           appointmentId: mode === "appointment" ? appointmentId || undefined : undefined,
           issues: issues.trim(),
           priority,
-          station: station.trim() || STATIONS[0],
+          station: station.trim() || stations[0]?.name || "",
           serviceIds,
           mileage: Number(mileage.replace(/[^0-9]/g, "")) || undefined,
           fuelLevel: fuelMap[fuelLevel] ?? 50,
@@ -674,9 +673,9 @@ function CreateTaskContent() {
                       onChange={(e) => setStation(e.target.value)}
                       className="h-9 rounded-md border border-border bg-white px-2.5 text-xs"
                     >
-                      {STATIONS.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
+                      {stations.map((s) => (
+                        <option key={s.id} value={s.name}>
+                          {s.name}
                         </option>
                       ))}
                     </select>
