@@ -35,11 +35,13 @@ export const updateVehicleSchema = z.object({
 
 export const bookAppointmentSchema = z.object({
   body: z.object({
+    ownerId: z.string().optional(),
     vehicleId: z.string(),
     serviceIds: z.array(z.string()),
     date: z.string(),
     time: z.string(),
     notes: z.string().optional(),
+    status: z.enum(["pending", "confirmed"]).optional(),
   }),
 });
 

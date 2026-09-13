@@ -121,6 +121,7 @@ export interface TaskCard {
   customerId: string;
   advisorId: string;
   mechanicId: string | null;
+  mechanicIds?: string[];
   station: string | null;
   assignmentNotes?: string | null;
   priority: TaskPriority;
@@ -132,9 +133,10 @@ export interface TaskCard {
   partsUsed: PartUsed[];
   photos: string[];
   vehicle?: Vehicle;
-  customer?: { id: string; name: string };
-  advisor?: { id: string; name: string };
-  mechanic?: { id: string; name: string };
+  customer?: { id: string; name: string; phone?: string | null; email?: string | null; avatar?: string | null };
+  advisor?: { id: string; name: string; phone?: string | null; email?: string | null; avatar?: string | null };
+  mechanic?: { id: string; name: string; avatar?: string };
+  mechanics?: { id: string; name: string; avatar?: string | null; specialization?: string | null; station?: string | null }[];
   appointmentId?: string | null;
   appointment?: Appointment | null;
   expectedDate?: string | null;
@@ -154,6 +156,28 @@ export interface Part {
   unitPrice: number;
   supplier: string;
   stock: number;
+}
+
+export interface Station {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PartRequestStatus = "pending" | "approved" | "fulfilled" | "rejected";
+
+export interface PartRequest {
+  id: string;
+  mechanicId: string;
+  taskCardId: string | null;
+  partName: string;
+  partId: string | null;
+  qty: number;
+  notes: string | null;
+  status: PartRequestStatus;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Appointment {
@@ -203,7 +227,15 @@ export interface Estimate {
   internalNotes?: string | null;
   items: EstimateItem[];
   total: number;
-  taskCard?: { id: string; vehicle?: Vehicle };
+  taskCard?: {
+    id: string;
+    vehicle?: Vehicle;
+    customer?: Customer;
+    advisor?: Employee;
+    status?: TaskStatus;
+    issues?: string | null;
+    priority?: string;
+  };
 }
 
 export interface InvoiceItem {
@@ -267,6 +299,29 @@ export interface KpiCard {
   icon: string;
 }
 
+export interface IncomeSummary {
+  totalRevenue: number;
+  pendingRevenue: number;
+  laborRevenue: number;
+  partsRevenue: number;
+  taxRevenue: number;
+  paidCount: number;
+  unpaidCount: number;
+}
+
+export interface ServiceHistoryReportItem {
+  id: string;
+  taskId: string;
+  date: string;
+  customer: string;
+  vehicle: string;
+  regNo: string;
+  service: string;
+  mechanic: string;
+  status: string;
+  total: number;
+}
+
 export interface ReportsData {
   totalRevenue: number;
   activeTasks: number;
@@ -283,6 +338,13 @@ export interface ReportsData {
   }[];
   serviceDistribution: { name: string; pct: number }[];
   activityLog: { id: string; user: string; action: string; time: string }[];
+  incomeSummary?: IncomeSummary;
+  serviceHistory?: ServiceHistoryReportItem[];
+  performanceSummary?: {
+    completedTasks: number;
+    avgRating: number;
+    totalRatingsCount: number;
+  };
 }
 
 

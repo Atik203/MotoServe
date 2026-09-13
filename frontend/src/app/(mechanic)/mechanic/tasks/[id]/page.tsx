@@ -67,7 +67,13 @@ export default function RepairProgressPage() {
           {[
             { label: "Vehicle", value: task.vehicle ? `${task.vehicle.year} ${task.vehicle.make} ${task.vehicle.model}` : task.vehicleId },
             { label: "Customer", value: task.customer?.name ?? task.customerId },
-            { label: "Mechanic", value: task.mechanic?.name ?? task.mechanicId ?? "Not assigned" },
+            {
+              label: "Mechanic",
+              value:
+                task.mechanics && task.mechanics.length > 0
+                  ? task.mechanics.map((m) => m.name).join(", ")
+                  : task.mechanic?.name ?? task.mechanicId ?? "Not assigned",
+            },
             { label: "Advisor", value: task.advisor?.name ?? task.advisorId },
             { label: "Station", value: task.station ?? "Not assigned" },
           ].map((f) => (

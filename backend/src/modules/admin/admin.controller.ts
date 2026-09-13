@@ -58,6 +58,16 @@ export async function deleteEmployeeController(req: Request, res: Response): Pro
   res.json({ ok: true });
 }
 
-export async function getReports(_req: Request, res: Response): Promise<void> {
-  res.json(await getReportData());
+export async function getReports(req: Request, res: Response): Promise<void> {
+  const { from, to, station, mechanicId, service, status } = req.query;
+  res.json(
+    await getReportData({
+      from: typeof from === "string" ? from : undefined,
+      to: typeof to === "string" ? to : undefined,
+      station: typeof station === "string" ? station : undefined,
+      mechanicId: typeof mechanicId === "string" ? mechanicId : undefined,
+      service: typeof service === "string" ? service : undefined,
+      status: typeof status === "string" ? status : undefined,
+    })
+  );
 }

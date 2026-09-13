@@ -1,25 +1,28 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
+  Eye,
+  EyeOff,
   FileText,
   Headset,
-  Info,
   Trash2,
   Upload,
+  User as UserIcon,
   UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAppDispatch } from "@/store/hooks";
-import { createEmployee } from "@/store/slices/employeesSlice";
+import Image from "next/image";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { createEmployee, fetchEmployees } from "@/store/slices/employeesSlice";
 import { uploadDocument } from "@/store/slices/authSlice";
+import { fetchStations } from "@/store/slices/stationsSlice";
 
 const DEPARTMENTS = ["Service Advisory", "Customer Relations", "Workshop Operations"];
-const BRANCHES = ["Main HQ (Downtown)", "Main Bay / Station 01", "North Yard", "South Hub"];
 const EMPLOYMENT_TYPES = ["Full Time", "Part Time", "Contract"];
 const SHIFTS = ["Morning (8AM - 4PM)", "Evening (4PM - 12AM)", "Rotational"];
 
@@ -34,7 +37,7 @@ const DOCUMENT_KINDS = [
 const fieldLabel = "text-sm text-foreground";
 const inputBase =
   "h-[42px] w-full rounded border border-[#6b7280] bg-white px-[13px] text-sm text-foreground placeholder:text-[#6b7280] outline-none focus:border-primary";
-const idInputBase = "h-[42px] w-full rounded border border-[#6b7280] bg-[#f3f4f5] px-[13px] text-sm text-[#64748b]";
+const idInputBase = "h-[42px] w-full rounded border border-[#6b7280] bg-[#f3f4f5] px-[13px] text-sm text-[#424753]";
 
 const initials = (name: string) =>
   name
@@ -55,6 +58,10 @@ interface AttachedDoc {
 export default function AddAdvisorPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const employees = useAppSelector((s) => s.employees.items);
+  const stations = useAppSelector((s) => s.stations.items);
+  const generatedId = `EMP-ADV-2026-${String(employees.filter((e) => e.role === "advisor").length + 1).padStart(3, "0")}`;
+
   const [form, setForm] = useState({
     fullName: "",
     nid: "",
@@ -71,12 +78,28 @@ export default function AddAdvisorPage() {
     salary: "",
     experience: "",
   });
+
+  useEffect(() => {
+    if (employees.length === 0) {
+      dispatch(fetchEmployees());
+    }
+    dispatch(fetchStations());
+  }, [dispatch, employees.length]);
+
+  useEffect(() => {
+    if (!form.branch && stations.length > 0) {
+      setForm((prev) => (prev.branch ? prev : { ...prev, branch: stations[0].name }));
+    }
+  }, [stations, form.branch]);
   const [employmentType, setEmploymentType] = useState("Full Time");
   const [shift, setShift] = useState("Morning (8AM - 4PM)");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarKey, setAvatarKey] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+
   const [docs, setDocs] = useState<AttachedDoc[]>([]);
   const [uploadingDocs, setUploadingDocs] = useState(false);
   const [selectedKind, setSelectedKind] = useState("National ID (NID)");
@@ -101,7 +124,6 @@ export default function AddAdvisorPage() {
     } catch {
       // Fallback below
     }
-    // Fallback: convert file to a base64 Data URL so upload is 100% dynamic even in offline/demo environment
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result as string);
@@ -221,10 +243,13 @@ export default function AddAdvisorPage() {
     }
   };
 
+  const selectCls = cn(inputBase, "appearance-none pr-8");
+
   return (
     <div className="bg-background min-h-screen p-8">
       <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6">
-        <div className="flex flex-col gap-2">
+        {/* Header & Breadcrumb */}
+        <div className="flex flex-col gap-1">
           <nav className="flex items-center gap-1.5 text-sm text-[#64748b]">
             <span>Dashboard</span>
             <span>›</span>
@@ -233,25 +258,31 @@ export default function AddAdvisorPage() {
             <span className="font-medium text-[#424753]">Add Service Advisor</span>
           </nav>
           <h1 className="text-3xl font-bold tracking-[-0.72px] text-foreground">Add Service Advisor</h1>
-          <p className="text-sm text-[#424753]">Create a new service advisor profile, upload verification documents, and assign system permissions.</p>
+          <p className="text-sm text-[#424753]">Create a new service advisor profile, assign branch department, and upload verification credentials.</p>
         </div>
 
         <div className="grid grid-cols-12 items-start gap-6">
-          <div className="col-span-9 flex flex-col gap-6">
+          {/* Left Column: Form Sections (8 cols) */}
+          <div className="col-span-12 flex flex-col gap-6 lg:col-span-8">
             {/* 1. Personal Information */}
             <section className="rounded-[12px] border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-              <h2 className="border-b border-[#e2e8f0] pb-[9px] text-xl font-semibold text-foreground">Personal Information</h2>
+              <div className="flex items-center gap-3 border-b border-[#e2e8f0] pb-4">
+                <span className="flex size-9 items-center justify-center rounded-lg bg-[rgba(0,68,146,0.1)]">
+                  <UserIcon className="size-5 text-[#004492]" />
+                </span>
+                <h2 className="text-xl font-semibold text-foreground">Personal Information</h2>
+              </div>
 
-              <div className="flex items-center gap-6 pt-5">
+              <div className="flex items-start gap-6 pt-5">
                 <div className="flex w-[104px] shrink-0 flex-col items-center gap-2">
                   <button
                     type="button"
                     disabled={avatarUploading}
                     onClick={() => document.getElementById("adv-avatar")?.click()}
-                    className="relative flex size-24 items-center justify-center overflow-hidden rounded-[12px] border border-dashed border-[#c2c6d5] bg-[#edeeef] transition-colors hover:border-primary disabled:opacity-60"
+                    className="relative flex size-24 items-center justify-center overflow-hidden rounded-[12px] border border-dashed border-[#c2c6d5] bg-[#edeeef] transition-colors hover:border-primary disabled:opacity-60 cursor-pointer"
                   >
                     {avatarUrl ? (
-                      <img src={avatarUrl} alt="Advisor avatar" className="size-full object-cover" />
+                      <Image src={avatarUrl} alt="Advisor avatar" fill unoptimized className="object-cover" />
                     ) : (
                       <UserPlus className="size-7 text-[#424753]" />
                     )}
@@ -265,11 +296,11 @@ export default function AddAdvisorPage() {
                 <div className="grid flex-1 grid-cols-2 gap-x-4 gap-y-4">
                   <label className="flex flex-col gap-1">
                     <span className={fieldLabel}>Full Name *</span>
-                    <Input value={form.fullName} onChange={set("fullName")} placeholder="e.g. John Doe" className={inputBase} />
+                    <Input value={form.fullName} onChange={set("fullName")} placeholder="e.g. Sarah Jenkins" className={inputBase} />
                   </label>
                   <label className="flex flex-col gap-1">
                     <span className={fieldLabel}>Employee ID</span>
-                    <Input value="EMP-2026-089" readOnly className={idInputBase} />
+                    <Input value={generatedId} readOnly className={idInputBase} />
                   </label>
                   <label className="flex flex-col gap-1">
                     <span className={fieldLabel}>National ID (NID) / SSN</span>
@@ -281,7 +312,7 @@ export default function AddAdvisorPage() {
                   </label>
                   <label className="flex flex-col gap-1">
                     <span className={fieldLabel}>Gender</span>
-                    <select value={form.gender} onChange={set("gender")} className={cn(inputBase, "appearance-none")}>
+                    <select value={form.gender} onChange={set("gender")} className={selectCls}>
                       <option value="">Select Gender</option>
                       <option>Male</option>
                       <option>Female</option>
@@ -295,7 +326,7 @@ export default function AddAdvisorPage() {
                   </label>
                   <label className="flex flex-col gap-1">
                     <span className={fieldLabel}>Email Address *</span>
-                    <Input value={form.email} onChange={set("email")} type="email" placeholder="john.doe@motoserve.com" className={inputBase} />
+                    <Input value={form.email} onChange={set("email")} type="email" placeholder="sarah.jenkins@motorserve.com" className={inputBase} />
                   </label>
                   <label className="col-span-2 flex flex-col gap-1">
                     <span className={fieldLabel}>Residential Address</span>
@@ -313,88 +344,110 @@ export default function AddAdvisorPage() {
               </div>
             </section>
 
-            {/* 2. Employment Information */}
-            <section className="flex flex-col gap-4 rounded-[12px] border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-              <h2 className="border-b border-[#e2e8f0] pb-[9px] text-xl font-semibold text-foreground">Employment Information</h2>
+            {/* 2. Employment Information & Credentials */}
+            <section className="rounded-[12px] border border-[#e2e8f0] bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <div className="flex items-center gap-3 border-b border-[#e2e8f0] pb-4">
+                <span className="flex size-9 items-center justify-center rounded-lg bg-[rgba(0,68,146,0.1)]">
+                  <Headset className="size-5 text-[#004492]" />
+                </span>
+                <h2 className="text-xl font-semibold text-foreground">Employment Information & Credentials</h2>
+              </div>
 
-              <div className="flex flex-col gap-4">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-                  <label className="flex flex-col gap-1">
-                    <span className={fieldLabel}>Department</span>
-                    <select value={form.department} onChange={set("department")} className={cn(inputBase, "appearance-none")}>
-                      {DEPARTMENTS.map((d) => (
-                        <option key={d}>{d}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <span className={fieldLabel}>Workshop Branch *</span>
-                    <select value={form.branch} onChange={set("branch")} className={cn(inputBase, "appearance-none")}>
-                      <option value="">Select Branch</option>
-                      {BRANCHES.map((b) => (
-                        <option key={b}>{b}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <span className={fieldLabel}>Joining Date</span>
-                    <input type="date" value={form.joiningDate} onChange={set("joiningDate")} className={inputBase} />
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <span className={fieldLabel}>Monthly Salary (Base)</span>
-                    <Input value={form.salary} onChange={set("salary")} placeholder="0.00" className={inputBase} />
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <span className={fieldLabel}>Years of Experience</span>
-                    <Input value={form.experience} onChange={set("experience")} placeholder="0" className={inputBase} />
-                  </label>
-                </div>
-
-                <div>
-                  <span className={fieldLabel}>Employment Type</span>
-                  <div className="flex gap-2 pt-2">
-                    {EMPLOYMENT_TYPES.map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setEmploymentType(t)}
-                        className={cn(
-                          "rounded-[16px] border px-4 py-1.5 text-sm font-medium transition-colors",
-                          employmentType === t ? "border-[#004492] bg-[rgba(0,68,146,0.1)] text-[#004492]" : "border-[#e2e8f0] bg-white text-[#424753]",
-                        )}
-                      >
-                        {t}
-                      </button>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-4 pt-5">
+                <label className="flex flex-col gap-1">
+                  <span className={fieldLabel}>Department *</span>
+                  <select value={form.department} onChange={set("department")} className={selectCls}>
+                    {DEPARTMENTS.map((d) => (
+                      <option key={d}>{d}</option>
                     ))}
-                  </div>
-                </div>
-
-                <div>
-                  <span className={fieldLabel}>Work Shift</span>
-                  <div className="flex gap-2 pt-2">
-                    {SHIFTS.map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => setShift(s)}
-                        className={cn(
-                          "rounded-[16px] border px-4 py-1.5 text-sm font-medium transition-colors",
-                          shift === s ? "border-[#004492] bg-[rgba(0,68,146,0.1)] text-[#004492]" : "border-[#e2e8f0] bg-white text-[#424753]",
-                        )}
-                      >
-                        {s}
-                      </button>
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={fieldLabel}>Assigned Workshop Station / Bay</span>
+                  <select value={form.branch} onChange={set("branch")} className={selectCls}>
+                    <option value="">Select Station / Bay</option>
+                    {stations.map((s) => (
+                      <option key={s.id} value={s.name}>{s.name}</option>
                     ))}
-                  </div>
-                </div>
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={fieldLabel}>Joining Date</span>
+                  <input type="date" value={form.joiningDate} onChange={set("joiningDate")} className={inputBase} />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={fieldLabel}>Monthly Salary (Base)</span>
+                  <Input value={form.salary} onChange={set("salary")} placeholder="0.00" className={inputBase} />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={fieldLabel}>Years of Experience</span>
+                  <Input value={form.experience} onChange={set("experience")} placeholder="0" className={inputBase} />
+                </label>
+              </div>
 
-                <div className="border-t border-[#e2e8f0] pt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <label className="flex flex-col gap-1">
-                      <span className={fieldLabel}>Temporary Password *</span>
-                      <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Minimum 6 characters" className={inputBase} />
-                    </label>
-                  </div>
+              {/* Employment Type Pills */}
+              <div className="pt-4">
+                <span className={fieldLabel}>Employment Type</span>
+                <div className="flex gap-2 pt-2">
+                  {EMPLOYMENT_TYPES.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setEmploymentType(t)}
+                      className={cn(
+                        "rounded-[16px] border px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer",
+                        employmentType === t ? "border-[#004492] bg-[rgba(0,68,146,0.1)] text-[#004492] font-semibold" : "border-[#e2e8f0] bg-white text-[#424753] hover:border-[#004492]/40",
+                      )}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Work Shift Pills */}
+              <div className="pt-4">
+                <span className={fieldLabel}>Work Shift</span>
+                <div className="flex gap-2 pt-2">
+                  {SHIFTS.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setShift(s)}
+                      className={cn(
+                        "rounded-[16px] border px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer",
+                        shift === s ? "border-[#004492] bg-[rgba(0,68,146,0.1)] text-[#004492] font-semibold" : "border-[#e2e8f0] bg-white text-[#424753] hover:border-[#004492]/40",
+                      )}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Account Credentials */}
+              <div className="border-t border-[#e2e8f0] pt-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <label className="flex flex-col gap-1">
+                    <span className={fieldLabel}>Temporary Password *</span>
+                    <div className="relative">
+                      <Input
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Minimum 6 characters"
+                        className={cn(inputBase, "pr-10")}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                        aria-label="Toggle password visibility"
+                      >
+                        {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      </button>
+                    </div>
+                  </label>
                 </div>
               </div>
             </section>
@@ -428,7 +481,7 @@ export default function AddAdvisorPage() {
                       type="button"
                       onClick={() => setSelectedKind(k)}
                       className={cn(
-                        "rounded-[16px] border px-3 py-1 text-xs font-medium transition-colors",
+                        "rounded-[16px] border px-3 py-1 text-xs font-medium transition-colors cursor-pointer",
                         selectedKind === k
                           ? "border-primary bg-primary/10 text-primary font-semibold"
                           : "border-[#e2e8f0] bg-white text-[#424753] hover:border-primary/40",
@@ -481,7 +534,7 @@ export default function AddAdvisorPage() {
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white">
                           {doc.preview ? (
-                            <img src={doc.preview} alt={doc.name} className="size-full object-cover" />
+                            <Image src={doc.preview} alt={doc.name} fill unoptimized className="object-cover" />
                           ) : (
                             <FileText className="size-5 text-primary" />
                           )}
@@ -518,24 +571,29 @@ export default function AddAdvisorPage() {
             </section>
           </div>
 
-          {/* Right Column: Profile Preview & Actions */}
-          <div className="col-span-3 flex flex-col gap-6">
+          {/* Right Column: Profile Preview & Actions (4 cols) */}
+          <div className="col-span-12 flex flex-col gap-6 lg:col-span-4 sticky top-6">
+            {/* Live Profile Preview Card */}
             <div className="overflow-hidden rounded-[12px] border border-[#e2e8f0] bg-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
               <div className="relative h-16 bg-gradient-to-r from-[#004492] to-[#005bbf]" />
               <div className="px-[25px] pb-[25px]">
                 <div className="relative -mt-10 flex items-end gap-3">
-                  <span className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[rgba(0,68,146,0.1)] text-xl font-bold text-[#004492]">
-                    {avatarUrl ? <img src={avatarUrl} alt="" className="size-full object-cover" /> : initials(form.fullName || "New Advisor")}
+                  <span className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[rgba(0,68,146,0.1)] text-xl font-bold text-[#004492]">
+                    {avatarUrl ? <Image src={avatarUrl} alt="" fill unoptimized className="object-cover" /> : initials(form.fullName || "New Advisor")}
+                    <span className="absolute right-0.5 bottom-0.5 size-3 rounded-full border-2 border-white bg-[#4caf50]" />
                   </span>
                   <div className="pb-1">
                     <p className="text-base font-semibold text-foreground">{form.fullName || "New Advisor"}</p>
-                    <p className="text-xs text-muted-foreground">Service Advisor</p>
+                    <span className="mt-0.5 inline-flex items-center gap-1 rounded bg-[rgba(0,68,146,0.1)] px-2 py-0.5 text-[11px] font-semibold text-[#004492]">
+                      <Headset className="size-3" />
+                      Service Advisor
+                    </span>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2.5 border-t border-[#e2e8f0] pt-4 text-sm">
                   <div className="flex justify-between">
                     <span className="text-[#424753]">ID</span>
-                    <span className="font-medium text-foreground">EMP-2026-089</span>
+                    <span className="font-mono font-medium text-foreground">{generatedId}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#424753]">Status</span>
@@ -546,11 +604,17 @@ export default function AddAdvisorPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#424753]">Branch</span>
-                    <span className="font-medium text-foreground">{form.branch || "-"}</span>
+                    <span className="font-medium text-foreground">{form.branch || "—"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#424753]">Shift</span>
-                    <span className="font-medium text-foreground">{shift === SHIFTS[0] ? "Morning" : shift === SHIFTS[1] ? "Evening" : "Rotational"}</span>
+                    <span className="font-medium text-foreground">
+                      {shift === SHIFTS[0] ? "Morning" : shift === SHIFTS[1] ? "Evening" : "Rotational"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#424753]">Employment</span>
+                    <span className="font-medium text-foreground">{employmentType}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#424753]">Documents</span>
@@ -560,19 +624,24 @@ export default function AddAdvisorPage() {
               </div>
             </div>
 
-            <div className="rounded-[12px] border border-[#e2e8f0] bg-[rgba(0,68,146,0.05)] p-[17px]">
-              <p className="flex items-start gap-2 text-sm leading-5 text-[#424753]">
-                <Info className="mt-0.5 size-4 shrink-0 text-[#004492]" />
-                An email will be sent automatically to the new advisor with login credentials and account activation details.
-              </p>
-            </div>
 
-            <div className="flex flex-col gap-3 rounded-[12px] border border-[#e2e8f0] bg-white p-[17px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
-              <Button variant="outline" size="sm" onClick={() => router.push("/admin/employees")} className="rounded-[4px] border-[#e2e8f0] text-xs font-semibold text-foreground">
+            {/* Action Buttons Card */}
+            <div className="flex flex-col gap-3 rounded-[12px] border border-[#e2e8f0] bg-white p-5 shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push("/admin/employees")}
+                className="h-10 rounded-lg border-[#e2e8f0] text-xs font-semibold text-[#424753] hover:bg-secondary hover:text-foreground transition-colors"
+              >
                 Cancel
               </Button>
-              <Button size="sm" onClick={() => void submit()} disabled={submitting || uploadingDocs} className="gap-1.5 rounded-[4px] bg-[#004492] py-3 text-xs font-semibold text-white hover:bg-[#004492]/90">
-                <Headset className="size-4" />
+              <Button
+                size="sm"
+                onClick={() => void submit()}
+                disabled={submitting || uploadingDocs}
+                className="gap-2 h-10 rounded-lg bg-[#004492] text-xs font-semibold text-white shadow-xs hover:bg-[#003675] transition-colors"
+              >
+                <UserPlus className="size-4" />
                 {submitting ? "Creating Advisor..." : "Create Account"}
               </Button>
             </div>

@@ -36,18 +36,33 @@ export const markThreadRead = createAsyncThunk(
 
 export const createThread = createAsyncThunk(
   "chat/createThread",
-  async ({ advisorId, subject, text }: { advisorId: string; subject: string; text: string }) => {
-    return await api.post<ChatThread>("/chat/threads", { advisorId, subject, text });
+  async ({
+    advisorId,
+    customerId,
+    subject,
+    text,
+  }: {
+    advisorId?: string;
+    customerId?: string;
+    subject: string;
+    text: string;
+  }) => {
+    return await api.post<ChatThread>("/chat/threads", { advisorId, customerId, subject, text });
   },
 );
 
 function pushMessage(state: ChatState, threadId: string, message: ChatMessage) {
   const thread = state.threads.find((t) => t.id === threadId);
   if (!thread) return;
-  if (thread.messages.some((m) => m.id === message.id)) return;
-  thread.messages.push(message);
+  if (!thread.messages.some((m) => m.id === message.id)) {
+    thread.messages.push(message);
+  }
   thread.lastMessageAt = message.time;
-  thread.unread = thread.id === state.activeThreadId ? 0 : thread.unread + 1;
+  if (thread.id === state.activeThreadId) {
+    thread.unread = 0;
+  } else {
+    thread.unread = (thread.unread || 0) + 1;
+  }
 }
 
 const chatSlice = createSlice({
@@ -61,6 +76,10 @@ const chatSlice = createSlice({
     },
     receiveMessage(state, action: PayloadAction<{ threadId: string; message: ChatMessage }>) {
       pushMessage(state, action.payload.threadId, action.payload.message);
+    },
+    markThreadReadLocally(state, action: PayloadAction<string>) {
+      const thread = state.threads.find((t) => t.id === action.payload);
+      if (thread) thread.unread = 0;
     },
   },
   extraReducers: (builder) => {
@@ -92,5 +111,5 @@ const chatSlice = createSlice({
   },
 });
 
-export const { setActiveThread, receiveMessage } = chatSlice.actions;
+export const { setActiveThread, receiveMessage, markThreadReadLocally } = chatSlice.actions;
 export default chatSlice.reducer;

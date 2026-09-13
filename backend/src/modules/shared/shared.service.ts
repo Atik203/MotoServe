@@ -25,15 +25,24 @@ export function listTasks(role?: string, userId?: string) {
   const normalized = role?.toLowerCase();
   return prisma.taskCard.findMany({
     where: {
-      mechanicId: normalized === "mechanic" ? userId : undefined,
+      ...(normalized === "mechanic" && userId
+        ? {
+            OR: [
+              { mechanicId: userId },
+              { mechanicIds: { has: userId } },
+              { mechanics: { some: { id: userId } } },
+            ],
+          }
+        : {}),
       customerId: normalized === "owner" ? userId : undefined,
       ownerArchivedAt: normalized === "owner" ? null : undefined,
     },
     include: {
       vehicle: true,
-      customer: { select: { id: true, name: true } },
-      advisor: { select: { id: true, name: true } },
-      mechanic: { select: { id: true, name: true } },
+      customer: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+      advisor: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+      mechanic: { select: { id: true, name: true, avatar: true } },
+      mechanics: { select: { id: true, name: true, avatar: true, specialization: true, station: true } },
       appointment: true,
       progress: { orderBy: { id: "asc" } },
       notes: { orderBy: { id: "desc" } },
@@ -48,9 +57,10 @@ export function findTaskById(id: string) {
     where: { id },
     include: {
       vehicle: true,
-      customer: { select: { id: true, name: true } },
-      advisor: { select: { id: true, name: true } },
-      mechanic: { select: { id: true, name: true } },
+      customer: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+      advisor: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+      mechanic: { select: { id: true, name: true, avatar: true } },
+      mechanics: { select: { id: true, name: true, avatar: true, specialization: true, station: true } },
       appointment: true,
       progress: { orderBy: { id: "asc" } },
       notes: { orderBy: { id: "desc" } },
@@ -66,9 +76,10 @@ export function listArchivedTasks(userId: string) {
     where: { customerId: userId, ownerArchivedAt: { not: null } },
     include: {
       vehicle: true,
-      customer: { select: { id: true, name: true } },
-      advisor: { select: { id: true, name: true } },
-      mechanic: { select: { id: true, name: true } },
+      customer: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+      advisor: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+      mechanic: { select: { id: true, name: true, avatar: true } },
+      mechanics: { select: { id: true, name: true, avatar: true, specialization: true, station: true } },
       appointment: true,
       progress: { orderBy: { id: "asc" } },
       notes: { orderBy: { id: "desc" } },
@@ -85,6 +96,7 @@ export function listAppointments(ownerId?: string) {
     include: {
       vehicle: true,
       owner: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+      taskCard: { select: { id: true, status: true, priority: true } },
     },
     orderBy: [{ date: "desc" }, { time: "desc" }],
   });
@@ -96,13 +108,14 @@ export function findAppointmentById(id: string) {
     include: {
       vehicle: true,
       owner: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+      taskCard: { select: { id: true, status: true, priority: true } },
     },
   });
 }
 
 export async function updateAppointment(
   id: string,
-  status: string,
+  data: { status?: string; date?: string; time?: string; notes?: string },
   role: string | undefined,
   userId: string | undefined,
 ) {
@@ -110,10 +123,30 @@ export async function updateAppointment(
   if (!appointment) throw new ApiError(404, "Appointment not found");
   if (role === "OWNER") {
     if (appointment.ownerId !== userId) throw new ApiError(403, "Insufficient permissions");
-    if (status !== "cancelled") throw new ApiError(403, "Owners can only cancel appointments");
+    if (data.status && data.status !== "cancelled") throw new ApiError(403, "Owners can only cancel appointments");
   }
-  return prisma.appointment.update({ where: { id }, data: { status: status.toUpperCase() as never } });
+  return prisma.appointment.update({
+    where: { id },
+    data: {
+      ...(data.status ? { status: data.status.toUpperCase() as never } : {}),
+      ...(data.date ? { date: data.date } : {}),
+      ...(data.time ? { time: data.time } : {}),
+      ...(data.notes !== undefined ? { notes: data.notes } : {}),
+    },
+    include: {
+      vehicle: true,
+      owner: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+      taskCard: { select: { id: true, status: true, priority: true } },
+    },
+  });
 }
+
+export async function deleteAppointment(id: string) {
+  const appointment = await prisma.appointment.findUnique({ where: { id } });
+  if (!appointment) throw new ApiError(404, "Appointment not found");
+  return prisma.appointment.delete({ where: { id } });
+}
+
 
 export function listEmployees(role?: string) {
   return prisma.user.findMany({
@@ -171,9 +204,47 @@ export function listEstimates(customerId?: string) {
     where: { customerId: customerId ?? undefined },
     include: {
       items: true,
-      taskCard: { select: { id: true, vehicle: true } },
+      taskCard: {
+        select: {
+          id: true,
+          status: true,
+          vehicleId: true,
+          issues: true,
+          priority: true,
+          vehicle: true,
+          customer: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+          advisor: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
+  });
+}
+
+export function getEstimateById(id: string, customerId?: string) {
+  return prisma.estimate.findFirst({
+    where: {
+      id,
+      customerId: customerId ?? undefined,
+    },
+    include: {
+      items: true,
+      taskCard: {
+        select: {
+          id: true,
+          status: true,
+          vehicleId: true,
+          issues: true,
+          priority: true,
+          station: true,
+          vehicle: true,
+          customer: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+          advisor: { select: { id: true, name: true, phone: true, email: true, avatar: true } },
+          mechanic: { select: { id: true, name: true, avatar: true, specialization: true } },
+          mechanics: { select: { id: true, name: true, avatar: true, specialization: true } },
+        },
+      },
+    },
   });
 }
 
@@ -231,4 +302,20 @@ export function mapCustomerStatus(status: string): CustomerStatus {
   if (status === "REJECTED") return "rejected";
   if (status === "PENDING") return "pending";
   return "inactive";
+}
+
+export function listStations() {
+  return prisma.station.findMany({ orderBy: { name: "asc" } });
+}
+
+export function createStation(name: string) {
+  return prisma.station.create({ data: { name } });
+}
+
+export function updateStation(id: string, name: string) {
+  return prisma.station.update({ where: { id }, data: { name } });
+}
+
+export function deleteStation(id: string) {
+  return prisma.station.delete({ where: { id } });
 }

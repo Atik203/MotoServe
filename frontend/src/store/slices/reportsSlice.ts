@@ -14,9 +14,18 @@ const initialState: ReportsState = {
   error: null,
 };
 
-export const fetchReports = createAsyncThunk("reports/fetchAll", async () => {
-  return await api.get<ReportsData>("/reports");
-});
+export const fetchReports = createAsyncThunk(
+  "reports/fetchAll",
+  async (params?: Record<string, string | undefined>) => {
+    const queryParts = params
+      ? Object.entries(params)
+          .filter(([, v]) => v !== undefined && v !== "" && v !== "all")
+          .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v!)}`)
+      : [];
+    const qs = queryParts.length > 0 ? `?${queryParts.join("&")}` : "";
+    return await api.get<ReportsData>(`/reports${qs}`);
+  }
+);
 
 const reportsSlice = createSlice({
   name: "reports",

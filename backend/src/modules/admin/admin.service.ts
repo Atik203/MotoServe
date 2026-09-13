@@ -81,31 +81,98 @@ export function deactivateEmployee(id: string) {
   return prisma.user.update({ where: { id }, data: { status: "INACTIVE" }, select: employeeSelect });
 }
 
-export async function getReportData(): Promise<ReportDto> {
-  const [stats, tasksByStatus, mechanics, activityLog, taskCards] = await Promise.all([
+export interface ReportFilterOptions {
+  from?: string;
+  to?: string;
+  station?: string;
+  mechanicId?: string;
+  service?: string;
+  status?: string;
+}
+
+export async function getReportData(filters?: ReportFilterOptions): Promise<ReportDto> {
+  const invoiceWhere: Record<string, any> = {};
+  if (filters?.from || filters?.to) {
+    invoiceWhere.issuedAt = {
+      ...(filters.from ? { gte: new Date(filters.from) } : {}),
+      ...(filters.to ? { lte: new Date(filters.to) } : {}),
+    };
+  }
+  if (filters?.status) {
+    invoiceWhere.status = filters.status.toUpperCase();
+  }
+  if (filters?.station || filters?.mechanicId) {
+    invoiceWhere.task = {
+      ...(filters.station ? { station: { contains: filters.station, mode: "insensitive" } } : {}),
+      ...(filters.mechanicId ? { OR: [{ mechanicId: filters.mechanicId }, { mechanicIds: { has: filters.mechanicId } }] } : {}),
+    };
+  }
+
+  const taskWhere: Record<string, any> = {};
+  if (filters?.from || filters?.to) {
+    taskWhere.createdAt = {
+      ...(filters.from ? { gte: new Date(filters.from) } : {}),
+      ...(filters.to ? { lte: new Date(filters.to) } : {}),
+    };
+  }
+  if (filters?.station) {
+    taskWhere.station = { contains: filters.station, mode: "insensitive" };
+  }
+  if (filters?.mechanicId) {
+    taskWhere.OR = [{ mechanicId: filters.mechanicId }, { mechanicIds: { has: filters.mechanicId } }];
+  }
+  if (filters?.status) {
+    taskWhere.status = filters.status.toUpperCase();
+  }
+
+  const [stats, tasksByStatus, mechanics, activityLog, taskCards, allInvoices, ratingsStats] = await Promise.all([
     getDashboardStats(),
-    prisma.taskCard.groupBy({ by: ["status"], _count: true }),
+    prisma.taskCard.groupBy({ by: ["status"], where: Object.keys(taskWhere).length ? taskWhere : undefined, _count: true }),
     prisma.user.findMany({
       where: { role: "MECHANIC" },
       include: { _count: { select: { taskCardsAssigned: true } } },
     }),
     listAuditLogs(),
-    prisma.taskCard.findMany({ select: { mechanicId: true, status: true, services: true } }),
+    prisma.taskCard.findMany({
+      where: Object.keys(taskWhere).length ? taskWhere : undefined,
+      select: { mechanicId: true, mechanicIds: true, status: true, services: true },
+    }),
+    prisma.invoice.findMany({
+      where: Object.keys(invoiceWhere).length ? invoiceWhere : undefined,
+      include: {
+        vehicle: { select: { id: true, make: true, model: true, year: true, regNo: true } },
+        task: {
+          select: {
+            id: true,
+            status: true,
+            station: true,
+            customer: { select: { id: true, name: true } },
+            mechanic: { select: { id: true, name: true } },
+            mechanics: { select: { id: true, name: true } },
+            services: true,
+          },
+        },
+      },
+      orderBy: { issuedAt: "desc" },
+    }),
+    prisma.rating.aggregate({ _avg: { score: true }, _count: true }),
   ]);
 
-  const completedByMechanic = taskCards
-    .filter((j) => j.status === "COMPLETED" && j.mechanicId)
-    .reduce<Record<string, number>>((map, j) => {
-      map[j.mechanicId!] = (map[j.mechanicId!] ?? 0) + 1;
-      return map;
-    }, {});
+  const completedByMechanic: Record<string, number> = {};
+  const activeByMechanic: Record<string, number> = {};
 
-  const activeByMechanic = taskCards
-    .filter((j) => j.mechanicId && j.status !== "COMPLETED" && j.status !== "READY")
-    .reduce<Record<string, number>>((map, j) => {
-      map[j.mechanicId!] = (map[j.mechanicId!] ?? 0) + 1;
-      return map;
-    }, {});
+  for (const j of taskCards) {
+    const assigned = j.mechanicIds?.length ? j.mechanicIds : (j.mechanicId ? [j.mechanicId] : []);
+    if (j.status === "COMPLETED") {
+      for (const mId of assigned) {
+        completedByMechanic[mId] = (completedByMechanic[mId] ?? 0) + 1;
+      }
+    } else if (j.status !== "READY") {
+      for (const mId of assigned) {
+        activeByMechanic[mId] = (activeByMechanic[mId] ?? 0) + 1;
+      }
+    }
+  }
 
   const serviceCount = new Map<string, number>();
   for (const task of taskCards) {
@@ -131,6 +198,56 @@ export async function getReportData(): Promise<ReportDto> {
 
   const mappedStatus = tasksByStatus.map((j) => ({ status: j.status.toLowerCase(), count: j._count }));
 
+  const paidInvoices = allInvoices.filter((i) => i.status === "PAID");
+  const unpaidInvoices = allInvoices.filter((i) => i.status !== "PAID");
+  const totalPaid = paidInvoices.reduce((s, i) => s + i.total, 0);
+  const totalPending = unpaidInvoices.reduce((s, i) => s + i.total, 0);
+  const laborRevenue = allInvoices.reduce((s, i) => s + i.laborTotal, 0);
+  const partsRevenue = allInvoices.reduce((s, i) => s + i.partsTotal, 0);
+  const taxRevenue = allInvoices.reduce((s, i) => s + i.tax, 0);
+
+  const incomeSummary = {
+    totalRevenue: Math.round(totalPaid * 100) / 100,
+    pendingRevenue: Math.round(totalPending * 100) / 100,
+    laborRevenue: Math.round(laborRevenue * 100) / 100,
+    partsRevenue: Math.round(partsRevenue * 100) / 100,
+    taxRevenue: Math.round(taxRevenue * 100) / 100,
+    paidCount: paidInvoices.length,
+    unpaidCount: unpaidInvoices.length,
+  };
+
+  const serviceHistory = allInvoices.slice(0, 50).map((inv) => {
+    const taskServices = Array.isArray(inv.task?.services) ? (inv.task?.services as { name?: string }[]) : [];
+    const serviceName = taskServices.length > 0
+      ? taskServices.map((s) => s.name).filter(Boolean).join(", ")
+      : Array.isArray(inv.items) && (inv.items as { description?: string }[])[0]?.description
+        ? (inv.items as { description?: string }[])[0].description!
+        : "Vehicle Service";
+
+    const mechanicName = inv.task?.mechanics && inv.task.mechanics.length > 0
+      ? inv.task.mechanics.map((m: { name: string }) => m.name).join(", ")
+      : inv.task?.mechanic?.name ?? "Unassigned";
+
+    return {
+      id: inv.id,
+      taskId: inv.taskId,
+      date: inv.issuedAt.toISOString(),
+      customer: inv.task?.customer?.name ?? "Vehicle Owner",
+      vehicle: inv.vehicle ? `${inv.vehicle.year} ${inv.vehicle.make} ${inv.vehicle.model}` : "Vehicle",
+      regNo: inv.vehicle?.regNo ?? "—",
+      service: serviceName,
+      mechanic: mechanicName,
+      status: inv.status.toLowerCase(),
+      total: Math.round(inv.total * 100) / 100,
+    };
+  });
+
+  const performanceSummary = {
+    completedTasks: tasksByStatus.find((j) => j.status === "COMPLETED")?._count ?? 0,
+    avgRating: ratingsStats._avg.score ? Number(ratingsStats._avg.score.toFixed(1)) : 5.0,
+    totalRatingsCount: ratingsStats._count,
+  };
+
   return {
     ...stats,
     activeTasks: stats.activeTasks,
@@ -144,6 +261,9 @@ export async function getReportData(): Promise<ReportDto> {
     })),
     serviceDistribution,
     activityLog: activityLog.map((a) => ({ id: a.id, user: a.user, action: a.action, time: a.time })),
+    incomeSummary,
+    serviceHistory,
+    performanceSummary,
   };
 }
 

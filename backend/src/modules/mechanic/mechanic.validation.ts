@@ -29,3 +29,12 @@ export const addTaskPhotoSchema = z.object({
   }),
 });
 
+export const createPartRequestSchema = z.object({
+  body: z.object({
+    partName: z.string().min(1),
+    qty: z.number().positive(),
+    taskCardId: z.string().optional(),
+    partId: z.string().optional(),
+    notes: z.string().optional(),
+  }),
+});
