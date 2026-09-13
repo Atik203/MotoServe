@@ -16,8 +16,6 @@ frontend/build/
 *.log
 
 # env
-.env
-.env.local
 .env.development.local
 .env.test.local
 .env.production.local
@@ -37,8 +35,7 @@ backend/dist/
 backend/dist-api/
 
 # editor
-.vscode/
 .idea/
 
 .vercel
-.env*
+config.bat
