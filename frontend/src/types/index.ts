@@ -158,6 +158,21 @@ export interface Part {
   stock: number;
 }
 
+export type PartRequestStatus = "pending" | "approved" | "fulfilled" | "rejected";
+
+export interface PartRequest {
+  id: string;
+  mechanicId: string;
+  taskCardId: string | null;
+  partName: string;
+  partId: string | null;
+  qty: number;
+  notes: string | null;
+  status: PartRequestStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Appointment {
   id: string;
   ownerId: string;

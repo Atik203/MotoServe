@@ -378,3 +378,23 @@ model AuditLog {
   action String
   time   DateTime @default(now())
 }
+
+enum PartRequestStatus {
+  PENDING
+  APPROVED
+  FULFILLED
+  REJECTED
+}
+
+model PartRequest {
+  id         String            @id @default(cuid())
+  mechanicId String
+  taskCardId String?
+  partName   String
+  partId     String?
+  qty        Int
+  notes      String?
+  status     PartRequestStatus @default(PENDING)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+}

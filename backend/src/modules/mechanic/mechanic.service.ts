@@ -2,7 +2,7 @@ import { prisma } from "../../lib/prisma.js";
 import { createWithSequentialId } from "../../lib/ids.js";
 import { ApiError } from "../../middleware/error.js";
 import type { Invoice } from "../../generated/prisma/client.js";
-import type { AddTaskNoteBody, AddPartUsedBody, UpdateTaskStatusBody } from "./mechanic.types.js";
+import type { AddTaskNoteBody, AddPartUsedBody, UpdateTaskStatusBody, CreatePartRequestBody } from "./mechanic.types.js";
 
 const STATUS_ORDER = ["RECEIVED", "INSPECTING", "REPAIRING", "TESTING", "READY", "COMPLETED"];
 
@@ -130,3 +130,23 @@ export async function addTaskPhoto(id: string, key: string) {
   });
 }
 
+export function createPartRequest(mechanicId: string, body: CreatePartRequestBody) {
+  return prisma.partRequest.create({
+    data: {
+      mechanicId,
+      taskCardId: body.taskCardId ?? null,
+      partName: body.partName,
+      partId: body.partId ?? null,
+      qty: body.qty,
+      notes: body.notes ?? null,
+      status: "PENDING",
+    },
+  });
+}
+
+export function listPartRequests(mechanicId: string) {
+  return prisma.partRequest.findMany({
+    where: { mechanicId },
+    orderBy: { createdAt: "desc" },
+  });
+}

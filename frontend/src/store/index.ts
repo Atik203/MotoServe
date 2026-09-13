@@ -14,6 +14,7 @@ import reportsReducer from "./slices/reportsSlice";
 import partsReducer from "./slices/partsSlice";
 import ratingsReducer from "./slices/ratingsSlice";
 import filesReducer from "./slices/filesSlice";
+import partRequestsReducer from "./slices/partRequestsSlice";
 
 export const makeStore = () =>
   configureStore({
@@ -33,6 +34,7 @@ export const makeStore = () =>
       parts: partsReducer,
       ratings: ratingsReducer,
       files: filesReducer,
+      partRequests: partRequestsReducer,
     },
   });
 
