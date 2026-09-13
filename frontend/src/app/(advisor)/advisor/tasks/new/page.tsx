@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   CalendarDays,
-  Car,
   Check,
   ChevronDown,
   Clock,
@@ -14,7 +13,6 @@ import {
   Phone,
   Plus,
   Search,
-  User,
   UserRound,
   Users,
   Wrench,
@@ -74,7 +72,12 @@ export default function CreateTaskPage() {
 
   // Appointment mode
   const [appointmentId, setAppointmentId] = useState(
-    () => (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("appointment") ?? "" : ""),
+    () =>
+      (typeof window !== "undefined"
+        ? (new URLSearchParams(window.location.search).get("appointment") ||
+            new URLSearchParams(window.location.search).get("appointmentId")) ??
+          ""
+        : ""),
   );
 
   // Walk-in mode
@@ -114,9 +117,26 @@ export default function CreateTaskPage() {
   useEffect(() => {
     dispatch(fetchVehicles());
     dispatch(fetchCustomers());
-    dispatch(fetchAppointments());
     dispatch(fetchServices());
     dispatch(fetchEmployees());
+    dispatch(fetchAppointments())
+      .unwrap()
+      .then((appts) => {
+        const paramId =
+          typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search).get("appointment") ||
+              new URLSearchParams(window.location.search).get("appointmentId")
+            : null;
+        if (paramId) {
+          const a = appts.find((x) => x.id === paramId);
+          if (a) {
+            setAppointmentId(a.id);
+            setServiceIds(a.serviceIds);
+            if (a.notes) setIssues(a.notes);
+          }
+        }
+      })
+      .catch(() => {});
   }, [dispatch]);
 
   // --- Resolved entities ---

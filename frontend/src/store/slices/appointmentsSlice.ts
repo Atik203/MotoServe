@@ -20,7 +20,7 @@ export const fetchAppointments = createAsyncThunk("appointments/fetchAll", async
 
 export const addAppointment = createAsyncThunk(
   "appointments/create",
-  async (data: { vehicleId: string; serviceIds: string[]; date: string; time: string; notes?: string; ownerId?: string }) => {
+  async (data: { vehicleId: string; serviceIds: string[]; date: string; time: string; notes?: string; ownerId?: string; status?: "pending" | "confirmed" }) => {
     return await api.post<Appointment>("/appointments", data);
   },
 );

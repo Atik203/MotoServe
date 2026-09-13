@@ -48,8 +48,10 @@ export async function deleteVehicle(ownerId: string, id: string) {
 }
 
 export function bookAppointment(ownerId: string, body: BookAppointmentBody) {
+  const { status, ...rest } = body;
+  const resolvedStatus = status ? (status.toUpperCase() as "PENDING" | "CONFIRMED") : "PENDING";
   return prisma.appointment.create({
-    data: { ...body, ownerId, notes: body.notes ?? "", status: "PENDING" },
+    data: { ...rest, ownerId, notes: rest.notes ?? "", status: resolvedStatus },
   });
 }
 

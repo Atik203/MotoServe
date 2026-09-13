@@ -371,12 +371,14 @@ export default function AdminAppointmentsPage() {
                 Refresh
               </Button>
               <Button
+                asChild
                 size="sm"
-                onClick={() => setNewBookingOpen(true)}
                 className="gap-1.5 rounded-md bg-[#004492] px-4 py-2 text-xs font-semibold text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)] hover:bg-[#004492]/90"
               >
-                <CalendarPlus className="size-4" />
-                Book Appointment
+                <Link href="/admin/appointments/book">
+                  <CalendarPlus className="size-4" />
+                  Book Appointment
+                </Link>
               </Button>
             </div>
           </div>
@@ -617,12 +619,14 @@ export default function AdminAppointmentsPage() {
               </Button>
             ) : (
               <Button
+                asChild
                 size="sm"
-                onClick={() => setNewBookingOpen(true)}
                 className="mt-4 gap-1.5 rounded-md bg-[#004492] text-xs text-white"
               >
-                <CalendarPlus className="size-3.5" />
-                Book New Appointment
+                <Link href="/admin/appointments/book">
+                  <CalendarPlus className="size-3.5" />
+                  Book New Appointment
+                </Link>
               </Button>
             )}
           </div>
@@ -767,19 +771,6 @@ export default function AdminAppointmentsPage() {
                         </Button>
                       )}
 
-                      {a.status === "confirmed" && (
-                        <Button
-                          asChild
-                          size="sm"
-                          className="h-8 gap-1 rounded-md bg-[#004492] px-3 text-xs font-semibold text-white hover:bg-[#004492]/90"
-                        >
-                          <Link href={`/advisor/tasks/new?appointmentId=${a.id}`}>
-                            <Wrench className="size-3.5" />
-                            Start Intake
-                          </Link>
-                        </Button>
-                      )}
-
                       <Button
                         type="button"
                         variant="outline"
@@ -905,15 +896,6 @@ export default function AdminAppointmentsPage() {
                             >
                               <CalendarCheck className="size-4" />
                             </button>
-                          )}
-                          {a.status === "confirmed" && (
-                            <Link
-                              href={`/advisor/tasks/new?appointmentId=${a.id}`}
-                              className="rounded p-1.5 text-[#004492] hover:bg-[#eff6ff] transition-colors"
-                              title="Start Repair Intake"
-                            >
-                              <Wrench className="size-4" />
-                            </Link>
                           )}
                           <button
                             type="button"
@@ -1355,14 +1337,6 @@ export default function AdminAppointmentsPage() {
             <Button type="button" variant="outline" onClick={() => setViewItem(null)} className="text-xs">
               Close
             </Button>
-            {viewItem?.status === "confirmed" && (
-              <Button asChild className="bg-[#004492] text-xs text-white">
-                <Link href={`/advisor/tasks/new?appointmentId=${viewItem.id}`}>
-                  <Wrench className="size-3.5 mr-1" />
-                  Start Intake
-                </Link>
-              </Button>
-            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

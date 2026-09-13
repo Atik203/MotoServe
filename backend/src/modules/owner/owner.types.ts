@@ -20,6 +20,7 @@ export interface BookAppointmentBody {
   date: string;
   time: string;
   notes?: string;
+  status?: "pending" | "confirmed";
 }
 
 export interface DecideEstimateBody {

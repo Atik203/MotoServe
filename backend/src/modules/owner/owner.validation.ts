@@ -41,6 +41,7 @@ export const bookAppointmentSchema = z.object({
     date: z.string(),
     time: z.string(),
     notes: z.string().optional(),
+    status: z.enum(["pending", "confirmed"]).optional(),
   }),
 });
 
