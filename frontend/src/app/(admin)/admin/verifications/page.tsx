@@ -15,6 +15,7 @@ import {
   Search,
   ShieldAlert,
   ShieldCheck,
+  Trash2,
   UserCheck,
   Users,
   UserX,
@@ -28,7 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchCustomers, verifyCustomer } from "@/store/slices/customersSlice";
+import { deleteCustomer, fetchCustomers, verifyCustomer } from "@/store/slices/customersSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,7 @@ export default function CustomerManagementPage() {
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected" | "inactive">("all");
   const [page, setPage] = useState(1);
   const [quickView, setQuickView] = useState<Customer | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
   const [actionBusyId, setActionBusyId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -123,6 +125,22 @@ export default function CustomerManagementPage() {
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Action failed");
+    } finally {
+      setActionBusyId(null);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const target = deleteTarget;
+    setActionBusyId(target.id);
+    try {
+      await dispatch(deleteCustomer(target.id)).unwrap();
+      toast.success(`Customer account "${target.name}" deleted`);
+      if (quickView?.id === target.id) setQuickView(null);
+      setDeleteTarget(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Delete failed");
     } finally {
       setActionBusyId(null);
     }
@@ -439,6 +457,17 @@ export default function CustomerManagementPage() {
                                 <span>Reject Account</span>
                               </DropdownMenuItem>
                             )}
+
+                            <DropdownMenuSeparator className="my-1 border-[#e2e8f0]" />
+
+                            <DropdownMenuItem
+                              disabled={actionBusyId === customer.id}
+                              onClick={() => setDeleteTarget(customer)}
+                              className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold cursor-pointer rounded-lg text-rose-700 hover:text-rose-800 hover:bg-rose-50 focus:bg-rose-50 focus:text-rose-800"
+                            >
+                              <Trash2 className="size-3.5 text-rose-600" />
+                              <span>Delete Account</span>
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -587,6 +616,42 @@ export default function CustomerManagementPage() {
                 </Link>
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Customer Confirmation Dialog */}
+      <Dialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent className="max-w-sm rounded-xl">
+          <DialogHeader>
+            <div className="flex size-11 items-center justify-center rounded-xl bg-rose-50 border border-rose-100">
+              <Trash2 className="size-5 text-rose-600" />
+            </div>
+            <DialogTitle className="text-base font-bold text-foreground pt-3">Delete customer account?</DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+              This permanently removes <span className="font-semibold text-foreground">{deleteTarget?.name}</span> and all
+              associated vehicles, jobs, invoices, appointments, and chat history. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeleteTarget(null)}
+              disabled={actionBusyId !== null && actionBusyId === deleteTarget?.id}
+              className="text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void confirmDelete()}
+              disabled={actionBusyId !== null && actionBusyId === deleteTarget?.id}
+              className="text-xs bg-rose-600 hover:bg-rose-700 text-white"
+            >
+              {actionBusyId === deleteTarget?.id ? "Deleting..." : "Delete Account"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

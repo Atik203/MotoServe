@@ -29,6 +29,24 @@ export function verifyCustomerStatus(id: string, decision: "approved" | "rejecte
   });
 }
 
+export async function deleteCustomer(id: string, requesterId: string) {
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) throw new ApiError(404, "Customer not found");
+  if (user.role !== "OWNER") throw new ApiError(400, "Only owner (customer) accounts can be deleted");
+  if (user.id === requesterId) throw new ApiError(400, "You cannot delete your own account");
+
+  await prisma.$transaction([
+    prisma.chatThread.deleteMany({ where: { ownerId: id } }),
+    prisma.rating.deleteMany({ where: { customerId: id } }),
+    prisma.taskCard.deleteMany({ where: { customerId: id } }),
+    prisma.appointment.deleteMany({ where: { ownerId: id } }),
+    prisma.vehicle.deleteMany({ where: { ownerId: id } }),
+    prisma.user.delete({ where: { id } }),
+  ]);
+
+  return user;
+}
+
 const employeeSelect = {
   id: true,
   name: true,
