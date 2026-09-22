@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TableLoading } from "@/components/ui/loading";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ResolvedAvatar } from "@/components/roles/shared/ResolvedAvatar";
 import {
   Table,
   TableBody,
@@ -294,12 +294,12 @@ function AdvisorEstimatesContent() {
                       {/* Customer */}
                       <TableCell className="py-4 pr-4 pl-4">
                         <div className="flex items-center gap-2">
-                          <Avatar className="size-7 border border-[#e5e7eb]">
-                            {customer?.avatar && <AvatarImage src={customer.avatar} alt={customer.name} />}
-                            <AvatarFallback className="bg-primary/10 text-[10px] font-bold text-primary">
-                              {customer?.name ? customer.name.slice(0, 2).toUpperCase() : "CU"}
-                            </AvatarFallback>
-                          </Avatar>
+                          <ResolvedAvatar
+                            src={customer?.avatar}
+                            name={customer?.name ?? "CU"}
+                            className="size-7 border border-[#e5e7eb]"
+                            fallbackClassName="bg-primary/10 text-[10px] font-bold text-primary"
+                          />
                           <div>
                             <p className="text-xs font-bold text-[#191c1d]">{customer?.name || "Client"}</p>
                             <p className="text-[11px] text-[#64748b]">{customer?.phone || "No phone"}</p>

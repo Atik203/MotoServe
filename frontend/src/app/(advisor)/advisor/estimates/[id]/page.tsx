@@ -35,7 +35,7 @@ import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
 import { DetailLoading } from "@/components/ui/loading";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ResolvedAvatar } from "@/components/roles/shared/ResolvedAvatar";
 import { Button } from "@/components/ui/button";
 
 const CATEGORY_STYLES: Record<
@@ -454,12 +454,12 @@ export default function AdvisorEstimateDetailPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <Avatar className="size-12 border border-[#e5e7eb]">
-                  {customer?.avatar && <AvatarImage src={customer.avatar} alt={customer.name} />}
-                  <AvatarFallback className="bg-primary/10 font-bold text-primary">
-                    {customer?.name ? customer.name.slice(0, 2).toUpperCase() : "CU"}
-                  </AvatarFallback>
-                </Avatar>
+                <ResolvedAvatar
+                  src={customer?.avatar}
+                  name={customer?.name ?? "CU"}
+                  className="size-12 border border-[#e5e7eb]"
+                  fallbackClassName="bg-primary/10 font-bold text-primary"
+                />
                 <div className="min-w-0 flex-1">
                   <p className="text-base font-bold text-[#191c1d]">{customer?.name ?? "Customer"}</p>
                   <p className="text-xs text-[#64748b]">ID: {customer?.id ?? estimate.customerId}</p>

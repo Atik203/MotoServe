@@ -35,7 +35,7 @@ import { fetchEstimates, createEstimate } from "@/store/slices/estimatesSlice";
 import { fetchServices } from "@/store/slices/servicesSlice";
 import { FormLoading } from "@/components/ui/loading";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ResolvedAvatar } from "@/components/roles/shared/ResolvedAvatar";
 import { Button } from "@/components/ui/button";
 
 interface LineItem {
@@ -483,14 +483,12 @@ function SendEstimateContent() {
               </div>
 
               <div className="flex items-center gap-3 py-1">
-                <Avatar className="size-11 border border-[#e5e7eb]">
-                  {selectedCustomer?.avatar && (
-                    <AvatarImage src={selectedCustomer.avatar} alt={selectedCustomer.name} />
-                  )}
-                  <AvatarFallback className="bg-primary/10 font-bold text-primary">
-                    {selectedCustomer?.name ? selectedCustomer.name.slice(0, 2).toUpperCase() : "CL"}
-                  </AvatarFallback>
-                </Avatar>
+                <ResolvedAvatar
+                  src={selectedCustomer?.avatar}
+                  name={selectedCustomer?.name ?? "CL"}
+                  className="size-11 border border-[#e5e7eb]"
+                  fallbackClassName="bg-primary/10 font-bold text-primary"
+                />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold text-[#191c1d]">
                     {selectedCustomer?.name || "Client"}
