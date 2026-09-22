@@ -59,7 +59,13 @@ export async function createTaskCard(advisorId: string, body: CreateTaskCardBody
         ? { connect: resolvedMechanicIds.map((mId) => ({ id: mId })) }
         : undefined,
       services: serviceLines.length
-        ? (serviceLines.map((s) => ({ id: s.id, name: s.name, price: s.basePrice })) as unknown as Prisma.InputJsonValue)
+        ? (serviceLines.map((s) => ({
+            id: s.id,
+            name: s.name,
+            price: s.basePrice,
+            durationMins: s.durationMins,
+            laborRate: s.laborRate,
+          })) as unknown as Prisma.InputJsonValue)
         : undefined,
       status: "RECEIVED",
     },

@@ -44,7 +44,6 @@ import {
 import type { Service, ServiceCategory } from "@/types";
 
 const PAGE_SIZE = 8;
-const LABOR_RATE_PER_HOUR = 45;
 
 const CATEGORIES: { label: string; value: ServiceCategory | "all" }[] = [
   { label: "All Services", value: "all" },
@@ -444,7 +443,7 @@ export default function ServicesPage() {
           /* Grid View */
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {rows.map((service) => {
-              const laborEst = (service.durationMins / 60) * LABOR_RATE_PER_HOUR;
+              const laborEst = (service.durationMins / 60) * (service.laborRate ?? 45);
               const totalEst = service.basePrice + laborEst;
               const imgUrl = service.marketing?.image ?? null;
 
@@ -587,7 +586,7 @@ export default function ServicesPage() {
               </TableHeader>
               <TableBody>
                 {rows.map((service) => {
-                  const laborEst = (service.durationMins / 60) * LABOR_RATE_PER_HOUR;
+                  const laborEst = (service.durationMins / 60) * (service.laborRate ?? 45);
                   const totalEst = service.basePrice + laborEst;
 
                   return (
@@ -775,13 +774,15 @@ export default function ServicesPage() {
                   <span className="font-semibold text-foreground">{formatDuration(previewService.durationMins)} ({previewService.durationMins} mins)</span>
                 </div>
                 <div className="flex items-center justify-between py-1.5 border-b border-[#e2e8f0]">
-                  <span className="text-muted-foreground">Est. Labor Component (@ $45/hr):</span>
-                  <span className="font-semibold text-foreground">{money((previewService.durationMins / 60) * LABOR_RATE_PER_HOUR)}</span>
+                  <span className="text-muted-foreground">
+                    Est. Labor Component (@ ${previewService.laborRate?.toFixed(2) ?? "45.00"}/hr):
+                  </span>
+                  <span className="font-semibold text-foreground">{money((previewService.durationMins / 60) * (previewService.laborRate ?? 45))}</span>
                 </div>
                 <div className="flex items-center justify-between pt-2 text-sm font-bold">
                   <span className="text-[#004492]">Customer Total Estimate:</span>
                   <span className="text-lg text-[#004492]">
-                    {money(previewService.basePrice + (previewService.durationMins / 60) * LABOR_RATE_PER_HOUR)}
+                    {money(previewService.basePrice + (previewService.durationMins / 60) * (previewService.laborRate ?? 45))}
                   </span>
                 </div>
               </div>
