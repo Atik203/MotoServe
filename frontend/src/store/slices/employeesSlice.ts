@@ -29,6 +29,7 @@ export const createEmployee = createAsyncThunk(
     station?: string;
     specialization?: string;
     avatar?: string;
+    skills?: string[];
     nid?: string;
     gender?: string;
     dateOfBirth?: string;

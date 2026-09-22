@@ -2,6 +2,7 @@ export interface CreateServiceBody {
   name: string;
   category: "maintenance" | "repairs" | "inspections";
   basePrice: number;
+  laborRate?: number;
   durationMins: number;
   description?: string;
   active?: boolean;
@@ -36,6 +37,7 @@ export interface CreateEmployeeBody {
   district?: string;
   zip?: string;
   country?: string;
+  skills?: string[];
   documents?: EmployeeDocument[];
   documentUrl?: string;
 }
@@ -57,6 +59,7 @@ export interface UpdateEmployeeBody {
   district?: string;
   zip?: string;
   country?: string;
+  skills?: string[];
   documents?: EmployeeDocument[];
   documentUrl?: string;
 }

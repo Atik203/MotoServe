@@ -7,6 +7,7 @@ export interface Service {
   name: string;
   category: ServiceCategory;
   basePrice: number;
+  laborRate?: number;
   durationMins: number;
   description: string;
   active: boolean;
@@ -73,6 +74,7 @@ export interface Employee {
   avatar: string;
   station?: string;
   specialization?: string;
+  skills?: string[];
   status: "active" | "inactive";
   joinedAt: string;
   nid?: string;

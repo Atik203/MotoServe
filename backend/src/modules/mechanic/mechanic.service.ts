@@ -47,13 +47,25 @@ export async function ensureInvoiceForTask(taskId: string) {
     where: { id: taskId },
     include: { partsUsed: true },
   });
-  const services = (task.services ?? []) as { id?: string; name: string; price: number }[];
+  const services = (task.services ?? []) as {
+    id?: string;
+    name: string;
+    price: number;
+    durationMins?: number;
+    laborRate?: number;
+  }[];
   const estimate = await prisma.estimate.findFirst({
     where: { taskCardId: taskId },
     include: { items: true },
   });
 
-  const laborTotal = estimate?.items.filter((i) => i.category === "LABOR").reduce((sum, i) => sum + i.amount, 0) ?? 0;
+  const estimateLabor =
+    estimate?.items.filter((i) => i.category === "LABOR").reduce((sum, i) => sum + i.amount, 0) ?? 0;
+  const autoLabor = services.reduce(
+    (sum, sv) => sum + (sv.durationMins ? (sv.durationMins / 60) * (sv.laborRate ?? 45) : 0),
+    0,
+  );
+  const laborTotal = estimateLabor > 0 ? estimateLabor : autoLabor;
   const servicesTotal = services.reduce((sum, sv) => sum + sv.price, 0);
   const partsTotal = task.partsUsed.reduce((sum, p) => sum + p.subtotal, 0);
   const subtotal = servicesTotal + partsTotal + laborTotal;
@@ -62,14 +74,26 @@ export async function ensureInvoiceForTask(taskId: string) {
 
   const year = new Date().getFullYear();
 
-  const laborItems = (estimate?.items ?? [])
-    .filter((i) => i.category === "LABOR")
-    .map((i) => ({
-      id: i.id ?? `lab-${crypto.randomUUID().slice(0, 8)}`,
-      description: i.description ?? "Labor",
-      category: "service",
-      amount: i.amount,
-    }));
+  const laborItems =
+  estimateLabor > 0
+    ? (estimate?.items ?? [])
+        .filter((i) => i.category === "LABOR")
+        .map((i) => ({
+          id: i.id ?? `lab-${crypto.randomUUID().slice(0, 8)}`,
+          description: i.description ?? "Labor",
+          category: "service",
+          amount: i.amount,
+        }))
+    : autoLabor > 0
+      ? [
+          {
+            id: `lab-${crypto.randomUUID().slice(0, 8)}`,
+            description: "Workshop Labor",
+            category: "service",
+            amount: Math.round(autoLabor * 100) / 100,
+          },
+        ]
+      : [];
 
   const items = [
     ...services.map((sv) => ({
