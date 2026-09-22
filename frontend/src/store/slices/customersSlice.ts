@@ -32,6 +32,10 @@ export const verifyCustomer = createAsyncThunk(
   },
 );
 
+export const deleteCustomer = createAsyncThunk("customers/delete", async (id: string) => {
+  return await api.delete<{ ok: boolean }>(`/customers/${id}`);
+});
+
 export const fetchDocumentUrl = createAsyncThunk("customers/documentUrl", async (key: string) => {
   return await api.post<{ url: string }>("/upload/presign-get", { key });
 });
@@ -62,6 +66,9 @@ const customersSlice = createSlice({
           customer.status = action.payload.status;
           customer.verifiedAt = action.payload.status === "approved" ? new Date().toISOString() : null;
         }
+      })
+      .addCase(deleteCustomer.fulfilled, (state, action) => {
+        state.items = state.items.filter((c) => c.id !== action.meta.arg);
       });
   },
 });
