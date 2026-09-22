@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -22,6 +22,7 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createService, updateService } from "@/store/slices/servicesSlice";
 import { uploadDocument } from "@/store/slices/authSlice";
+import { fetchDocumentUrl } from "@/store/slices/customersSlice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,7 +51,7 @@ const DURATIONS = [
 
 const SUGGESTED_TAGS = ["Popular", "Recommended", "Quick Turnaround", "Safety Critical", "Warranty Safe", "Seasonal"];
 
-const LABOR_RATE_PER_HOUR = 45;
+const DEFAULT_LABOR_RATE = 45;
 
 const durationLabel = (mins: number) =>
   mins < 60 ? `${mins} mins` : mins === 60 ? "1 Hour" : `${mins / 60} hrs`;
@@ -65,10 +66,12 @@ export default function ServiceForm({ initial }: { initial?: Service | null }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [category, setCategory] = useState<ServiceCategory>(initial?.category ?? "maintenance");
   const [price, setPrice] = useState(initial ? String(initial.basePrice) : "");
+  const [laborRate, setLaborRate] = useState(initial?.laborRate ? String(initial.laborRate) : String(DEFAULT_LABOR_RATE));
   const [duration, setDuration] = useState(initial?.durationMins ?? 60);
   const [description, setDescription] = useState(initial?.description ?? "");
   const [active, setActive] = useState(initial?.active ?? true);
   const [iconUrl, setIconUrl] = useState<string | null>(initial?.marketing?.image ?? null);
+  const [iconPreview, setIconPreview] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>(initial?.marketing?.tags ?? ["Popular"]);
   const [newTagInput, setNewTagInput] = useState("");
 
@@ -78,8 +81,9 @@ export default function ServiceForm({ initial }: { initial?: Service | null }) {
 
   const isEdit = Boolean(initial);
   const priceNum = Number(price);
+  const laborRateNum = Number(laborRate);
   const durationMins = Number(duration);
-  const laborCost = (durationMins / 60) * LABOR_RATE_PER_HOUR;
+  const laborCost = (durationMins / 60) * (Number.isFinite(laborRateNum) && laborRateNum > 0 ? laborRateNum : 0);
   const estimatedTotal = (Number.isFinite(priceNum) ? priceNum : 0) + laborCost;
 
   const duplicate = services.some(
@@ -94,6 +98,12 @@ export default function ServiceForm({ initial }: { initial?: Service | null }) {
       ? "Service Name must be at least 2 characters"
       : null;
   const priceError = price === "" ? null : !Number.isFinite(priceNum) || priceNum <= 0 ? "Base Price must be greater than 0" : null;
+  const laborRateError =
+    laborRate !== "" && !Number.isFinite(laborRateNum)
+      ? "Labor rate must be a number"
+      : laborRateNum <= 0
+        ? "Labor rate must be greater than 0"
+        : null;
 
   const uploadFile = async (file: File): Promise<string> => {
     try {
@@ -104,7 +114,7 @@ export default function ServiceForm({ initial }: { initial?: Service | null }) {
         headers: { "Content-Type": file.type },
       });
       if (!put.ok) throw new Error("Upload to storage failed");
-      return res.getUrl ?? res.key;
+      return res.key;
     } catch {
       // Fallback to data URL
       return new Promise((resolve) => {
@@ -114,6 +124,22 @@ export default function ServiceForm({ initial }: { initial?: Service | null }) {
       });
     }
   };
+
+  useEffect(() => {
+    if (!initial?.marketing?.image) return;
+    const stored = initial.marketing.image;
+    if (stored.startsWith("/") || stored.startsWith("http")) return;
+    dispatch(fetchDocumentUrl(stored))
+      .unwrap()
+      .then((r) => setIconPreview(r.url))
+      .catch(() => {});
+  }, [initial, dispatch]);
+
+  useEffect(() => {
+    return () => {
+      if (iconPreview) URL.revokeObjectURL(iconPreview);
+    };
+  }, [iconPreview]);
 
   const handlePickIcon = async (file?: File) => {
     if (!file) return;
@@ -129,13 +155,21 @@ export default function ServiceForm({ initial }: { initial?: Service | null }) {
     setUploadingImage(true);
     try {
       const url = await uploadFile(file);
+      if (iconPreview) URL.revokeObjectURL(iconPreview);
       setIconUrl(url);
+      setIconPreview(URL.createObjectURL(file));
       toast.success("Service image uploaded");
     } catch {
       toast.error("Failed to upload service image");
     } finally {
       setUploadingImage(false);
     }
+  };
+
+  const removeIcon = () => {
+    if (iconPreview) URL.revokeObjectURL(iconPreview);
+    setIconUrl(null);
+    setIconPreview(null);
   };
 
   const addTag = (tag: string) => {
@@ -150,8 +184,12 @@ export default function ServiceForm({ initial }: { initial?: Service | null }) {
   };
 
   const submit = async () => {
-    if (nameError || !name.trim() || priceError || price === "" || priceNum <= 0) {
+    if (nameError || !name.trim() || priceError || laborRateError) {
       toast.error("Please fill in all required fields properly");
+      return;
+    }
+    if (price === "" || priceNum <= 0) {
+      toast.error("Base Price must be greater than 0");
       return;
     }
     setSubmitting(true);
@@ -160,6 +198,7 @@ export default function ServiceForm({ initial }: { initial?: Service | null }) {
       name: name.trim(),
       category,
       basePrice: Math.round(priceNum * 100) / 100,
+      laborRate: laborRateNum,
       durationMins,
       description: description.trim(),
       active,
@@ -266,6 +305,32 @@ export default function ServiceForm({ initial }: { initial?: Service | null }) {
                 <p className={errMsg}>
                   <AlertCircle className="size-3" />
                   {priceError}
+                </p>
+              )}
+            </div>
+
+            {/* Labor Rate */}
+            <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+              <Label className="text-xs font-semibold text-foreground">
+                Labor Rate / Hour <span className="text-rose-500">*</span>
+              </Label>
+              <div className="relative">
+                <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm font-semibold text-[#424753]">$</span>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={laborRate}
+                  onChange={(e) => setLaborRate(e.target.value)}
+                  placeholder="45"
+                  className={cn(inputCls, "pl-7", laborRateError && invalidInputCls)}
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground">Per service hourly rate used for labor estimates.</p>
+              {laborRateError && (
+                <p className={errMsg}>
+                  <AlertCircle className="size-3" />
+                  {laborRateError}
                 </p>
               )}
             </div>
@@ -379,7 +444,7 @@ export default function ServiceForm({ initial }: { initial?: Service | null }) {
               ) : iconUrl ? (
                 <div className="relative flex items-center gap-4 rounded-lg border border-[#e5e7eb] bg-[#f8f9fa] p-3">
                   <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-md border border-[#e2e8f0]">
-                    <Image src={iconUrl} alt="Service preview" fill unoptimized className="object-cover" />
+                    <Image src={iconPreview ?? iconUrl ?? ""} alt="Service preview" fill unoptimized className="object-cover" />
                   </div>
                   <div className="flex flex-1 flex-col gap-0.5">
                     <p className="text-xs font-semibold text-foreground">Catalog banner uploaded</p>
@@ -389,7 +454,7 @@ export default function ServiceForm({ initial }: { initial?: Service | null }) {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setIconUrl(null)}
+                    onClick={removeIcon}
                     className="gap-1 rounded-md text-xs text-rose-600 hover:bg-rose-50"
                   >
                     <Trash2 className="size-3.5" />
@@ -459,10 +524,18 @@ export default function ServiceForm({ initial }: { initial?: Service | null }) {
             </div>
             <div className="flex items-center justify-between border-b border-dashed border-[#e5e7eb] pb-2">
               <span className="flex items-center gap-1 text-muted-foreground">
-                Estimated Labor Rate
+                Labor Rate / Hour
                 <Info className="size-3 text-muted-foreground" />
               </span>
-              <span className="font-semibold text-foreground">${laborCost.toFixed(2)}</span>
+              <span className="font-semibold text-foreground">
+                {laborRate === "" || !Number.isFinite(laborRateNum) ? "$0.00" : `$${laborRateNum.toFixed(2)}/hr`}
+              </span>
+            </div>
+            <div className="flex items-center justify-between border-b border-dashed border-[#e5e7eb] pb-2">
+              <span className="text-muted-foreground">Estimated Labor Cost</span>
+              <span className="font-semibold text-foreground">
+                {laborRate === "" || !Number.isFinite(laborRateNum) ? "$0.00" : `$${laborCost.toFixed(2)}`}
+              </span>
             </div>
             <div className="flex items-end justify-between rounded-lg bg-[#eff6ff] p-3 border border-[#bfdbfe]">
               <div>
@@ -484,8 +557,8 @@ export default function ServiceForm({ initial }: { initial?: Service | null }) {
           <div className="p-4">
             <div className="overflow-hidden rounded-lg border border-[#e2e8f0] bg-white shadow-sm">
               <div className="relative h-28 w-full bg-[#f3f4f5]">
-                {iconUrl ? (
-                  <Image src={iconUrl} alt="Preview" fill unoptimized className="object-cover" />
+                {iconPreview ?? iconUrl ? (
+                  <Image src={iconPreview ?? iconUrl ?? ""} alt="Preview" fill unoptimized className="object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#eff6ff] to-[#e2e8f0]">
                     <Wrench className="size-8 text-[#004492]/40" />

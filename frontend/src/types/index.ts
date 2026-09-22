@@ -7,6 +7,7 @@ export interface Service {
   name: string;
   category: ServiceCategory;
   basePrice: number;
+  laborRate?: number;
   durationMins: number;
   description: string;
   active: boolean;
