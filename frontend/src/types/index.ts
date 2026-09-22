@@ -74,6 +74,7 @@ export interface Employee {
   avatar: string;
   station?: string;
   specialization?: string;
+  skills?: string[];
   status: "active" | "inactive";
   joinedAt: string;
   nid?: string;
