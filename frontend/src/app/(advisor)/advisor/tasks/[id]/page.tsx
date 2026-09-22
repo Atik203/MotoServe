@@ -41,7 +41,7 @@ import { MechanicNotes } from "@/components/roles/mechanic/MechanicNotes";
 import { PartsUsedTable } from "@/components/roles/mechanic/PartsUsedTable";
 import { RepairPhotos } from "@/components/roles/mechanic/RepairPhotos";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ResolvedAvatar } from "@/components/roles/shared/ResolvedAvatar";
 import { Button } from "@/components/ui/button";
 import { DetailLoading } from "@/components/ui/loading";
 import type { TaskStatus } from "@/types";
@@ -63,14 +63,6 @@ const STATUS_LABELS: Record<TaskStatus, string> = {
   ready: "Ready for Pickup",
   completed: "Completed",
 };
-
-const initials = (name: string) =>
-  name
-    .split(" ")
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
 export default function AdvisorTaskDetailPage() {
   const params = useParams<{ id: string }>();
@@ -542,12 +534,12 @@ export default function AdvisorTaskDetailPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <Avatar className="size-12 border border-[#e5e7eb]">
-                  {customer?.avatar && <AvatarImage src={customer.avatar} alt={customer.name} />}
-                  <AvatarFallback className="bg-primary/10 font-bold text-primary">
-                    {customer?.name ? initials(customer.name) : "CU"}
-                  </AvatarFallback>
-                </Avatar>
+                <ResolvedAvatar
+                  src={customer?.avatar}
+                  name={customer?.name ?? "CU"}
+                  className="size-12 border border-[#e5e7eb]"
+                  fallbackClassName="bg-primary/10 font-bold text-primary"
+                />
                 <div className="min-w-0 flex-1">
                   <p className="text-base font-bold text-[#191c1d]">{customer?.name ?? "Customer"}</p>
                   <p className="text-xs text-[#64748b]">ID: {customer?.id ?? task.customerId}</p>
@@ -623,12 +615,12 @@ export default function AdvisorTaskDetailPage() {
                       key={m.id}
                       className="flex items-center gap-3 rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-2.5"
                     >
-                      <Avatar className="size-9 border border-[#e5e7eb]">
-                        {m.avatar && <AvatarImage src={m.avatar} alt={m.name} />}
-                        <AvatarFallback className="bg-[#eff6ff] text-xs font-bold text-primary">
-                          {initials(m.name)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <ResolvedAvatar
+                        src={m.avatar}
+                        name={m.name}
+                        className="size-9 border border-[#e5e7eb]"
+                        fallbackClassName="bg-[#eff6ff] text-xs font-bold text-primary"
+                      />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-xs font-bold text-[#191c1d]">{m.name}</p>
                         <p className="truncate text-[11px] text-[#64748b]">
