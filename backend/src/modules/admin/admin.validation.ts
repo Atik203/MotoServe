@@ -41,6 +41,7 @@ export const createEmployeeSchema = z.object({
     district: z.string().optional(),
     zip: z.string().optional(),
     country: z.string().optional(),
+    skills: z.array(z.string()).optional(),
     documents: z
       .array(
         z.object({
@@ -73,6 +74,7 @@ export const updateEmployeeSchema = z.object({
     district: z.string().optional(),
     zip: z.string().optional(),
     country: z.string().optional(),
+    skills: z.array(z.string()).optional(),
     documents: z
       .array(
         z.object({

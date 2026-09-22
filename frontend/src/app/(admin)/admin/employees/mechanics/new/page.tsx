@@ -12,6 +12,7 @@ import {
   User as UserIcon,
   UserPlus,
   Wrench,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -128,6 +129,8 @@ export default function AddMechanicPage() {
     if (!skills.includes(v)) setSkills((prev) => [...prev, v]);
     setCustomSkill("");
   };
+
+  const removeSkill = (skill: string) => setSkills((prev) => prev.filter((s) => s !== skill));
 
   const uploadFile = async (file: File, purpose: "document" | "image"): Promise<string> => {
     try {
@@ -248,6 +251,7 @@ export default function AddMechanicPage() {
           station: form.branch || undefined,
           specialization: specialization || undefined,
           avatar: avatarKey || undefined,
+          skills,
           nid: form.nid.trim() || undefined,
           gender: form.gender || undefined,
           dateOfBirth: form.dob || undefined,
@@ -444,11 +448,35 @@ export default function AddMechanicPage() {
                       {skill} {skills.includes(skill) ? "✓" : "+"}
                     </button>
                   ))}
+                  {skills
+                    .filter((s) => !SKILL_CHOICES.includes(s))
+                    .map((skill) => (
+                      <span
+                        key={skill}
+                        className="flex items-center gap-1.5 rounded-[16px] border border-[#004492] bg-[rgba(0,68,146,0.1)] px-3 py-1 text-xs font-semibold text-[#004492]"
+                      >
+                        {skill}
+                        <button
+                          type="button"
+                          onClick={() => removeSkill(skill)}
+                          className="hover:text-rose-600 cursor-pointer"
+                          aria-label={`Remove ${skill}`}
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </span>
+                    ))}
                 </div>
                 <div className="flex gap-2 pt-3">
                   <Input
                     value={customSkill}
                     onChange={(e) => setCustomSkill(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addCustomSkill();
+                      }
+                    }}
                     placeholder="Add custom skill..."
                     className={cn(inputBase, "h-9 max-w-xs text-xs")}
                   />
