@@ -37,6 +37,7 @@ export interface CreateEmployeeBody {
   district?: string;
   zip?: string;
   country?: string;
+  skills?: string[];
   documents?: EmployeeDocument[];
   documentUrl?: string;
 }
@@ -58,6 +59,7 @@ export interface UpdateEmployeeBody {
   district?: string;
   zip?: string;
   country?: string;
+  skills?: string[];
   documents?: EmployeeDocument[];
   documentUrl?: string;
 }

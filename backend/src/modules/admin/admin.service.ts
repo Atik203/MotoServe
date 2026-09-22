@@ -56,6 +56,7 @@ const employeeSelect = {
   avatar: true,
   station: true,
   specialization: true,
+  skills: true,
   status: true,
   nid: true,
   documents: true,
@@ -66,11 +67,12 @@ const employeeSelect = {
 export async function createEmployee(data: CreateEmployeeBody) {
   const existing = await findUserByEmail(data.email);
   if (existing) throw new ApiError(409, "Email already registered");
-  const { password, role, dateOfBirth, documents, ...profile } = data;
+  const { password, role, dateOfBirth, documents, skills, ...profile } = data;
   return prisma.user.create({
     data: {
       ...profile,
       ...(documents ? { documents: documents as unknown as Prisma.InputJsonValue } : {}),
+      ...(skills?.length ? { skills: skills as unknown as Prisma.InputJsonValue } : {}),
       ...(dateOfBirth ? { dateOfBirth: new Date(dateOfBirth) } : {}),
       passwordHash: await bcrypt.hash(password, 10),
       role: role.toUpperCase() as never,
@@ -81,12 +83,13 @@ export async function createEmployee(data: CreateEmployeeBody) {
 }
 
 export function updateEmployee(id: string, data: UpdateEmployeeBody) {
-  const { password, status, dateOfBirth, documents, ...rest } = data;
+  const { password, status, dateOfBirth, documents, skills, ...rest } = data;
   return prisma.user.update({
     where: { id },
     data: {
       ...rest,
       ...(documents ? { documents: documents as unknown as Prisma.InputJsonValue } : {}),
+      ...(skills ? { skills: skills as unknown as Prisma.InputJsonValue } : {}),
       ...(dateOfBirth ? { dateOfBirth: new Date(dateOfBirth) } : {}),
       ...(password ? { passwordHash: bcrypt.hashSync(password, 10) } : {}),
       ...(status ? { status: status.toUpperCase() as never } : {}),

@@ -27,6 +27,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { deleteEmployee, fetchEmployees, updateEmployee } from "@/store/slices/employeesSlice";
 import { fetchFileUrl } from "@/store/slices/filesSlice";
 import { fetchStations } from "@/store/slices/stationsSlice";
+import { useFileUrl } from "@/hooks/useFileUrl";
 import type { Employee } from "@/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -56,7 +57,7 @@ const PAGE_SIZE = 8;
 type Tab = "all" | "mechanic" | "advisor";
 
 function EmployeeAvatar({ employee }: { employee: Employee }) {
-  const [broken, setBroken] = useState(false);
+  const resolved = useFileUrl(employee.avatar);
 
   const initials = employee.name
     .split(" ")
@@ -66,7 +67,7 @@ function EmployeeAvatar({ employee }: { employee: Employee }) {
     .join("")
     .toUpperCase();
 
-  if (!employee.avatar || broken) {
+  if (!resolved) {
     return (
       <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-[#eff6ff] text-xs font-bold text-primary">
         {initials || "EM"}
@@ -76,14 +77,7 @@ function EmployeeAvatar({ employee }: { employee: Employee }) {
 
   return (
     <span className="relative block size-10 shrink-0 overflow-hidden rounded-xl border border-[#e2e8f0]">
-      <Image
-        src={employee.avatar}
-        alt={employee.name}
-        fill
-        unoptimized
-        className="object-cover"
-        onError={() => setBroken(true)}
-      />
+      <Image src={resolved} alt={employee.name} fill unoptimized className="object-cover" />
     </span>
   );
 }
@@ -731,6 +725,21 @@ function EmployeeDialog({
                   placeholder="e.g. Diagnostics & Hybrid Powertrains"
                   className="h-9 rounded-md border-[#e2e8f0] bg-white text-xs"
                 />
+              </div>
+            )}
+            {employee?.role === "mechanic" && Array.isArray(employee.skills) && employee.skills.length > 0 && (
+              <div className="col-span-2 flex flex-col gap-1.5">
+                <Label className="text-xs font-semibold text-foreground">Core Skills & Competencies</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {employee.skills.map((s) => (
+                    <span
+                      key={s}
+                      className="rounded-full border border-[#004492]/20 bg-[rgba(0,68,146,0.08)] px-2.5 py-1 text-[11px] font-semibold text-[#004492]"
+                    >
+                      {s}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
           </div>
