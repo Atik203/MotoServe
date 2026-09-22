@@ -2,6 +2,7 @@ export interface CreateServiceBody {
   name: string;
   category: "maintenance" | "repairs" | "inspections";
   basePrice: number;
+  laborRate?: number;
   durationMins: number;
   description?: string;
   active?: boolean;

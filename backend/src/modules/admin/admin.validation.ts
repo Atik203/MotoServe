@@ -5,6 +5,7 @@ export const createServiceSchema = z.object({
     name: z.string().min(2),
     category: z.enum(["maintenance", "repairs", "inspections"]),
     basePrice: z.number().nonnegative(),
+    laborRate: z.number().positive().optional(),
     durationMins: z.number().int().positive(),
     description: z.string().optional(),
     active: z.boolean().optional(),

@@ -152,6 +152,7 @@ model Service {
   name        String
   category    ServiceCategory
   basePrice   Float
+  laborRate   Float           @default(45)
   durationMins Int
   description String
   active      Boolean         @default(true)
