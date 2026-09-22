@@ -5,6 +5,7 @@ import {
   createEmployee,
   createService,
   deactivateEmployee,
+  deleteCustomer,
   deleteService,
   getReportData,
   updateEmployee,
@@ -38,6 +39,12 @@ export async function verifyOwner(req: Request, res: Response): Promise<void> {
   const user = await verifyCustomerStatus(req.params.id as string, decision);
   await logAudit(req.user?.name ?? "admin", `${decision === "approved" ? "Approved" : "Rejected"} owner ${user.name}`);
   res.json({ id: user.id, status: mapCustomerStatus(user.status) });
+}
+
+export async function deleteCustomerController(req: Request, res: Response): Promise<void> {
+  const user = await deleteCustomer(req.params.id as string, req.user?.userId ?? "");
+  await logAudit(req.user?.name ?? "admin", `Deleted customer account "${user.name}"`);
+  res.json({ ok: true });
 }
 
 export async function createEmployeeController(req: Request, res: Response): Promise<void> {

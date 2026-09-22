@@ -4,6 +4,7 @@ import { validate } from "../../middleware/validate.js";
 import {
   createEmployeeController,
   createServiceController,
+  deleteCustomerController,
   deleteEmployeeController,
   deleteServiceController,
   getReports,
@@ -30,5 +31,6 @@ router.patch("/employees/:id", requireAuth, requireRole("admin"), validate(updat
 router.delete("/employees/:id", requireAuth, requireRole("admin"), deleteEmployeeController);
 
 router.patch("/customers/:id/verify", requireAuth, requireRole("admin"), validate(verifyOwnerSchema), verifyOwner);
+router.delete("/customers/:id", requireAuth, requireRole("admin"), deleteCustomerController);
 
 router.get("/reports", requireAuth, requireRole("admin", "advisor"), getReports);
