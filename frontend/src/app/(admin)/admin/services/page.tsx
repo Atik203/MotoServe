@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchServices, updateService, deleteService } from "@/store/slices/servicesSlice";
+import { useFileUrl } from "@/hooks/useFileUrl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { TableLoading } from "@/components/ui/loading";
@@ -60,6 +61,23 @@ const formatDuration = (mins: number) =>
 
 const formatCategory = (category: Service["category"]) =>
   category.charAt(0).toUpperCase() + category.slice(1);
+
+function ServiceImage({ src, alt, className }: { src?: string | null; alt: string; className?: string }) {
+  const resolved = useFileUrl(src);
+  if (!resolved) {
+    return (
+      <div
+        className={cn(
+          "flex h-full w-full items-center justify-center bg-gradient-to-br from-[#eff6ff] to-[#e2e8f0]",
+          className,
+        )}
+      >
+        <Wrench className="size-10 text-[#004492]/40" />
+      </div>
+    );
+  }
+  return <Image src={resolved} alt={alt} fill unoptimized className={className} />;
+}
 
 const categoryBadgeStyles: Record<string, string> = {
   maintenance: "bg-[#eff6ff] text-[#004492] border-[#bfdbfe]",
@@ -445,7 +463,6 @@ export default function ServicesPage() {
             {rows.map((service) => {
               const laborEst = (service.durationMins / 60) * (service.laborRate ?? 45);
               const totalEst = service.basePrice + laborEst;
-              const imgUrl = service.marketing?.image ?? null;
 
               return (
                 <div
@@ -457,19 +474,11 @@ export default function ServicesPage() {
                 >
                   {/* Top Thumbnail & Badges */}
                   <div className="relative h-36 w-full overflow-hidden bg-[#f3f4f5]">
-                    {imgUrl ? (
-                      <Image
-                        src={imgUrl}
-                        alt={service.name}
-                        fill
-                        unoptimized
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#eff6ff] to-[#e2e8f0]">
-                        <Wrench className="size-10 text-[#004492]/40" />
-                      </div>
-                    )}
+                    <ServiceImage
+                      src={service.marketing?.image ?? null}
+                      alt={service.name}
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
                     {/* Category badge */}
@@ -746,18 +755,10 @@ export default function ServicesPage() {
 
           {previewService && (
             <div className="flex flex-col gap-4 py-2">
-              {/* Thumbnail if present */}
-              {previewService.marketing?.image && (
-                <div className="relative h-44 w-full overflow-hidden rounded-lg border border-border">
-                  <Image
-                    src={previewService.marketing.image}
-                    alt={previewService.name}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                  />
-                </div>
-              )}
+              {/* Thumbnail */}
+              <div className="relative h-44 w-full overflow-hidden rounded-lg border border-border">
+                <ServiceImage src={previewService.marketing?.image ?? null} alt={previewService.name} className="object-cover" />
+              </div>
 
               <p className="text-sm text-[#424753] leading-relaxed">
                 {previewService.description || "No specific description entered for this service offering."}
