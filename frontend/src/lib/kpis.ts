@@ -140,7 +140,7 @@ export function buildKpis(role: KpiRole, ctx: KpiContext): KpiCard[] {
           id: "kpi-002",
           label: "In Progress",
           value: String(assignedTasks.filter((t) => t.status === "repairing" || t.status === "testing").length),
-          delta: `${assignedTasks.filter((t) => t.priority === "high").length} high priority`,
+          delta: `${assignedTasks.filter((t) => t.priority === "high" || t.priority === "urgent").length} high priority`,
           trend: "flat",
           icon: "wrench",
         },

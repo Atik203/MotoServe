@@ -5,7 +5,7 @@ export const createTaskCardSchema = z.object({
     vehicleId: z.string(),
     customerId: z.string(),
     issues: z.string().min(1),
-    priority: z.enum(["low", "medium", "high"]).optional(),
+    priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
     station: z.string().optional(),
     mileage: z.number().int().nonnegative().optional(),
     fuelLevel: z.number().int().min(0).max(100).optional(),
