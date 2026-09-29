@@ -861,6 +861,7 @@ function ReceiveVehicleContent() {
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-xs font-semibold">Priority</Label>
                   <select
+                    data-testid="intake-priority"
                     value={priority}
                     onChange={(e) => setPriority(e.target.value as "low" | "medium" | "high" | "urgent")}
                     className="h-9 rounded-lg border border-border bg-white px-3 text-xs capitalize"
@@ -908,6 +909,7 @@ function ReceiveVehicleContent() {
               </Button>
               <Button
                 type="submit"
+                data-testid="intake-submit"
                 size="sm"
                 disabled={intakeBusy}
                 className="bg-[#0052cc] text-white hover:bg-[#0047b3]"
