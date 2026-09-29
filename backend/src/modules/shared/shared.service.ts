@@ -262,8 +262,11 @@ export function listInvoices(customerId?: string) {
 
 export function listThreads(role?: string, userId?: string) {
   const normalized = role?.toLowerCase();
+  const isParticipantRole = normalized === "owner" || normalized === "advisor";
   return prisma.chatThread.findMany({
-    where: { ownerId: normalized === "owner" ? userId : undefined, advisorId: normalized === "advisor" ? userId : undefined },
+    where: isParticipantRole
+      ? { ownerId: normalized === "owner" ? userId : undefined, advisorId: normalized === "advisor" ? userId : undefined }
+      : { id: { in: [] } },
     include: {
       owner: { select: { id: true, name: true, avatar: true } },
       advisor: { select: { id: true, name: true, avatar: true } },
