@@ -5,6 +5,7 @@ Admin
 • Add service types with base prices (oil change, brake, engine, wash)
 • Add service advisors and mechanics
 • Generate income and workload reports
+
 Vehicle Owner
 • Register vehicles (model, registration number)
 • Book a servicing appointment
@@ -12,17 +13,21 @@ Vehicle Owner
 • Track service status (Received → Inspecting → Repairing → Testing → Ready)
 • Pay using dummy payment and download invoice
 • Rate the service
+
 Service Advisor
-• Receive vehicles and create job cards
-• Assign jobs to mechanics
+• Receive vehicles and create task cards
+• Assign tasks to mechanics
 • Send cost estimates to owners
 • Chat with vehicle owners
+
 Mechanic
-• See assigned job cards
+• See assigned task cards
 • Update repair progress and add parts used
-• Mark jobs as completed
+• Mark tasks as completed
+
 Guests
 • See service list, prices, and workshop info
+
 Others
 • Full service history per vehicle
-• Job card and invoice PDF generation
+• task card and invoice PDF generation
