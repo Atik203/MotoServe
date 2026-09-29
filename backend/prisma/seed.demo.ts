@@ -258,6 +258,16 @@ async function main() {
   const inspection = await prisma.service.findFirst({ where: { name: "Multi-Point Inspection" } });
   const tireRotation = await prisma.service.findFirst({ where: { name: "Tire Rotation" } });
 
+  console.log("Seeding workshop stations...");
+  for (const name of [
+    "Main Bay / Station 01",
+    "Main Bay / Station 02",
+    "Main Bay / Station 03",
+    "Main Bay / Station 04",
+  ]) {
+    await prisma.station.upsert({ where: { name }, update: {}, create: { name } });
+  }
+
   console.log("Seeding demo appointments...");
   await prisma.appointment.create({
     data: {

@@ -85,7 +85,7 @@ function CreateTaskContent() {
   const stations = useAppSelector((s) => s.stations.items);
 
   // Mode: Booked Appointment vs Walk-In
-  const [mode, setMode] = useState<"appointment" | "walkin">(urlAppointmentId ? "appointment" : "appointment");
+  const [mode, setMode] = useState<"appointment" | "walkin">(urlAppointmentId ? "appointment" : "walkin");
   const [appointmentId, setAppointmentId] = useState(urlAppointmentId ?? "");
 
   // Walk-In state
@@ -167,9 +167,17 @@ function CreateTaskContent() {
   }, [urlAppointmentId, appointments, vehicles]);
 
   // Confirmed appointments
+  const linkedAppointmentIds = useMemo(
+    () => new Set(tasks.filter((t) => t.appointmentId).map((t) => t.appointmentId as string)),
+    [tasks],
+  );
+
   const confirmedAppointments = useMemo(
-    () => appointments.filter((a) => a.status === "confirmed" || a.id === appointmentId),
-    [appointments, appointmentId],
+    () =>
+      appointments.filter(
+        (a) => (a.status === "confirmed" || a.id === appointmentId) && !linkedAppointmentIds.has(a.id),
+      ),
+    [appointments, appointmentId, linkedAppointmentIds],
   );
 
   const selectedAppointment: Appointment | null = appointmentId
@@ -302,6 +310,10 @@ function CreateTaskContent() {
       toast.error("Please select or register a vehicle and customer");
       return;
     }
+    if (mode === "appointment" && appointmentId && linkedAppointmentIds.has(appointmentId)) {
+      toast.error("This appointment already has a task card");
+      return;
+    }
     if (!issues.trim()) {
       toast.error("Please provide customer concerns or intake reason");
       return;
@@ -409,9 +421,9 @@ function CreateTaskContent() {
                         "rounded-md px-3 py-1 text-xs font-semibold transition-all",
                         mode === "appointment" ? "bg-white text-[#0052cc] shadow-xs" : "text-muted-foreground",
                       )}
-                    >
-                      Booked Booking
-                    </button>
+                      >
+                        Booked Appointment
+                      </button>
                     <button
                       type="button"
                       onClick={() => setMode("walkin")}
@@ -679,6 +691,11 @@ function CreateTaskContent() {
                         </option>
                       ))}
                     </select>
+                    {stations.length === 0 && (
+                      <p className="text-[11px] font-medium text-amber-600">
+                        No workshop bays configured — add them in the admin portal.
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex flex-col gap-1.5">
