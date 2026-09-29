@@ -35,12 +35,12 @@ export async function createPartRequestController(req: Request, res: Response): 
   if (!mechanicId) throw new Error("Unauthorized");
   const request = await createPartRequest(mechanicId, req.body.body as CreatePartRequestBody);
   await logAudit(req.user?.name ?? "mechanic", `Requested part: ${request.partName} x${request.qty}`);
-  res.status(201).json(request);
+  res.status(201).json({ ...request, status: request.status.toLowerCase() });
 }
 
 export async function listPartRequestsController(req: Request, res: Response): Promise<void> {
   const mechanicId = req.user?.userId;
   if (!mechanicId) throw new Error("Unauthorized");
   const requests = await listPartRequests(mechanicId);
-  res.json(requests);
+  res.json(requests.map((request) => ({ ...request, status: request.status.toLowerCase() })));
 }
