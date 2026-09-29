@@ -13,6 +13,13 @@ export async function createTaskCard(advisorId: string, body: CreateTaskCardBody
     if (appointment.vehicleId !== body.vehicleId) {
       throw new ApiError(400, "Appointment belongs to a different vehicle");
     }
+    const existingTask = await prisma.taskCard.findUnique({
+      where: { appointmentId: body.appointmentId },
+      select: { id: true },
+    });
+    if (existingTask) {
+      throw new ApiError(409, `Appointment already has task card #${existingTask.id}`);
+    }
   }
 
   const resolvedMechanicIds: string[] = Array.isArray(body.mechanicIds) && body.mechanicIds.length > 0

@@ -578,6 +578,8 @@ export default function AdvisorDashboardPage() {
                 ) : (
                   scheduleSlots.map((slot) => {
                     const pill = appointmentStatusStyles[slot.appointment.status] ?? appointmentStatusStyles.pending;
+                    const linkedTask =
+                      slot.appointment.taskCard ?? tasks.find((t) => t.appointmentId === slot.appointment.id);
                     return (
                       <div
                         key={slot.appointment.id}
@@ -623,13 +625,22 @@ export default function AdvisorDashboardPage() {
                               Confirm
                             </Button>
                           )}
-                          {slot.appointment.status === "confirmed" && (
+                          {slot.appointment.status === "confirmed" && !linkedTask && (
                             <Link
                               href={`/advisor/receive?appointment=${slot.appointment.id}`}
                               className="inline-flex h-7 items-center gap-1 rounded-lg bg-primary px-2.5 text-xs font-semibold text-white hover:bg-primary/90 shadow-2xs transition-colors"
                             >
                               <Truck className="size-3.5" />
                               Start Intake
+                            </Link>
+                          )}
+                          {slot.appointment.status === "confirmed" && linkedTask && (
+                            <Link
+                              href={`/advisor/tasks/${linkedTask.id}`}
+                              className="inline-flex h-7 items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2.5 font-mono text-[11px] font-bold text-primary hover:bg-blue-100 transition-colors"
+                            >
+                              <Wrench className="size-3" />
+                              #{linkedTask.id}
                             </Link>
                           )}
                           {(slot.appointment.status === "pending" || slot.appointment.status === "confirmed") && (
