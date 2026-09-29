@@ -143,7 +143,10 @@ export default function AppointmentConfirmationPage() {
             <Button variant="outline" onClick={() => router.push("/dashboard")} className="rounded border-primary px-[25px] py-[11px] text-xs font-semibold tracking-[0.24px] text-primary">
               View Dashboard
             </Button>
-            <Button onClick={() => router.push("/dashboard/services/track")} className="gap-2 rounded px-6 py-2.5 text-xs font-semibold tracking-[0.24px]">
+            <Button
+              onClick={() => router.push(appointment ? `/dashboard/appointments/${appointment.id}` : "/dashboard/appointments")}
+              className="gap-2 rounded px-6 py-2.5 text-xs font-semibold tracking-[0.24px]"
+            >
               Track Appointment
               <ChevronRight className="size-3" />
             </Button>
