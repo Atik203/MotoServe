@@ -140,7 +140,8 @@ function buildActiveNotifications({
   const list: NotificationItem[] = [];
 
   // Chat threads
-  for (const t of threads) {
+  const canChat = role === "owner" || role === "advisor";
+  for (const t of canChat ? threads : []) {
     if (t.unread > 0) {
       const otherParty = role === "owner" ? t.advisor?.name ?? "Advisor" : t.owner?.name ?? "Customer";
       const lastMsg = t.messages?.[t.messages.length - 1];
@@ -495,7 +496,7 @@ function buildActivities({
   }
 
   // Chat Threads Activities
-  for (const t of threads) {
+  for (const t of role === "owner" || role === "advisor" ? threads : []) {
     const otherParty = role === "owner" ? t.advisor?.name ?? "Advisor" : t.owner?.name ?? "Customer";
     const lastMsg = t.messages?.[t.messages.length - 1];
     const dateObj = parseSafeDate(t.lastMessageAt);
