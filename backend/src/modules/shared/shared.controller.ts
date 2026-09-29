@@ -64,6 +64,9 @@ function mapTask(task: {
     id: typeof s?.id === "string" ? s.id : `svc-${idx + 1}`,
     name: typeof s?.name === "string" ? (s.name as string) : "Service",
     price: typeof s?.price === "number" ? s.price : 0,
+    durationMins: typeof s?.durationMins === "number" ? s.durationMins : undefined,
+    laborRate: typeof s?.laborRate === "number" ? s.laborRate : undefined,
+    category: typeof s?.category === "string" ? (s.category as string).toLowerCase() : undefined,
   }));
 
   return {

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
+  AlertTriangle,
   ArrowLeft,
   Calendar,
   Car,
@@ -18,6 +19,7 @@ import {
   Package,
   Phone,
   Plus,
+  RefreshCw,
   Send,
   ShieldAlert,
   ShieldCheck,
@@ -32,6 +34,7 @@ import { fetchTasks } from "@/store/slices/tasksSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
 import { fetchEstimates, createEstimate } from "@/store/slices/estimatesSlice";
+import { computeAutoLabor, TAX_RATE } from "@/lib/pricing";
 import { fetchServices } from "@/store/slices/servicesSlice";
 import { FormLoading } from "@/components/ui/loading";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
@@ -167,6 +170,18 @@ function SendEstimateContent() {
         });
       }
 
+      const autoLabor = computeAutoLabor(selectedTask.services ?? []);
+      if (autoLabor > 0) {
+        initial.push({
+          id: nextId(),
+          name: "Workshop Labor",
+          category: "labor",
+          qty: 1,
+          unitPrice: 0,
+          laborRate: Number(autoLabor.toFixed(2)),
+        });
+      }
+
       if (selectedTask.partsUsed && selectedTask.partsUsed.length > 0) {
         selectedTask.partsUsed.forEach((pu) => {
           initial.push({
@@ -295,9 +310,57 @@ function SendEstimateContent() {
   }, [computedRows]);
 
   const netSubtotal = servicesTotal + partsTotal + laborTotal;
-  const taxRate = 0.085;
-  const estimatedTax = netSubtotal * taxRate;
+  const estimatedTax = netSubtotal * TAX_RATE;
   const grandTotal = netSubtotal + estimatedTax;
+
+  const existingEstimate = useMemo(() => {
+    if (!selectedTask) return null;
+    return (
+      estimates.find((e) => e.taskId === selectedTask.id || e.taskCardId === selectedTask.id) ?? null
+    );
+  }, [estimates, selectedTask]);
+
+  const existingNames = useMemo(
+    () => new Set((existingEstimate?.items ?? []).map((i) => i.description.trim().toLowerCase())),
+    [existingEstimate],
+  );
+
+  const missingTaskItems = useMemo(() => {
+    if (!selectedTask) return { services: [] as string[], parts: [] as string[] };
+    const services = (selectedTask.services ?? [])
+      .map((s) => s.name)
+      .filter((name) => !existingNames.has(name.trim().toLowerCase()));
+    const parts = (selectedTask.partsUsed ?? [])
+      .map((p) => p.name)
+      .filter((name) => !existingNames.has(name.trim().toLowerCase()));
+    return { services, parts };
+  }, [selectedTask, existingNames]);
+
+  const missingCount = missingTaskItems.services.length + missingTaskItems.parts.length;
+
+  const syncTaskChanges = () => {
+    if (!selectedTask) return;
+    setLineItems((prev) => {
+      const known = new Set(prev.map((p) => p.name.trim().toLowerCase()));
+      const next = [...prev];
+      for (const srv of selectedTask.services ?? []) {
+        if (known.has(srv.name.trim().toLowerCase())) continue;
+        known.add(srv.name.trim().toLowerCase());
+        next.push({ id: nextId(), name: srv.name, category: "service", qty: 1, unitPrice: srv.price ?? 59.99, laborRate: 0 });
+      }
+      for (const pu of selectedTask.partsUsed ?? []) {
+        if (known.has(pu.name.trim().toLowerCase())) continue;
+        known.add(pu.name.trim().toLowerCase());
+        next.push({ id: nextId(), name: pu.name, category: "parts", qty: pu.qty || 1, unitPrice: pu.unitPrice || pu.subtotal || 35.0, laborRate: 0 });
+      }
+      const autoLabor = computeAutoLabor(selectedTask.services ?? []);
+      if (!next.some((n) => n.category === "labor") && autoLabor > 0) {
+        next.push({ id: nextId(), name: "Workshop Labor", category: "labor", qty: 1, unitPrice: 0, laborRate: Number(autoLabor.toFixed(2)) });
+      }
+      return next;
+    });
+    toast.success("Estimate synced with the latest task items — review and resend");
+  };
 
   const handleSendEstimate = async () => {
     if (!selectedTask) {
@@ -326,7 +389,11 @@ function SendEstimateContent() {
         })
       ).unwrap();
 
-      toast.success("Estimate successfully dispatched to customer!");
+      toast.success(
+        existingEstimate
+          ? "Updated estimate re-sent to customer!"
+          : "Estimate successfully dispatched to customer!",
+      );
       if (res?.id) {
         router.push(`/advisor/estimates/${res.id}`);
       } else {
@@ -583,6 +650,39 @@ function SendEstimateContent() {
                   </div>
                 </div>
 
+                {existingEstimate && missingCount > 0 && (
+                  <div className="flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3.5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+                      <div>
+                        <p className="text-xs font-bold text-amber-900">This estimate is out of date</p>
+                        <p className="text-xs text-amber-800">
+                          {[
+                            missingTaskItems.parts.length > 0
+                              ? `${missingTaskItems.parts.length} new part${missingTaskItems.parts.length > 1 ? "s" : ""}`
+                              : null,
+                            missingTaskItems.services.length > 0
+                              ? `${missingTaskItems.services.length} new service${missingTaskItems.services.length > 1 ? "s" : ""}`
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" and ")}{" "}
+                          added to #{selectedTask?.id} since this estimate was sent.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={syncTaskChanges}
+                      className="gap-1.5 rounded-lg bg-amber-600 text-xs font-bold text-white hover:bg-amber-700"
+                    >
+                      <RefreshCw className="size-3" />
+                      Sync &amp; Resend
+                    </Button>
+                  </div>
+                )}
+
                 {/* Line Items Table */}
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
@@ -792,7 +892,7 @@ function SendEstimateContent() {
                   </div>
 
                   <div className="flex items-center justify-between text-[#64748b]">
-                    <span>Sales Tax (8.5%):</span>
+                    <span>Sales Tax ({(TAX_RATE * 100).toFixed(1)}%):</span>
                     <span className="font-mono font-semibold text-[#191c1d]">
                       ${estimatedTax.toFixed(2)}
                     </span>
@@ -837,7 +937,7 @@ function SendEstimateContent() {
                   className="h-11 w-full gap-2 rounded-lg bg-primary text-sm font-bold text-white shadow-md hover:bg-primary/90 disabled:opacity-50"
                 >
                   <Send className="size-4" />
-                  {submitting ? "Transmitting Quote..." : "Send Estimate to Customer"}
+                  {submitting ? "Transmitting Quote..." : existingEstimate ? "Update & Resend Estimate" : "Send Estimate to Customer"}
                 </Button>
 
                 <p className="text-center text-[11px] text-[#9ca3af]">
