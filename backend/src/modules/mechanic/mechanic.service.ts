@@ -2,8 +2,8 @@ import { prisma } from "../../lib/prisma.js";
 import { createWithSequentialId } from "../../lib/ids.js";
 import { ApiError } from "../../middleware/error.js";
 import type { Invoice } from "../../generated/prisma/client.js";
-import type { AddTaskNoteBody, AddPartUsedBody, UpdateTaskStatusBody, CreatePartRequestBody } from "./mechanic.types.js";
-import { DEFAULT_LABOR_RATE, TAX_RATE } from "../../lib/pricing.js";
+import type { AddTaskNoteBody, AddPartUsedBody, UpdateTaskStatusBody, CreatePartRequestBody, ReviewPartRequestBody } from "./mechanic.types.js";
+import { DEFAULT_LABOR_RATE, TAX_RATE, round2 } from "../../lib/pricing.js";
 
 const STATUS_ORDER = ["RECEIVED", "INSPECTING", "REPAIRING", "TESTING", "READY", "COMPLETED"];
 
@@ -174,4 +174,89 @@ export function listPartRequests(mechanicId: string) {
     where: { mechanicId },
     orderBy: { createdAt: "desc" },
   });
+}
+
+export async function listTeamPartRequests() {
+  const requests = await prisma.partRequest.findMany({
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+  });
+  const mechanicIds = [...new Set(requests.map((r) => r.mechanicId))];
+  const mechanics = await prisma.user.findMany({
+    where: { id: { in: mechanicIds } },
+    select: { id: true, name: true, avatar: true },
+  });
+  const byId = new Map(mechanics.map((m) => [m.id, m]));
+  return requests.map((r) => ({ ...r, mechanic: byId.get(r.mechanicId) ?? null }));
+}
+
+export async function reviewPartRequest(
+  id: string,
+  body: ReviewPartRequestBody,
+  reviewerName: string,
+) {
+  const request = await prisma.partRequest.findUnique({ where: { id } });
+  if (!request) throw new ApiError(404, "Part request not found");
+
+  const target = body.status.toUpperCase() as "APPROVED" | "REJECTED" | "FULFILLED";
+  const allowed: Record<string, string[]> = {
+    PENDING: ["APPROVED", "REJECTED", "FULFILLED"],
+    APPROVED: ["FULFILLED", "REJECTED"],
+    REJECTED: ["APPROVED"],
+    FULFILLED: [],
+  };
+  if (!allowed[request.status]?.includes(target)) {
+    throw new ApiError(
+      400,
+      `Cannot move part request from ${request.status.toLowerCase()} to ${target.toLowerCase()}`,
+    );
+  }
+
+  let issued: { name: string; qty: number; unitPrice: number; supplier: string; subtotal: number } | null = null;
+
+  if (target === "FULFILLED") {
+    const part = request.partId
+      ? await prisma.part.findUnique({ where: { id: request.partId } })
+      : null;
+    const unitPrice = part?.unitPrice ?? 0;
+
+    if (part) {
+      await prisma.part.update({
+        where: { id: part.id },
+        data: { stock: Math.max(0, part.stock - request.qty) },
+      });
+    }
+
+    if (request.taskCardId) {
+      await prisma.partsUsed.create({
+        data: {
+          taskCardId: request.taskCardId,
+          name: part?.name ?? request.partName,
+          qty: request.qty,
+          unitPrice,
+          supplier: part?.supplier ?? "",
+          subtotal: round2(request.qty * unitPrice),
+        },
+      });
+    }
+
+    issued = {
+      name: part?.name ?? request.partName,
+      qty: request.qty,
+      unitPrice,
+      supplier: part?.supplier ?? "",
+      subtotal: round2(request.qty * unitPrice),
+    };
+  }
+
+  const updated = await prisma.partRequest.update({
+    where: { id },
+    data: {
+      status: target as never,
+      reviewNote: body.reviewNote ?? null,
+      reviewedBy: reviewerName,
+      reviewedAt: new Date(),
+    },
+  });
+
+  return { request: updated, issued };
 }

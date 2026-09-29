@@ -182,6 +182,10 @@ export interface PartRequest {
   qty: number;
   notes: string | null;
   status: PartRequestStatus;
+  reviewNote?: string | null;
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+  mechanic?: { id: string; name: string; avatar?: string | null } | null;
   createdAt: string;
   updatedAt: string;
 }
