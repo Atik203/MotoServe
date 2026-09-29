@@ -4,6 +4,7 @@ import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import type { TaskCard, Prisma } from "../../generated/prisma/client.js";
 import { createWithSequentialId } from "../../lib/ids.js";
+import { round2, summarizeItems } from "../../lib/pricing.js";
 import type { AssignMechanicBody, CreateCustomerBody, CreateEstimateBody, CreateTaskCardBody } from "./advisor.types.js";
 
 export async function createTaskCard(advisorId: string, body: CreateTaskCardBody) {
@@ -115,14 +116,31 @@ export async function createCustomer(body: CreateCustomerBody) {
 }
 
 export async function assignMechanic(id: string, body: AssignMechanicBody) {
-  const existing = await prisma.taskCard.findUnique({ where: { id } });
+  const existing = await prisma.taskCard.findUnique({
+    where: { id },
+    include: {
+      mechanics: { select: { id: true, name: true } },
+      mechanic: { select: { id: true, name: true } },
+    },
+  });
   if (!existing) throw new ApiError(404, "Task not found");
+
+  if (existing.status === "COMPLETED") {
+    throw new ApiError(400, "Completed tasks cannot be reassigned");
+  }
+  if (existing.status === "READY" && !body.force) {
+    throw new ApiError(400, "Task is ready for pickup — reassignment requires force");
+  }
 
   const resolvedMechanicIds: string[] = Array.isArray(body.mechanicIds)
     ? body.mechanicIds.filter(Boolean)
     : body.mechanicId
       ? [body.mechanicId]
       : [];
+
+  if (resolvedMechanicIds.length === 0 && !body.unassign) {
+    throw new ApiError(400, "Select at least one mechanic, or pass unassign to clear the assignment");
+  }
 
   if (resolvedMechanicIds.length > 0) {
     const mechanics = await prisma.user.findMany({
@@ -137,6 +155,12 @@ export async function assignMechanic(id: string, body: AssignMechanicBody) {
     }
   }
 
+  const previousNames = existing.mechanics.length > 0
+    ? existing.mechanics.map((m) => m.name)
+    : existing.mechanic
+      ? [existing.mechanic.name]
+      : [];
+
   const data: Prisma.TaskCardUncheckedUpdateInput = {
     mechanicId: resolvedMechanicIds[0] ?? null,
     mechanicIds: resolvedMechanicIds,
@@ -144,10 +168,10 @@ export async function assignMechanic(id: string, body: AssignMechanicBody) {
       set: resolvedMechanicIds.map((mId) => ({ id: mId })),
     },
   };
-  if (body.station) data.station = body.station;
-  if (body.notes) data.assignmentNotes = body.notes;
+  if (body.station !== undefined) data.station = body.station.trim() ? body.station.trim() : null;
+  if (body.notes !== undefined) data.assignmentNotes = body.notes.trim() ? body.notes.trim() : null;
 
-  return prisma.taskCard.update({
+  const task = await prisma.taskCard.update({
     where: { id },
     data,
     include: {
@@ -155,6 +179,13 @@ export async function assignMechanic(id: string, body: AssignMechanicBody) {
       mechanic: { select: { id: true, name: true, avatar: true } },
     },
   });
+
+  return {
+    task,
+    previous: previousNames,
+    assigned: task.mechanics.map((m) => m.name),
+    reassigned: previousNames.length > 0,
+  };
 }
 
 export type EstimateWithItems = Prisma.EstimateGetPayload<{ include: { items: true } }>;
@@ -177,12 +208,23 @@ export async function createEstimate(
       data: { advisorId },
     });
   }
-  const total = body.items.reduce((sum, i) => sum + i.amount, 0);
+  const totals = summarizeItems(body.items);
   const items = body.items.map((i) => ({
     description: i.description,
     category: i.category.toUpperCase() as never,
-    amount: i.amount,
+    serviceId: i.serviceId ?? null,
+    qty: i.qty ?? 1,
+    rate: i.rate ?? null,
+    amount: round2(i.amount),
   }));
+  const pricing = {
+    servicesTotal: totals.servicesTotal,
+    laborTotal: totals.laborTotal,
+    partsTotal: totals.partsTotal,
+    subtotal: totals.subtotal,
+    tax: totals.tax,
+    total: totals.total,
+  };
 
   const existing = await prisma.estimate.findFirst({
     where: { taskCardId: targetId },
@@ -196,7 +238,7 @@ export async function createEstimate(
         advisorId,
         summary: body.summary ?? "",
         internalNotes: body.internalNotes,
-        total,
+        ...pricing,
         status: "PENDING" as never,
         items: { deleteMany: {}, create: items },
       },
@@ -212,7 +254,7 @@ export async function createEstimate(
       advisorId,
       summary: body.summary ?? "",
       internalNotes: body.internalNotes,
-      total,
+      ...pricing,
       items: {
         create: items,
       },

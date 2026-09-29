@@ -3,6 +3,7 @@ import { createWithSequentialId } from "../../lib/ids.js";
 import { ApiError } from "../../middleware/error.js";
 import type { Invoice } from "../../generated/prisma/client.js";
 import type { AddTaskNoteBody, AddPartUsedBody, UpdateTaskStatusBody, CreatePartRequestBody } from "./mechanic.types.js";
+import { DEFAULT_LABOR_RATE, TAX_RATE } from "../../lib/pricing.js";
 
 const STATUS_ORDER = ["RECEIVED", "INSPECTING", "REPAIRING", "TESTING", "READY", "COMPLETED"];
 
@@ -62,14 +63,14 @@ export async function ensureInvoiceForTask(taskId: string) {
   const estimateLabor =
     estimate?.items.filter((i) => i.category === "LABOR").reduce((sum, i) => sum + i.amount, 0) ?? 0;
   const autoLabor = services.reduce(
-    (sum, sv) => sum + (sv.durationMins ? (sv.durationMins / 60) * (sv.laborRate ?? 45) : 0),
+    (sum, sv) => sum + (sv.durationMins ? (sv.durationMins / 60) * (sv.laborRate ?? DEFAULT_LABOR_RATE) : 0),
     0,
   );
   const laborTotal = estimateLabor > 0 ? estimateLabor : autoLabor;
   const servicesTotal = services.reduce((sum, sv) => sum + sv.price, 0);
   const partsTotal = task.partsUsed.reduce((sum, p) => sum + p.subtotal, 0);
   const subtotal = servicesTotal + partsTotal + laborTotal;
-  const tax = subtotal * 0.085;
+  const tax = subtotal * TAX_RATE;
   const total = subtotal + tax;
 
   const year = new Date().getFullYear();

@@ -35,7 +35,7 @@ import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
 import { downloadTaskCardPdf } from "@/lib/pdf";
-import { computeTotals, DEFAULT_LABOR_RATE, TAX_RATE } from "@/lib/pricing";
+import { computeTotals, DEFAULT_LABOR_RATE, TAX_RATE, formatHours, laborHours, round2 } from "@/lib/pricing";
 import { ProgressStepper } from "@/components/roles/mechanic/ProgressStepper";
 import { PriorityPill, StatusBadge } from "@/components/roles/mechanic/StatusBadge";
 import { MechanicNotes } from "@/components/roles/mechanic/MechanicNotes";
@@ -270,7 +270,7 @@ export default function AdvisorTaskDetailPage() {
                   className="gap-2 rounded-lg border-[#e5e7eb] bg-white text-xs font-semibold text-[#191c1d] hover:bg-muted"
                 >
                   <Users className="size-3.5" />
-                  Assign Mechanic
+                  {assignedMechanics.length > 0 ? "Change Mechanic" : "Assign Mechanic"}
                 </Button>
               </Link>
 
@@ -483,32 +483,46 @@ export default function AdvisorTaskDetailPage() {
               </div>
 
               <div className="divide-y divide-[#f1f3f5]">
-                {(task.services ?? []).map((service, index) => (
-                  <div key={service.id || index} className="flex items-center justify-between py-3">
-                    <div className="flex items-center gap-3">
-                      <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[#eff6ff] text-xs font-bold text-primary">
-                        {index + 1}
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold text-[#191c1d]">{service.name}</p>
-                        <p className="text-xs text-[#64748b]">
-                          {[
-                            service.category
-                              ? service.category.charAt(0).toUpperCase() + service.category.slice(1)
-                              : null,
-                            service.durationMins ? `${service.durationMins} min` : null,
-                            `$${service.laborRate ?? DEFAULT_LABOR_RATE}/hr labor`,
-                          ]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </p>
+                {(task.services ?? []).map((service, index) => {
+                  const hours = laborHours(service.durationMins);
+                  const rate = service.laborRate ?? DEFAULT_LABOR_RATE;
+                  const laborAmount = round2(hours * rate);
+                  const lineTotal = round2((service.price ?? 0) + laborAmount);
+                  return (
+                    <div key={service.id || index} className="flex items-start justify-between py-3">
+                      <div className="flex items-start gap-3">
+                        <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[#eff6ff] text-xs font-bold text-primary">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <p className="text-sm font-semibold text-[#191c1d]">{service.name}</p>
+                          <p className="text-xs text-[#64748b]">
+                            {[
+                              service.category
+                                ? service.category.charAt(0).toUpperCase() + service.category.slice(1)
+                                : null,
+                              `$${(service.price ?? 0).toFixed(2)} base`,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </p>
+                          {hours > 0 && (
+                            <p className="mt-0.5 text-xs text-[#64748b]">
+                              Labor: {formatHours(hours)} × ${rate.toFixed(2)}/hr ={" "}
+                              <span className="font-semibold text-[#191c1d]">${laborAmount.toFixed(2)}</span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-mono text-sm font-bold text-[#191c1d]">
+                          ${lineTotal.toFixed(2)}
+                        </span>
+                        <p className="text-[10px] text-[#64748b]">incl. labor</p>
                       </div>
                     </div>
-                    <span className="font-mono text-sm font-bold text-[#191c1d]">
-                      ${(service.price ?? 0).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
                 {(!task.services || task.services.length === 0) && (
                   <div className="py-6 text-center text-sm text-[#64748b]">
                     No services specified on this task.
