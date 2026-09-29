@@ -122,11 +122,7 @@ export default function AdvisorBookAppointmentPage() {
     dispatch(fetchStations());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (!selectedStation && stations.length > 0) {
-      setSelectedStation(stations[0].name);
-    }
-  }, [stations, selectedStation]);
+    const stationValue = selectedStation || stations[0]?.name || "";
 
   // Available mechanics (active only)
   const mechanics = useMemo(
@@ -230,10 +226,10 @@ export default function AdvisorBookAppointmentPage() {
           model: newVehicleModel,
           year: parseInt(newVehicleYear, 10) || new Date().getFullYear(),
           regNo: newVehicleReg.toUpperCase(),
-          fuelType: newVehicleFuel,
-          mileage: parseInt(newVehicleMileage, 10) || 0,
-          image: "/images/cars/car-1.png",
-        }),
+              fuelType: newVehicleFuel,
+              mileage: parseInt(newVehicleMileage, 10) || 0,
+              image: "",
+            }),
       ).unwrap();
       toast.success("Vehicle registered successfully");
       setSelectedVehicleId(created.id);
@@ -274,7 +270,7 @@ export default function AdvisorBookAppointmentPage() {
       .map((e) => e.name);
     const mechanicNotes =
       assignedMechanicNames.length > 0
-        ? `[Assigned Mechanics: ${assignedMechanicNames.join(", ")} | Bay: ${selectedStation}]`
+        ? `[Assigned Mechanics: ${assignedMechanicNames.join(", ")} | Bay: ${stationValue}]`
         : "";
     const combinedNotes = [customRequest.trim(), mechanicNotes].filter(Boolean).join(" ");
 
@@ -302,7 +298,7 @@ export default function AdvisorBookAppointmentPage() {
               customerId: selectedCustomerId,
               appointmentId: appt.id,
               serviceIds: selectedServices,
-              station: selectedStation,
+              station: stationValue,
               priority: taskPriority,
               mileage: selectedVehicle?.mileage,
               issues: customRequest.trim() || selectedServiceNames.join(" • ") || "Scheduled Service",
@@ -692,7 +688,7 @@ export default function AdvisorBookAppointmentPage() {
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-xs font-semibold text-foreground">Workshop Bay / Station</Label>
                   <select
-                    value={selectedStation}
+                    value={stationValue}
                     onChange={(e) => setSelectedStation(e.target.value)}
                     className="h-9 rounded-md border border-border bg-white px-3 text-xs text-foreground outline-none focus:border-[#0052cc]"
                   >
@@ -864,7 +860,7 @@ export default function AdvisorBookAppointmentPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Intake Bay:</span>
-                    <span className="font-semibold text-foreground">{selectedStation}</span>
+                    <span className="font-semibold text-foreground">{stationValue}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Technicians:</span>
