@@ -63,8 +63,16 @@ async function request<T>(path: string, { body, ...init }: ApiOptions = {}): Pro
   if (!res.ok) {
     let message = `Request failed (${res.status})`;
     try {
-      const data = (await res.json()) as { error?: string };
+      const data = (await res.json()) as {
+        error?: string;
+        issues?: { path?: (string | number)[]; message?: string }[];
+      };
       if (data.error) message = data.error;
+      const firstIssue = data.issues?.[0];
+      if (firstIssue?.message) {
+        const field = firstIssue.path?.filter((p) => p !== "body").join(".");
+        message = field ? `${message} — ${field}: ${firstIssue.message}` : `${message} — ${firstIssue.message}`;
+      }
     } catch {
       // ignore non-JSON error bodies
     }
