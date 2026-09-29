@@ -1,4 +1,4 @@
-import { CheckCircle2, ClipboardList, Wrench } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardList, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TaskPriority, TaskStatus } from "@/types";
 
@@ -12,6 +12,7 @@ const statusConfig: Record<TaskStatus, { label: string; className: string }> = {
 };
 
 const priorityIcon = {
+  urgent: <AlertTriangle className="size-3" />,
   high: <Wrench className="size-3" />,
   medium: <ClipboardList className="size-3" />,
   low: <CheckCircle2 className="size-3" />,
@@ -33,9 +34,24 @@ export function StatusBadge({ status, priority }: StatusBadgeProps) {
 }
 
 export function PriorityPill({ priority }: { priority: TaskPriority }) {
+  const label =
+    priority === "urgent"
+      ? "Urgent Rush"
+      : priority === "high"
+        ? "High Priority"
+        : priority === "medium"
+          ? "Medium Priority"
+          : "Low Priority";
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-[rgba(255,193,7,0.1)] px-[13px] py-[5px] text-xs font-semibold tracking-[0.8px] text-warning uppercase ring-1 ring-[rgba(255,193,7,0.2)]">
-      {priority === "high" ? "High Priority" : priority === "medium" ? "Medium Priority" : "Low Priority"}
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-[13px] py-[5px] text-xs font-semibold tracking-[0.8px] uppercase ring-1",
+        priority === "urgent"
+          ? "bg-[rgba(225,29,72,0.1)] text-[#be123c] ring-[rgba(225,29,72,0.2)]"
+          : "bg-[rgba(255,193,7,0.1)] text-warning ring-[rgba(255,193,7,0.2)]",
+      )}
+    >
+      {label}
     </span>
   );
 }
