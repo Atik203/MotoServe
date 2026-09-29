@@ -124,6 +124,10 @@ export async function updateAppointment(
   if (role === "OWNER") {
     if (appointment.ownerId !== userId) throw new ApiError(403, "Insufficient permissions");
     if (data.status && data.status !== "cancelled") throw new ApiError(403, "Owners can only cancel appointments");
+    const isReschedule = Boolean(data.date || data.time || data.notes !== undefined);
+    if (isReschedule && appointment.status === "CANCELLED") {
+      throw new ApiError(400, "Cancelled appointments cannot be rescheduled");
+    }
   }
   return prisma.appointment.update({
     where: { id },
