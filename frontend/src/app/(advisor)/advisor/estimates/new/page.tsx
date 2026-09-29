@@ -85,6 +85,7 @@ function SendEstimateContent() {
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const customers = useAppSelector((s) => s.customers.items);
   const estimates = useAppSelector((s) => s.estimates.items);
+  const servicesCatalog = useAppSelector((s) => s.services.items);
 
   const initialTaskId = searchParams.get("task") || "";
   const [selectedTaskId, setSelectedTaskId] = useState(initialTaskId);
@@ -183,6 +184,33 @@ function SendEstimateContent() {
             });
           }
         });
+      } else if (selectedTask.appointment?.serviceIds?.length) {
+        const carriedIds = selectedTask.appointment.serviceIds;
+        servicesCatalog
+          .filter((s) => carriedIds.includes(s.id))
+          .forEach((srv) => {
+            initial.push({
+              id: nextId(),
+              name: srv.name,
+              category: "service",
+              qty: 1,
+              unitPrice: srv.basePrice ?? 59.99,
+              laborRate: 0,
+              serviceId: srv.id,
+            });
+            const hours = laborHours(srv.durationMins);
+            if (hours > 0) {
+              initial.push({
+                id: nextId(),
+                name: `Labor — ${srv.name}`,
+                category: "labor",
+                qty: hours,
+                unitPrice: 0,
+                laborRate: srv.laborRate ?? DEFAULT_LABOR_RATE,
+                serviceId: srv.id,
+              });
+            }
+          });
       }
 
       if (selectedTask.partsUsed && selectedTask.partsUsed.length > 0) {
@@ -221,7 +249,7 @@ function SendEstimateContent() {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [selectedTask, estimates]);
+  }, [selectedTask, estimates, servicesCatalog]);
 
   const updateItem = (id: string, patch: Partial<LineItem>) => {
     setLineItems((prev) =>

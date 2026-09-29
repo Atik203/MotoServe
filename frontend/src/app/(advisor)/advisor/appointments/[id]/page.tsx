@@ -39,6 +39,7 @@ import { fetchServices } from "@/store/slices/servicesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
 import { fetchTasks } from "@/store/slices/tasksSlice";
 import { cn } from "@/lib/utils";
+import { DEFAULT_LABOR_RATE, TAX_RATE, formatHours, laborHours, round2 } from "@/lib/pricing";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { Button } from "@/components/ui/button";
 import {
@@ -184,6 +185,15 @@ export default function AdvisorAppointmentDetailsPage() {
     .toUpperCase();
 
   const totalCost = selectedServices.reduce((acc, s) => acc + s.basePrice, 0);
+  const totalLabor = round2(
+    selectedServices.reduce(
+      (acc, s) => acc + laborHours(s.durationMins) * (s.laborRate ?? DEFAULT_LABOR_RATE),
+      0,
+    ),
+  );
+  const subtotal = round2(totalCost + totalLabor);
+  const tax = round2(subtotal * TAX_RATE);
+  const estimatedTotal = round2(subtotal + tax);
   const totalDuration = selectedServices.reduce((acc, s) => acc + s.durationMins, 0);
 
   return (
@@ -455,25 +465,36 @@ export default function AdvisorAppointmentDetailsPage() {
                     No standard catalog services selected. Review custom request notes below.
                   </div>
                 ) : (
-                  selectedServices.map((srv) => (
-                    <div key={srv.id} className="flex items-center justify-between py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                          <Wrench className="size-4" />
+                  selectedServices.map((srv) => {
+                    const hours = laborHours(srv.durationMins);
+                    const rate = srv.laborRate ?? DEFAULT_LABOR_RATE;
+                    const labor = round2(hours * rate);
+                    return (
+                      <div key={srv.id} className="flex items-start justify-between py-3.5">
+                        <div className="flex items-start gap-3">
+                          <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <Wrench className="size-4" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-foreground">{srv.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {srv.category ? `${cap(srv.category)} • ` : ""}{srv.durationMins} min estimated duration
+                            </p>
+                            <p className="mt-0.5 text-[11px] text-muted-foreground">
+                              ${srv.basePrice.toFixed(2)} base
+                              {hours > 0 ? ` + ${formatHours(hours)} × $${rate.toFixed(2)}/hr labor` : ""}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-bold text-foreground">{srv.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {srv.category ? `${cap(srv.category)} • ` : ""}{srv.durationMins} min estimated duration
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-foreground">
+                            ${round2(srv.basePrice + labor).toFixed(2)}
                           </p>
+                          <p className="text-[10px] text-muted-foreground">Base + labor</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-foreground">${srv.basePrice.toFixed(2)}</p>
-                        <p className="text-[10px] text-muted-foreground">Base Labor & Parts</p>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
 
@@ -481,16 +502,24 @@ export default function AdvisorAppointmentDetailsPage() {
               {selectedServices.length > 0 && (
                 <div className="mt-4 rounded-lg bg-slate-50 p-4">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Labor & Service Subtotal:</span>
+                    <span>Services (base price):</span>
                     <span className="font-semibold text-foreground">${totalCost.toFixed(2)}</span>
                   </div>
                   <div className="mt-1.5 flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Estimated Sales Tax (8.5%):</span>
-                    <span className="font-semibold text-foreground">${(totalCost * 0.085).toFixed(2)}</span>
+                    <span>Mechanic Labor:</span>
+                    <span className="font-semibold text-foreground">${totalLabor.toFixed(2)}</span>
+                  </div>
+                  <div className="mt-1.5 flex items-center justify-between border-t border-slate-200 pt-1.5 text-xs font-semibold text-foreground">
+                    <span>Subtotal:</span>
+                    <span>${subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="mt-1.5 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Estimated Sales Tax ({(TAX_RATE * 100).toFixed(1)}%):</span>
+                    <span className="font-semibold text-foreground">${tax.toFixed(2)}</span>
                   </div>
                   <div className="mt-2.5 flex items-center justify-between border-t border-slate-200 pt-2.5 text-sm font-bold text-foreground">
                     <span>Estimated Total:</span>
-                    <span className="text-base text-primary">${(totalCost * 1.085).toFixed(2)}</span>
+                    <span className="text-base text-primary">${estimatedTotal.toFixed(2)}</span>
                   </div>
                 </div>
               )}
