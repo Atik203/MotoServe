@@ -182,6 +182,7 @@ export interface PartRequest {
   qty: number;
   notes: string | null;
   status: PartRequestStatus;
+  kind?: "issue" | "restock";
   reviewNote?: string | null;
   reviewedBy?: string | null;
   reviewedAt?: string | null;

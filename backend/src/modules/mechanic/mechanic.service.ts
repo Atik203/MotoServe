@@ -164,6 +164,7 @@ export function createPartRequest(mechanicId: string, body: CreatePartRequestBod
       partId: body.partId ?? null,
       qty: body.qty,
       notes: body.notes ?? null,
+      kind: (body.kind ?? "issue").toUpperCase() as never,
       status: "PENDING",
     },
   });
@@ -212,40 +213,52 @@ export async function reviewPartRequest(
   }
 
   let issued: { name: string; qty: number; unitPrice: number; supplier: string; subtotal: number } | null = null;
+  let restocked: { name: string; qty: number; stock: number } | null = null;
 
   if (target === "FULFILLED") {
     const part = request.partId
       ? await prisma.part.findUnique({ where: { id: request.partId } })
       : null;
-    const unitPrice = part?.unitPrice ?? 0;
 
-    if (part) {
-      await prisma.part.update({
-        where: { id: part.id },
-        data: { stock: Math.max(0, part.stock - request.qty) },
-      });
+    if (request.kind === "RESTOCK") {
+      if (part) {
+        const updatedPart = await prisma.part.update({
+          where: { id: part.id },
+          data: { stock: part.stock + request.qty },
+        });
+        restocked = { name: updatedPart.name, qty: request.qty, stock: updatedPart.stock };
+      }
+    } else {
+      const unitPrice = part?.unitPrice ?? 0;
+
+      if (part) {
+        await prisma.part.update({
+          where: { id: part.id },
+          data: { stock: Math.max(0, part.stock - request.qty) },
+        });
+      }
+
+      if (request.taskCardId) {
+        await prisma.partsUsed.create({
+          data: {
+            taskCardId: request.taskCardId,
+            name: part?.name ?? request.partName,
+            qty: request.qty,
+            unitPrice,
+            supplier: part?.supplier ?? "",
+            subtotal: round2(request.qty * unitPrice),
+          },
+        });
+      }
+
+      issued = {
+        name: part?.name ?? request.partName,
+        qty: request.qty,
+        unitPrice,
+        supplier: part?.supplier ?? "",
+        subtotal: round2(request.qty * unitPrice),
+      };
     }
-
-    if (request.taskCardId) {
-      await prisma.partsUsed.create({
-        data: {
-          taskCardId: request.taskCardId,
-          name: part?.name ?? request.partName,
-          qty: request.qty,
-          unitPrice,
-          supplier: part?.supplier ?? "",
-          subtotal: round2(request.qty * unitPrice),
-        },
-      });
-    }
-
-    issued = {
-      name: part?.name ?? request.partName,
-      qty: request.qty,
-      unitPrice,
-      supplier: part?.supplier ?? "",
-      subtotal: round2(request.qty * unitPrice),
-    };
   }
 
   const updated = await prisma.partRequest.update({
@@ -258,5 +271,5 @@ export async function reviewPartRequest(
     },
   });
 
-  return { request: updated, issued };
+  return { request: updated, issued, restocked };
 }

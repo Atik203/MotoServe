@@ -397,6 +397,11 @@ enum PartRequestStatus {
   REJECTED
 }
 
+enum PartRequestKind {
+  ISSUE
+  RESTOCK
+}
+
 model PartRequest {
   id         String            @id @default(cuid())
   mechanicId String
@@ -406,6 +411,7 @@ model PartRequest {
   qty        Int
   notes      String?
   status     PartRequestStatus @default(PENDING)
+  kind       PartRequestKind   @default(ISSUE)
   reviewNote String?
   reviewedBy String?
   reviewedAt DateTime?
