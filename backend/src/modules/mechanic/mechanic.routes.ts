@@ -8,6 +8,7 @@ import {
   updateTaskStatusController,
   createPartRequestController,
   listPartRequestsController,
+  reviewPartRequestController,
 } from "./mechanic.controller.js";
 import {
   addTaskNoteSchema,
@@ -15,6 +16,7 @@ import {
   addPartUsedSchema,
   updateTaskStatusSchema,
   createPartRequestSchema,
+  reviewPartRequestSchema,
 } from "./mechanic.validation.js";
 
 export const router = Router();
@@ -68,4 +70,12 @@ router.get(
   requireAuth,
   requireRole("mechanic", "advisor", "admin"),
   listPartRequestsController,
+);
+
+router.patch(
+  "/parts/requests/:id",
+  requireAuth,
+  requireRole("advisor", "admin"),
+  validate(reviewPartRequestSchema),
+  reviewPartRequestController,
 );

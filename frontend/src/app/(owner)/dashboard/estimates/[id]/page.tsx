@@ -38,6 +38,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { summarizeItems } from "@/lib/pricing";
 import {
   Table,
   TableBody,
@@ -116,21 +117,21 @@ export default function EstimateDetailsAndApprovalPage() {
   }, [task]);
 
   const breakdown = useMemo(() => {
-    if (!estimate) return { partsTotal: 0, laborTotal: 0, subtotal: 0, tax: 0, total: 0 };
-    const partsTotal = estimate.items
-      .filter((i) => i.category === "parts")
-      .reduce((sum, i) => sum + i.amount, 0);
-    const laborTotal = estimate.items
-      .filter((i) => i.category !== "parts")
-      .reduce((sum, i) => sum + i.amount, 0);
-    const subtotal = partsTotal + laborTotal > 0 ? partsTotal + laborTotal : estimate.total / 1.085;
-    const tax = estimate.total - subtotal > 0 ? estimate.total - subtotal : subtotal * 0.085;
+    if (!estimate) return { servicesTotal: 0, partsTotal: 0, laborTotal: 0, subtotal: 0, tax: 0, total: 0 };
+    const summed = summarizeItems(estimate.items);
+    const hasStored = (estimate.subtotal ?? 0) > 0;
+    const servicesTotal = hasStored ? estimate.servicesTotal ?? summed.servicesTotal : summed.servicesTotal;
+    const partsTotal = hasStored ? estimate.partsTotal ?? summed.partsTotal : summed.partsTotal;
+    const laborTotal = hasStored ? estimate.laborTotal ?? summed.laborTotal : summed.laborTotal;
+    const subtotal = hasStored ? estimate.subtotal ?? summed.subtotal : summed.subtotal;
+    const tax = hasStored ? estimate.tax ?? summed.tax : summed.tax;
     return {
+      servicesTotal,
       partsTotal,
       laborTotal,
       subtotal,
       tax,
-      total: estimate.total,
+      total: estimate.total || summed.total,
     };
   }, [estimate]);
 
@@ -410,8 +411,12 @@ export default function EstimateDetailsAndApprovalPage() {
                         <p className="text-xs font-bold text-foreground">{item.description}</p>
                         <p className="text-[10px] text-muted-foreground">
                           {item.category === "parts"
-                            ? "Genuine OEM or certified replacement component"
-                            : "Certified technician labor & installation"}
+                            ? (item.qty ?? 1) > 1
+                              ? `${item.qty} × $${(item.rate ?? 0).toFixed(2)}`
+                              : "Genuine OEM or certified replacement component"
+                            : item.category === "labor" && item.qty
+                              ? `${item.qty} hr${item.qty === 1 ? "" : "s"} × $${(item.rate ?? 0).toFixed(2)}/hr`
+                              : "Certified technician labor & installation"}
                         </p>
                       </TableCell>
                       <TableCell className="align-middle">
@@ -427,7 +432,11 @@ export default function EstimateDetailsAndApprovalPage() {
                         </span>
                       </TableCell>
                       <TableCell className="align-middle text-center font-mono text-xs text-foreground">
-                        1
+                        {item.category === "labor"
+                          ? `${item.qty ?? 1}h`
+                          : item.qty && item.qty > 1
+                            ? item.qty
+                            : 1}
                       </TableCell>
                       <TableCell className="align-middle text-right font-mono text-xs font-bold text-foreground">
                         ${item.amount.toFixed(2)}
@@ -445,7 +454,14 @@ export default function EstimateDetailsAndApprovalPage() {
                 </div>
 
                 <div className="flex w-full sm:w-72 flex-col gap-2 text-xs">
-                  {breakdown.partsTotal > 0 && (
+                  {breakdown.servicesTotal > 0 && (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Services</span>
+                    <span className="font-mono font-medium text-foreground">${breakdown.servicesTotal.toFixed(2)}</span>
+                  </div>
+                )}
+
+                {breakdown.partsTotal > 0 && (
                     <div className="flex justify-between text-muted-foreground">
                       <span>Parts Subtotal</span>
                       <span className="font-mono font-medium text-foreground">${breakdown.partsTotal.toFixed(2)}</span>

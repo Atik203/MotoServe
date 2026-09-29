@@ -38,6 +38,8 @@ import { fetchCustomers } from "@/store/slices/customersSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
 import { fetchAppointments } from "@/store/slices/appointmentsSlice";
 import { fetchStations } from "@/store/slices/stationsSlice";
+import { fetchServices } from "@/store/slices/servicesSlice";
+import { DEFAULT_LABOR_RATE, laborHours, round2 } from "@/lib/pricing";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { TableLoading } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
@@ -87,6 +89,7 @@ function ReceiveVehicleContent() {
   const employees = useAppSelector((s) => s.employees.items);
   const appointments = useAppSelector((s) => s.appointments.items);
   const stations = useAppSelector((s) => s.stations.items);
+  const services = useAppSelector((s) => s.services.items);
 
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("all");
@@ -104,6 +107,7 @@ function ReceiveVehicleContent() {
   const [stationBay, setStationBay] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high" | "urgent">("medium");
   const [issues, setIssues] = useState("");
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [intakeBusy, setIntakeBusy] = useState(false);
 
   useEffect(() => {
@@ -113,13 +117,11 @@ function ReceiveVehicleContent() {
     dispatch(fetchEmployees());
     dispatch(fetchAppointments());
     dispatch(fetchStations());
+    dispatch(fetchServices());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (!stationBay && stations.length > 0) {
-      setStationBay(stations[0].name);
-    }
-  }, [stations, stationBay]);
+  const stationBayValue = stationBay || stations[0]?.name || "";
+  const carriedServices = services.filter((s) => selectedServiceIds.includes(s.id));
 
   // If appointment query parameter exists, open intake modal pre-filled
   useEffect(() => {
@@ -138,6 +140,7 @@ function ReceiveVehicleContent() {
           const v = vehicles.find((item) => item.id === appt.vehicleId);
           if (v) setIntakeMileage(String(v.mileage || 25000));
           setIssues(appt.notes || "Vehicle checked in from appointment");
+          setSelectedServiceIds(appt.serviceIds ?? []);
           setIntakeModalOpen(true);
         }
       }
@@ -244,7 +247,8 @@ function ReceiveVehicleContent() {
           vehicleId: selectedVehicleId,
           customerId: selectedCustomerId,
           appointmentId: selectedAppointmentId || undefined,
-          station: stationBay,
+          serviceIds: selectedServiceIds,
+          station: stationBayValue,
           priority,
           mileage: parseInt(intakeMileage, 10) || undefined,
           fuelLevel: fuelMap[fuelLevel] ?? 50,
@@ -260,6 +264,7 @@ function ReceiveVehicleContent() {
       setSelectedCustomerId("");
       setIntakeMileage("");
       setIssues("");
+      setSelectedServiceIds([]);
       dispatch(fetchTasks());
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Vehicle intake failed");
@@ -547,7 +552,7 @@ function ReceiveVehicleContent() {
                         <div className="flex items-center gap-3">
                           <div className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-slate-100 bg-[#eef1f4]">
                             <VehicleImage
-                              src={vehicle?.image || "/images/cars/car-1.png"}
+                              src={vehicle?.image}
                               alt={vehicle?.model ?? "Vehicle"}
                               fill
                               className="object-contain p-1"
@@ -694,7 +699,7 @@ function ReceiveVehicleContent() {
                     <div className="flex items-center gap-3">
                       <div className="relative size-14 shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-[#eef1f4]">
                         <VehicleImage
-                          src={vehicle?.image || "/images/cars/car-1.png"}
+                          src={vehicle?.image}
                           alt={vehicle?.model ?? "Vehicle"}
                           fill
                           className="object-contain p-1"
@@ -842,7 +847,7 @@ function ReceiveVehicleContent() {
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-xs font-semibold">Initial Station Bay</Label>
                   <select
-                    value={stationBay}
+                    value={stationBayValue}
                     onChange={(e) => setStationBay(e.target.value)}
                     className="h-9 rounded-lg border border-border bg-white px-3 text-xs"
                   >
@@ -884,6 +889,43 @@ function ReceiveVehicleContent() {
                 />
                 <span>Vehicle Keys received & stored in custody box</span>
               </label>
+
+              {/* Requested Services carried from the appointment */}
+              {carriedServices.length > 0 && (
+                <div className="flex flex-col gap-2 rounded-lg border border-border bg-[#f8fafc] p-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold">
+                      Requested Services ({carriedServices.length})
+                    </Label>
+                    <span className="text-[11px] text-muted-foreground">From appointment</span>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    {carriedServices.map((s) => {
+                      const hours = laborHours(s.durationMins);
+                      const rate = s.laborRate ?? DEFAULT_LABOR_RATE;
+                      const labor = round2(hours * rate);
+                      return (
+                        <div key={s.id} className="flex items-start justify-between gap-3 text-xs">
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-foreground">{s.name}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              ${s.basePrice.toFixed(2)} base
+                              {hours > 0 ? ` + ${hours} hr × $${rate}/hr labor` : ""}
+                            </p>
+                          </div>
+                          <span className="shrink-0 font-mono font-bold text-foreground">
+                            ${round2(s.basePrice + labor).toFixed(2)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Services come from the appointment they are locked to it here; adjust them later on the task or
+                    estimate page.
+                  </p>
+                </div>
+              )}
 
               {/* Customer Concerns / Notes */}
               <div className="flex flex-col gap-1.5">

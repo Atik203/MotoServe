@@ -7,7 +7,7 @@ import { useFileUrl } from "@/hooks/useFileUrl";
 import { cn } from "@/lib/utils";
 
 interface VehicleImageProps {
-  src: string;
+  src?: string | null;
   alt: string;
   fill?: boolean;
   width?: number;
@@ -46,5 +46,5 @@ export function VehicleImage({ src, alt, fill, width, height, className, sizes, 
     );
   }
 
-  return <Image src={resolved} alt={alt} fill={fill} width={width} height={height} className={className} sizes={sizes} priority={priority} onError={() => setFailed(true)} />;
+  return <Image src={resolved} alt={alt} fill={fill} width={width} height={height} className={className} sizes={sizes} priority={priority} unoptimized onError={() => setFailed(true)} />;
 }

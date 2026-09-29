@@ -40,6 +40,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
 import { StatusBadge } from "@/components/roles/mechanic/StatusBadge";
+import { PartRequestsPanel } from "@/components/roles/shared/PartRequestsPanel";
 import {
   Table,
   TableBody,
@@ -670,6 +671,9 @@ export default function AdvisorDashboardPage() {
 
           {/* Right Column: Pending Estimates & Messages Hub (4 cols) */}
           <div className="lg:col-span-4 flex flex-col gap-6">
+            {/* Part Requests Review Queue */}
+            <PartRequestsPanel title="Part Requests to Review" className="rounded-2xl p-5 shadow-xs" />
+
             {/* Pending Customer Estimates Widget */}
             <div className="flex flex-col gap-4 rounded-2xl border border-border bg-white p-5 shadow-xs">
               <div className="flex items-center justify-between border-b border-border pb-3">

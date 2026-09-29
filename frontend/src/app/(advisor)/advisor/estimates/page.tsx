@@ -274,7 +274,7 @@ function AdvisorEstimatesContent() {
                         <div className="flex items-center gap-2.5">
                           <div className="relative size-9 shrink-0 overflow-hidden rounded-lg border border-[#e5e7eb] bg-[#f8fafc]">
                             <VehicleImage
-                              src={vehicle?.image || "/images/cars/car-1.png"}
+                              src={vehicle?.image}
                               alt={vehicle?.model || "Vehicle"}
                               fill
                               className="object-contain p-1"
@@ -427,7 +427,7 @@ function AdvisorEstimatesContent() {
                     <div className="flex items-center gap-3">
                       <div className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-[#e5e7eb] bg-[#f8fafc]">
                         <VehicleImage
-                          src={vehicle?.image || "/images/cars/car-1.png"}
+                          src={vehicle?.image}
                           alt={vehicle?.model || "Vehicle"}
                           fill
                           className="object-contain p-1"

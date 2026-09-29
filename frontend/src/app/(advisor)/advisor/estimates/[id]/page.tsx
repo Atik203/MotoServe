@@ -28,6 +28,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { summarizeItems } from "@/lib/pricing";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchEstimate, fetchEstimates } from "@/store/slices/estimatesSlice";
 import { fetchTasks } from "@/store/slices/tasksSlice";
@@ -141,21 +142,14 @@ export default function AdvisorEstimateDetailPage() {
 
   const normalizedStatus = (estimate.status || "pending").toLowerCase();
 
-  const servicesTotal = (estimate.items ?? [])
-    .filter((i) => i.category?.toLowerCase() === "service")
-    .reduce((sum, i) => sum + (i.amount ?? 0), 0);
-
-  const partsTotal = (estimate.items ?? [])
-    .filter((i) => i.category?.toLowerCase() === "parts")
-    .reduce((sum, i) => sum + (i.amount ?? 0), 0);
-
-  const laborTotal = (estimate.items ?? [])
-    .filter((i) => i.category?.toLowerCase() === "labor")
-    .reduce((sum, i) => sum + (i.amount ?? 0), 0);
-
-  const subtotal = servicesTotal + partsTotal + laborTotal || estimate.total || 0;
-  const tax = subtotal * 0.085;
-  const totalWithTax = subtotal + tax;
+  const summed = summarizeItems(estimate.items ?? []);
+  const hasStored = (estimate.subtotal ?? 0) > 0;
+  const servicesTotal = hasStored ? estimate.servicesTotal ?? summed.servicesTotal : summed.servicesTotal;
+  const partsTotal = hasStored ? estimate.partsTotal ?? summed.partsTotal : summed.partsTotal;
+  const laborTotal = hasStored ? estimate.laborTotal ?? summed.laborTotal : summed.laborTotal;
+  const subtotal = hasStored ? estimate.subtotal ?? summed.subtotal : summed.subtotal;
+  const tax = hasStored ? estimate.tax ?? summed.tax : summed.tax;
+  const totalWithTax = estimate.total || subtotal + tax;
 
   return (
     <div className="min-h-screen bg-[#f9fafb] p-8">
@@ -286,7 +280,7 @@ export default function AdvisorEstimateDetailPage() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <div className="relative size-20 shrink-0 overflow-hidden rounded-xl border border-[#e5e7eb] bg-[#f8fafc]">
                   <VehicleImage
-                    src={vehicle?.image || "/images/cars/car-1.png"}
+                    src={vehicle?.image}
                     alt={vehicle?.model || "Vehicle"}
                     fill
                     className="object-contain p-2"
@@ -377,7 +371,13 @@ export default function AdvisorEstimateDetailPage() {
                           </td>
                           <td className="py-3 pr-3">
                             <p className="text-xs font-bold text-[#191c1d]">{item.description}</p>
-                            <p className="text-[11px] text-[#64748b]">OEM Certified Spec</p>
+                            <p className="text-[11px] text-[#64748b]">
+                              {cat === "labor" && item.qty
+                                ? `${item.qty} hr${item.qty === 1 ? "" : "s"} × $${(item.rate ?? 0).toFixed(2)}/hr`
+                                : cat === "parts" && (item.qty ?? 1) > 1
+                                  ? `${item.qty} × $${(item.rate ?? 0).toFixed(2)}`
+                                  : "OEM Certified Spec"}
+                            </p>
                           </td>
                           <td className="py-3 pr-3 text-right font-mono text-xs font-bold text-[#191c1d]">
                             ${(item.amount ?? 0).toFixed(2)}
@@ -404,7 +404,7 @@ export default function AdvisorEstimateDetailPage() {
                   <span>Labor: <strong className="text-[#191c1d]">${laborTotal.toFixed(2)}</strong></span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#64748b]">Net Subtotal:</span>
+                  <span className="font-semibold text-[#64748b]">Subtotal (pre-tax):</span>
                   <span className="font-mono text-sm font-bold text-[#191c1d]">${subtotal.toFixed(2)}</span>
                 </div>
               </div>
