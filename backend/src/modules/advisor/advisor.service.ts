@@ -8,8 +8,10 @@ import { round2, summarizeItems } from "../../lib/pricing.js";
 import type { AssignMechanicBody, CreateCustomerBody, CreateEstimateBody, CreateTaskCardBody } from "./advisor.types.js";
 
 export async function createTaskCard(advisorId: string, body: CreateTaskCardBody) {
+  const appointment = body.appointmentId
+    ? await prisma.appointment.findUnique({ where: { id: body.appointmentId } })
+    : null;
   if (body.appointmentId) {
-    const appointment = await prisma.appointment.findUnique({ where: { id: body.appointmentId } });
     if (!appointment) throw new ApiError(404, "Appointment not found");
     if (appointment.vehicleId !== body.vehicleId) {
       throw new ApiError(400, "Appointment belongs to a different vehicle");
@@ -42,8 +44,11 @@ export async function createTaskCard(advisorId: string, body: CreateTaskCardBody
     }
   }
 
-  const serviceLines = body.serviceIds?.length
-    ? await prisma.service.findMany({ where: { id: { in: body.serviceIds } } })
+  const requestedServiceIds = body.serviceIds?.length
+    ? body.serviceIds
+    : appointment?.serviceIds ?? [];
+  const serviceLines = requestedServiceIds.length
+    ? await prisma.service.findMany({ where: { id: { in: requestedServiceIds } } })
     : [];
   const task = await createWithSequentialId<TaskCard>(prisma.taskCard, "TC-", 1040, (id) => ({
     data: {
