@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, Package, Search, SendHorizonal, Loader2, AlertCircle, Clock } from "lucide-react";
+import { Check, Package, PackageCheck, PackagePlus, Search, SendHorizonal, Loader2, AlertCircle, Clock } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchParts } from "@/store/slices/partsSlice";
 import { fetchTasks } from "@/store/slices/tasksSlice";
@@ -46,6 +46,7 @@ export default function PartsRequestPage() {
   const [qty, setQty] = useState(1);
   const [taskCardId, setTaskCardId] = useState("");
   const [notes, setNotes] = useState("");
+  const [kind, setKind] = useState<"issue" | "restock">("issue");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -85,6 +86,7 @@ export default function PartsRequestPage() {
     setSelected(part);
     setQty(1);
     setNotes("");
+    setKind("issue");
     setTaskCardId(myActiveTasks[0]?.id ?? "");
   };
 
@@ -100,6 +102,7 @@ export default function PartsRequestPage() {
           qty,
           taskCardId: taskCardId || undefined,
           notes: notes || undefined,
+          kind,
         }),
       ).unwrap();
       toast.success(`Request for ${selected.name} submitted`);
@@ -238,6 +241,44 @@ export default function PartsRequestPage() {
                     onChange={(e) => setQty(Number(e.target.value))}
                     className="h-9 rounded-lg border-border bg-[#f9fafb] text-sm"
                   />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-muted-foreground">Request type *</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setKind("issue")}
+                      className={cn(
+                        "flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2 text-left transition-colors",
+                        kind === "issue"
+                          ? "border-primary bg-primary-soft"
+                          : "border-border bg-[#f9fafb] hover:border-primary/40",
+                      )}
+                    >
+                      <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                        <PackageCheck className="size-3.5 text-primary" />
+                        Issue from stock
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">Handed to you, billed on the task</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setKind("restock")}
+                      className={cn(
+                        "flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2 text-left transition-colors",
+                        kind === "restock"
+                          ? "border-primary bg-primary-soft"
+                          : "border-border bg-[#f9fafb] hover:border-primary/40",
+                      )}
+                    >
+                      <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                        <PackagePlus className="size-3.5 text-primary" />
+                        Restock order
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">Refills catalog stock, not billed</span>
+                    </button>
+                  </div>
                 </div>
 
                 {myActiveTasks.length > 0 && (
