@@ -63,10 +63,10 @@ export default defineConfig({
       env: { ...process.env, DATABASE_URL: TEST_DATABASE_URL } as Record<string, string>,
     },
     {
-      command: "npm run dev --prefix frontend",
+      command: "npm run build --prefix frontend && npm run start --prefix frontend",
       url: WEB_BASE,
       reuseExistingServer: false,
-      timeout: 180_000,
+      timeout: 300_000,
     },
   ],
 });
