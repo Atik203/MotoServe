@@ -516,11 +516,13 @@ function ReceiveVehicleContent() {
                           <span
                             className={cn(
                               "block font-sans text-[10px] font-bold uppercase mt-0.5",
-                              task.priority === "high"
-                                ? "text-rose-600"
-                                : task.priority === "medium"
-                                  ? "text-amber-600"
-                                  : "text-slate-500",
+                              task.priority === "urgent"
+                                ? "text-rose-700"
+                                : task.priority === "high"
+                                  ? "text-rose-600"
+                                  : task.priority === "medium"
+                                    ? "text-amber-600"
+                                    : "text-slate-500",
                             )}
                           >
                             {task.priority}

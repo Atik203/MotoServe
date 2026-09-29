@@ -86,7 +86,7 @@ export interface Employee {
 
 export type TaskStatus = "received" | "inspecting" | "repairing" | "testing" | "ready" | "completed";
 
-export type TaskPriority = "low" | "medium" | "high";
+export type TaskPriority = "low" | "medium" | "high" | "urgent";
 
 export interface TaskServiceLine {
   id: string;
