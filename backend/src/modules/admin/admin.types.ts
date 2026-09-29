@@ -95,6 +95,7 @@ export interface ReportDto {
   revenueByMonth: { month: string; revenue: number }[];
   tasksByStatus: { status: string; count: number }[];
   workloadByMechanic: {
+    id: string;
     mechanic: string;
     role: string;
     active: number;

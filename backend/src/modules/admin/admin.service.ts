@@ -275,6 +275,7 @@ export async function getReportData(filters?: ReportFilterOptions): Promise<Repo
     revenueByMonth: stats.revenueByMonth,
     tasksByStatus: mappedStatus,
     workloadByMechanic: mechanics.map((m) => ({
+      id: m.id,
       mechanic: m.name,
       role: m.specialization ?? "Technician",
       active: activeByMechanic[m.id] ?? 0,

@@ -365,7 +365,7 @@ export default function AdminDashboardPage() {
                 <div className="flex flex-col gap-2.5">
                   {reports.workloadByMechanic.slice(0, 4).map((m) => (
                     <div
-                      key={m.mechanic}
+                      key={m.id}
                       className="flex items-center justify-between rounded-lg border border-[#e2e8f0] p-3"
                     >
                       <div className="flex items-center gap-3">
