@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, Check, Clock, Download, FileCheck, MessageSquare, Wrench } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -9,9 +9,11 @@ import { fetchTasks } from "@/store/slices/tasksSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchEstimates } from "@/store/slices/estimatesSlice";
 import { fetchInvoices } from "@/store/slices/invoicesSlice";
+import { fetchAppointments } from "@/store/slices/appointmentsSlice";
 import { downloadInvoicePdf } from "@/lib/pdf";
 import { DetailLoading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
+import type { Appointment } from "@/types";
 
 export default function ServiceTrackingPage() {
   const dispatch = useAppDispatch();
@@ -20,13 +22,24 @@ export default function ServiceTrackingPage() {
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const estimates = useAppSelector((s) => s.estimates.items);
   const invoices = useAppSelector((s) => s.invoices.items);
+  const appointments = useAppSelector((s) => s.appointments.items);
+  const appointmentsStatus = useAppSelector((s) => s.appointments.status);
 
   useEffect(() => {
     if (tasks.length === 0) dispatch(fetchTasks());
     if (vehicles.length === 0) dispatch(fetchVehicles());
     if (estimates.length === 0) dispatch(fetchEstimates());
     if (invoices.length === 0) dispatch(fetchInvoices());
-  }, [dispatch, tasks.length, vehicles.length, estimates.length, invoices.length]);
+    if (appointments.length === 0) dispatch(fetchAppointments());
+  }, [dispatch, tasks.length, vehicles.length, estimates.length, invoices.length, appointments.length]);
+
+  const upcomingAppointment = useMemo(
+    () =>
+      appointments
+        .filter((a) => a.status === "pending" || a.status === "confirmed")
+        .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))[0],
+    [appointments],
+  );
 
   const activeTasks = tasks.filter((t) => !["completed", "ready"].includes(t.status));
   const task = activeTasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] ?? tasks[0];
@@ -42,6 +55,12 @@ export default function ServiceTrackingPage() {
 
   if (!task || !vehicle) {
     if ((tasksStatus === "idle" || tasksStatus === "loading") && tasks.length === 0) {
+      return <DetailLoading label="Loading service tracking" />;
+    }
+    if (upcomingAppointment) {
+      return <AppointmentTrackingView appointment={upcomingAppointment} />;
+    }
+    if ((appointmentsStatus === "idle" || appointmentsStatus === "loading") && appointments.length === 0) {
       return <DetailLoading label="Loading service tracking" />;
     }
     return <div className="bg-background min-h-screen p-8 text-muted-foreground">No active service found.</div>;
@@ -249,6 +268,111 @@ export default function ServiceTrackingPage() {
             </section>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function AppointmentTrackingView({ appointment }: { appointment: Appointment }) {
+  const vehicles = useAppSelector((s) => s.vehicles.items);
+  const vehicle = vehicles.find((v) => v.id === appointment.vehicleId) ?? appointment.vehicle ?? null;
+  const steps = ["Booked", "Confirmed", "In Workshop", "Completed"];
+  const currentIndex = appointment.status === "confirmed" ? 1 : 0;
+  const isConfirmed = appointment.status === "confirmed";
+
+  return (
+    <div className="bg-background min-h-screen p-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+        <div className="flex flex-col gap-1">
+          <Link href="/dashboard/appointments" className="flex items-center gap-1 text-[11px] font-medium text-[#424753] hover:text-primary">
+            <ArrowLeft className="size-[10.7px]" />
+            Back to Appointments
+          </Link>
+          <div className="flex items-center gap-4 pt-1">
+            <h1 className="text-4xl font-bold tracking-[-0.72px] text-foreground">
+              {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : "Service Appointment"}
+            </h1>
+            {vehicle && (
+              <span className="rounded-xl border border-border bg-[#edeeef] px-[9px] py-[5px] text-xs font-semibold tracking-[0.24px] text-[#424753]">
+                {vehicle.regNo}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-[#424753]">
+            Appointment #{appointment.id} • {appointment.date} at {appointment.time}
+          </p>
+        </div>
+
+        <section className="flex flex-col gap-6 rounded-lg border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-foreground">Appointment Status</h2>
+            <span className="flex items-center gap-2 rounded-xl border border-[rgba(0,82,204,0.2)] bg-[rgba(0,82,204,0.1)] px-[13px] py-[7px] text-xs font-semibold tracking-[0.24px] text-primary">
+              <span className="size-2 rounded-full bg-primary" />
+              {isConfirmed ? "Confirmed" : "Pending Review"}
+            </span>
+          </div>
+
+          <div className="relative px-4 pt-4 pb-8">
+            <div className="absolute top-8 right-8 left-8 h-0.5 bg-[#f3f4f5]" />
+            <div
+              className="absolute top-8 left-8 h-0.5 bg-[#4caf50]"
+              style={{ width: `${(currentIndex / (steps.length - 1)) * 100}%` }}
+            />
+            <div className="flex items-start justify-between">
+              {steps.map((label, i) => {
+                const isDone = i <= currentIndex;
+                return (
+                  <div key={label} className="flex w-[89px] flex-col items-center">
+                    <span
+                      className={cn(
+                        "flex size-8 items-center justify-center rounded-xl shadow-[0_1px_1px_rgba(0,0,0,0.05)]",
+                        isDone ? "bg-[#4caf50]" : "border-2 border-[#e1e3e4] bg-[#edeeef]",
+                      )}
+                    >
+                      {isDone ? (
+                        <Check className="size-[12.2px] text-white" />
+                      ) : (
+                        <Clock className="size-3 text-[#424753]" />
+                      )}
+                    </span>
+                    <p
+                      className={cn(
+                        "pt-2 text-xs tracking-[0.24px]",
+                        i === currentIndex
+                          ? "font-bold text-primary"
+                          : isDone
+                            ? "font-semibold text-foreground"
+                            : "font-semibold text-[#424753]",
+                      )}
+                    >
+                      {label}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-[#e2e8f0] bg-[#f8f9fa] p-4 text-sm text-[#424753]">
+            Your appointment is booked. Live service tracking appears here once the workshop checks your vehicle in and
+            creates a task card.
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={`/dashboard/appointments/${appointment.id}`}
+              className="flex items-center justify-center gap-2 rounded bg-primary px-4 py-3 text-xs font-semibold tracking-[0.24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.05)]"
+            >
+              View Appointment Details
+            </Link>
+            <Link
+              href="/dashboard/appointments/book"
+              className="flex items-center justify-center gap-2 rounded border border-[#c2c6d5] bg-[#f8f9fa] px-[17px] py-[13px] text-xs font-semibold tracking-[0.24px] text-foreground"
+            >
+              Book Another Service
+            </Link>
+          </div>
+        </section>
       </div>
     </div>
   );
