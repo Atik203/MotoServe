@@ -1,5 +1,12 @@
 import { Prisma } from "../generated/prisma/client.js";
 
+function isIdCollision(err: Prisma.PrismaClientKnownRequestError, idField: string): boolean {
+  const target = (err.meta as { target?: unknown } | undefined)?.target;
+  if (Array.isArray(target)) return target.map(String).includes(idField);
+  if (typeof target === "string") return target.includes(idField);
+  return true;
+}
+
 /**
  * Allocates a max-suffix id (e.g. JC-1046) and creates the row inside a retry
  * loop so concurrent creations cannot collide on the same suffix (P2002).
@@ -22,7 +29,7 @@ export async function createWithSequentialId<T>(
     try {
       return await delegate.create(buildArgs(id));
     } catch (err) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002" && isIdCollision(err, idField)) {
         continue;
       }
       throw err;
