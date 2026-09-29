@@ -46,6 +46,20 @@ npm run db:push       # prisma db push
 npm run db:seed       # node prisma/seed.ts
 ```
 
+## Tests (Playwright — E2E + API flows)
+
+Tests live in `tests/` (`tests/api/*.spec.ts` = API flows, `tests/e2e/*.spec.ts` = browser flows) and are run from the **repo root**.
+They need a DEDICATED test database — `tests/setup-db.mjs` runs `prisma db push` + the demo seed against it, which DELETES data.
+Copy `.env.test.example` to `.env.test` (gitignored) and set `TEST_DATABASE_URL` there. `playwright.config.ts` refuses to run without it, and boots both servers itself (so stop `npm run dev` first — it will not reuse an existing server).
+
+```bash
+npm run test:install   # one-time: download the Chromium browser
+npm run test:setup     # (re)seed the test database
+npm run test:api       # API flow specs only (fast, deterministic)
+npm run test:e2e       # browser specs only
+npm test               # everything
+```
+
 ## Frontend conventions
 
 - App Router routes grouped by role:
