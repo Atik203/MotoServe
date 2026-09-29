@@ -10,6 +10,7 @@ export type CreatePartRequestBody = {
   taskCardId?: string;
   partId?: string;
   notes?: string;
+  kind?: "issue" | "restock";
 };
 
 export type ReviewPartRequestBody = {
