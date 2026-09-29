@@ -195,7 +195,7 @@ export function ActivityManager({
               { id: "invoices", label: "Invoices", count: countsByCategory.invoices },
               { id: "appointments", label: "Appointments", count: countsByCategory.appointments },
               { id: "chat", label: "Messages", count: countsByCategory.chat },
-            ].map((tab) => {
+            ].filter((tab) => !(role === "mechanic" && tab.id === "chat")).map((tab) => {
               const isActive = activeTab === tab.id;
               return (
                 <button
