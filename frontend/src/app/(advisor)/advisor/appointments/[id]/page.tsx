@@ -145,7 +145,6 @@ export default function AdvisorAppointmentDetailsPage() {
             date: rescheduleDate,
             time: rescheduleTime,
             notes: rescheduleNotes,
-            status: "confirmed",
           },
         }),
       ).unwrap();

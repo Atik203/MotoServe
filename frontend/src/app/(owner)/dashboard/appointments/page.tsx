@@ -173,7 +173,6 @@ export default function MyAppointmentsPage() {
             date: rescheduleDate,
             time: rescheduleTime,
             notes: rescheduleNotes.trim(),
-            status: "pending",
           },
         }),
       ).unwrap();
