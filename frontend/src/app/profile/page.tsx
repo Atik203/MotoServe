@@ -113,7 +113,7 @@ export default function ProfilePage() {
         <div className="flex items-center gap-6 rounded-[8px] border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
           <span className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-primary-soft text-2xl font-bold text-primary">
             {avatar ? (
-              <Image src={avatar} alt={user.name} fill className="object-cover" />
+              <Image src={avatar} alt={user.name} fill unoptimized className="object-cover" />
             ) : (
               userInitials(user.name)
             )}

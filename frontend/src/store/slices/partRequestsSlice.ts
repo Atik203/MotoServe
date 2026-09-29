@@ -15,14 +15,14 @@ const initialState: PartRequestsState = {
 };
 
 export const fetchPartRequests = createAsyncThunk("partRequests/fetch", async () => {
-  const data = await api.get<PartRequest[]>("/mechanic/parts/requests");
+  const data = await api.get<PartRequest[]>("/parts/requests");
   return data.map((r) => ({ ...r, status: r.status.toLowerCase() as PartRequest["status"] }));
 });
 
 export const submitPartRequest = createAsyncThunk(
   "partRequests/submit",
   async (body: { partName: string; qty: number; taskCardId?: string; partId?: string; notes?: string }) => {
-    const data = await api.post<PartRequest>("/mechanic/parts/request", body);
+    const data = await api.post<PartRequest>("/parts/request", body);
     return { ...data, status: data.status.toLowerCase() as PartRequest["status"] };
   },
 );

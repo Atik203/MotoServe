@@ -92,6 +92,9 @@ export interface TaskServiceLine {
   id: string;
   name: string;
   price: number;
+  durationMins?: number;
+  laborRate?: number;
+  category?: string;
 }
 
 export interface TaskProgressStep {
@@ -147,6 +150,7 @@ export interface TaskCard {
   keysReceived?: boolean | null;
   accessories?: string | null;
   ownerArchivedAt?: string | null;
+  estimates?: { id: string; items: { id?: string; description?: string; category?: string; amount?: number }[] }[];
   createdAt: string;
   updatedAt?: string;
 }

@@ -35,6 +35,7 @@ import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
 import { downloadTaskCardPdf } from "@/lib/pdf";
+import { computeTotals, DEFAULT_LABOR_RATE, TAX_RATE } from "@/lib/pricing";
 import { ProgressStepper } from "@/components/roles/mechanic/ProgressStepper";
 import { PriorityPill, StatusBadge } from "@/components/roles/mechanic/StatusBadge";
 import { MechanicNotes } from "@/components/roles/mechanic/MechanicNotes";
@@ -198,11 +199,17 @@ export default function AdvisorTaskDetailPage() {
     }
   };
 
-  const servicesTotal = (task.services ?? []).reduce((sum, s) => sum + (s.price ?? 0), 0);
-  const partsTotal = (task.partsUsed ?? []).reduce((sum, p) => sum + (p.subtotal ?? 0), 0);
-  const subtotal = servicesTotal + partsTotal;
-  const estimatedTax = subtotal * 0.085;
-  const grandTotal = subtotal + estimatedTax;
+  const estimateLabor = (task.estimates ?? [])
+    .flatMap((e) => e.items)
+    .filter((i) => i.category === "LABOR")
+    .reduce((sum, i) => sum + (i.amount ?? 0), 0);
+  const {
+    servicesTotal,
+    partsTotal,
+    laborTotal,
+    tax: estimatedTax,
+    total: grandTotal,
+  } = computeTotals(task.services ?? [], task.partsUsed ?? [], estimateLabor);
 
   return (
     <div className="min-h-screen bg-[#f9fafb] p-8">
@@ -484,7 +491,17 @@ export default function AdvisorTaskDetailPage() {
                       </span>
                       <div>
                         <p className="text-sm font-semibold text-[#191c1d]">{service.name}</p>
-                        <p className="text-xs text-[#64748b]">Standard service package</p>
+                        <p className="text-xs text-[#64748b]">
+                          {[
+                            service.category
+                              ? service.category.charAt(0).toUpperCase() + service.category.slice(1)
+                              : null,
+                            service.durationMins ? `${service.durationMins} min` : null,
+                            `$${service.laborRate ?? DEFAULT_LABOR_RATE}/hr labor`,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
                       </div>
                     </div>
                     <span className="font-mono text-sm font-bold text-[#191c1d]">
@@ -578,7 +595,7 @@ export default function AdvisorTaskDetailPage() {
                 )}
               </div>
 
-              <Link href="/advisor/chat" className="w-full">
+              <Link href={customer?.id ? `/advisor/chat?customer=${customer.id}` : "/advisor/chat"} className="w-full">
                 <Button variant="outline" className="w-full gap-2 rounded-lg border-primary/20 bg-[#eff6ff] text-xs font-semibold text-primary hover:bg-primary/10">
                   <MessageSquare className="size-3.5" />
                   Message Customer
@@ -604,7 +621,7 @@ export default function AdvisorTaskDetailPage() {
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-[#64748b]">Assigned Station / Bay</span>
                 <span className="text-sm font-semibold text-[#191c1d]">
-                  {task.station ?? "Main Workshop / Bay"}
+                  {task.station ?? assignedMechanics.find((m) => m.station)?.station ?? "Not assigned"}
                 </span>
               </div>
 
@@ -624,7 +641,7 @@ export default function AdvisorTaskDetailPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-xs font-bold text-[#191c1d]">{m.name}</p>
                         <p className="truncate text-[11px] text-[#64748b]">
-                          {m.specialization ?? "Mechanic Specialist"}
+                          {[m.specialization ?? "Technician", m.station].filter(Boolean).join(" · ")}
                         </p>
                       </div>
                     </div>
@@ -670,7 +687,11 @@ export default function AdvisorTaskDetailPage() {
                   <span className="font-semibold text-[#191c1d]">${partsTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex items-center justify-between text-[#64748b]">
-                  <span>Estimated Tax (8.5%):</span>
+                  <span>Workshop Labor:</span>
+                  <span className="font-semibold text-[#191c1d]">${laborTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between text-[#64748b]">
+                  <span>Estimated Tax ({(TAX_RATE * 100).toFixed(1)}%):</span>
                   <span className="font-semibold text-[#191c1d]">${estimatedTax.toFixed(2)}</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between border-t border-[#f1f3f5] pt-2 text-sm font-bold text-[#191c1d]">

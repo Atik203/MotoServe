@@ -3,11 +3,13 @@
 import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
+  AlertCircle,
   ArrowRight,
   Calendar,
   Check,
   CheckCircle2,
   ClipboardList,
+  Clock,
   Package,
   Wrench,
   type LucideIcon,
@@ -16,6 +18,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchTasks } from "@/store/slices/tasksSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchParts } from "@/store/slices/partsSlice";
+import { fetchPartRequests } from "@/store/slices/partRequestsSlice";
 import { buildKpis } from "@/lib/kpis";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -52,6 +55,13 @@ const quickActions: { label: string; icon: LucideIcon; href: string }[] = [
   { label: "History", icon: ClipboardList, href: "/mechanic/history" },
 ];
 
+function requestStatusConfig(status: string) {
+  if (status === "approved") return { label: "Approved", className: "bg-[rgba(76,175,80,0.1)] text-[#4caf50]", icon: Check };
+  if (status === "fulfilled") return { label: "Fulfilled", className: "bg-[rgba(0,82,204,0.1)] text-primary", icon: Package };
+  if (status === "rejected") return { label: "Rejected", className: "bg-[rgba(186,26,26,0.1)] text-[#ba1a1a]", icon: AlertCircle };
+  return { label: "Pending", className: "bg-[rgba(255,193,7,0.1)] text-[#8b5000]", icon: Clock };
+}
+
 export default function MechanicDashboardPage() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
@@ -59,10 +69,12 @@ export default function MechanicDashboardPage() {
   const tasksStatus = useAppSelector((s) => s.tasks.status);
   const vehicles = useAppSelector((s) => s.vehicles.items);
   const parts = useAppSelector((s) => s.parts.items);
+  const partRequests = useAppSelector((s) => s.partRequests.items);
 
   useEffect(() => {
     dispatch(fetchTasks());
     dispatch(fetchVehicles());
+    dispatch(fetchPartRequests());
     if (parts.length === 0) dispatch(fetchParts());
   }, [dispatch, parts.length]);
 
@@ -335,6 +347,59 @@ export default function MechanicDashboardPage() {
                   </Link>
                 ))}
               </div>
+            </section>
+
+            <section className="flex flex-col gap-4 rounded-[8px] border border-border bg-white p-[25px] shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+              <div className="flex items-center justify-between border-b border-border pb-[9px]">
+                <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
+                  <Package className="size-4 text-primary" />
+                  My Part Requests
+                </h2>
+                <Link
+                  href="/mechanic/parts"
+                  className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                >
+                  Request part <ArrowRight className="size-3" />
+                </Link>
+              </div>
+
+              {partRequests.length === 0 ? (
+                <p className="py-2 text-sm text-muted-foreground">
+                  You have not requested any parts yet.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2.5">
+                  {partRequests.slice(0, 4).map((req) => {
+                    const cfg = requestStatusConfig(req.status);
+                    const Icon = cfg.icon;
+                    return (
+                      <div
+                        key={req.id}
+                        className="flex items-center justify-between gap-3 rounded-[8px] border border-border bg-[#f9fafb] px-3 py-2.5"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-semibold text-foreground">
+                            {req.partName} <span className="font-normal text-muted-foreground">× {req.qty}</span>
+                          </p>
+                          <p className="truncate text-[11px] text-muted-foreground">
+                            {req.taskCardId ? `${req.taskCardId} · ` : ""}
+                            {new Date(req.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          </p>
+                        </div>
+                        <span
+                          className={cn(
+                            "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium capitalize",
+                            cfg.className,
+                          )}
+                        >
+                          <Icon className="size-3" />
+                          {cfg.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </section>
 
             {activeTask && (

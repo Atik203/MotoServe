@@ -72,6 +72,7 @@ export async function createTaskCard(advisorId: string, body: CreateTaskCardBody
             price: s.basePrice,
             durationMins: s.durationMins,
             laborRate: s.laborRate,
+            category: s.category,
           })) as unknown as Prisma.InputJsonValue)
         : undefined,
       status: "RECEIVED",
@@ -177,6 +178,32 @@ export async function createEstimate(
     });
   }
   const total = body.items.reduce((sum, i) => sum + i.amount, 0);
+  const items = body.items.map((i) => ({
+    description: i.description,
+    category: i.category.toUpperCase() as never,
+    amount: i.amount,
+  }));
+
+  const existing = await prisma.estimate.findFirst({
+    where: { taskCardId: targetId },
+    select: { id: true },
+  });
+
+  if (existing) {
+    return prisma.estimate.update({
+      where: { id: existing.id },
+      data: {
+        advisorId,
+        summary: body.summary ?? "",
+        internalNotes: body.internalNotes,
+        total,
+        status: "PENDING" as never,
+        items: { deleteMany: {}, create: items },
+      },
+      include: { items: true },
+    }) as unknown as Promise<EstimateWithItems>;
+  }
+
   return createWithSequentialId<EstimateWithItems>(prisma.estimate, "ES-", 3300, (id) => ({
     data: {
       id,
@@ -187,11 +214,7 @@ export async function createEstimate(
       internalNotes: body.internalNotes,
       total,
       items: {
-        create: body.items.map((i) => ({
-          description: i.description,
-          category: i.category.toUpperCase() as never,
-          amount: i.amount,
-        })),
+        create: items,
       },
     },
     include: { items: true },
