@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Car, ChevronDown, ImagePlus, Upload } from "lucide-react";
+import { Car, ChevronDown, ImagePlus, Trash2, Upload } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { uploadDocument } from "@/store/slices/authSlice";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
@@ -229,7 +229,7 @@ export function VehicleForm({ initial, submitLabel = "Register Vehicle", onSubmi
           <Label className="text-xs font-semibold tracking-[0.24px] text-[#424753]">
             Upload Vehicle, Insurance and Registration Photos
           </Label>
-          <span className="text-[10px] tracking-[0.24px] text-muted-foreground">
+          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
             {photos.length > 0 ? `${photos.length} uploaded` : "Multiple allowed"}
           </span>
         </div>
@@ -241,60 +241,77 @@ export function VehicleForm({ initial, submitLabel = "Register Vehicle", onSubmi
           className="hidden"
           onChange={handlePhotoPick}
         />
-        {photos.length > 0 && (
-          <div className="grid grid-cols-3 gap-3">
-            {photos.map((p, i) => (
-              <div key={p.key} className="relative overflow-hidden rounded-lg border border-[#c2c6d5] bg-[#f8f9fa]">
-                <div className="h-24 w-full bg-[#eef1f4]">
-                  {p.preview ? (
-                    p.name.toLowerCase().endsWith(".pdf") ? (
-                      <div className="flex h-full items-center justify-center">
-                        <ImagePlus className="size-6 text-primary" />
-                      </div>
-                    ) : (
-                      <img src={p.preview} alt={p.name} className="h-full w-full object-cover" />
-                    )
-                  ) : p.key.startsWith("/") ? (
-                    <img src={p.key} alt={p.name} className="h-full w-full object-cover" />
-                  ) : (
-                    <VehicleImage src={p.key} alt={p.name} fill className="object-contain p-2" />
-                  )}
-                </div>
-                {i === 0 && (
-                  <span className="absolute top-1.5 left-1.5 rounded-sm bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                    Vehicle Photo
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => removePhoto(p.key)}
-                  className="absolute top-1.5 right-1.5 rounded-sm bg-[rgba(46,49,50,0.8)] px-1.5 py-0.5 text-[10px] font-semibold text-white hover:bg-[#ba1a1a]"
-                >
-                  Remove
-                </button>
-                <p className="truncate px-2 py-1 text-[10px] text-muted-foreground">{p.name}</p>
-              </div>
-            ))}
-          </div>
-        )}
+
         <button
           type="button"
           disabled={photoUploading}
           onClick={() => photoInputRef.current?.click()}
-          className="flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border bg-[#f8f9fa] p-[26px] transition-colors hover:border-primary/50 disabled:opacity-60"
+          className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#c2c6d5] bg-[#f8f9fa] px-4 py-8 text-center transition-colors hover:border-primary/60 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <ImagePlus className="size-6 text-muted-foreground" />
-          <p className="text-sm text-foreground">
-            {photoUploading ? "Uploading..." : (
-              <>
-                Drag & drop photos here, or <span className="font-medium text-primary">browse</span>
-              </>
-            )}
-          </p>
-          <p className="text-[11px] font-medium text-muted-foreground">
-            {photos.length > 0 ? "Add more — JPG, PNG, PDF (Max 5MB each)" : "Supports JPG, PNG, PDF (Max 5MB each) — you can upload several"}
-          </p>
+          <span className="flex size-11 items-center justify-center rounded-xl bg-white text-primary shadow-xs">
+            <Upload className="size-5" />
+          </span>
+          <span className="flex flex-col gap-0.5">
+            <span className="text-sm font-semibold text-foreground">
+              {photoUploading ? (
+                "Uploading photos..."
+              ) : (
+                <>
+                  Click to select or drag &amp; drop photos, or{" "}
+                  <span className="font-semibold text-primary">browse</span>
+                </>
+              )}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {photos.length > 0
+                ? "Add more — JPG, PNG or PDF (max 5MB each)"
+                : "Select multiple files (JPG, PNG, PDF up to 5MB each)"}
+            </span>
+          </span>
         </button>
+
+        {photos.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            {photos.map((p, i) => (
+              <div
+                key={p.key}
+                className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-[#f8f9fa] p-3 transition-colors hover:border-primary/40"
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white">
+                    {p.preview ? (
+                      p.name.toLowerCase().endsWith(".pdf") ? (
+                        <ImagePlus className="size-5 text-primary" />
+                      ) : (
+                        <img src={p.preview} alt={p.name} className="h-full w-full object-cover" />
+                      )
+                    ) : p.key.startsWith("/") ? (
+                      <img src={p.key} alt={p.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <VehicleImage src={p.key} alt={p.name} fill className="object-contain p-1" />
+                    )}
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <p className="truncate text-xs font-semibold text-foreground">{p.name}</p>
+                    <div className="mt-0.5 flex items-center gap-1.5">
+                      <span className="rounded bg-primary/10 px-1.5 py-0.2 text-[10px] font-medium text-primary">
+                        {i === 0 ? "Primary" : "Photo"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removePhoto(p.key)}
+                  className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                  aria-label={`Remove ${p.name}`}
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex justify-end border-t border-border pt-[25px]">
