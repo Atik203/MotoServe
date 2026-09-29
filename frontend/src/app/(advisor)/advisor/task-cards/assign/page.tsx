@@ -69,7 +69,9 @@ function AssignMechanicContent() {
   const [stationBay, setStationBay] = useState("");
   const [mechanicSearch, setMechanicSearch] = useState("");
   const [taskSearch, setTaskSearch] = useState("");
-  const [unassignedOnly, setUnassignedOnly] = useState(false);
+  const [queueView, setQueueView] = useState<"needs" | "assigned">("needs");
+  const [editingAssignment, setEditingAssignment] = useState(false);
+  const [confirmingReassign, setConfirmingReassign] = useState(false);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -112,6 +114,8 @@ function AssignMechanicContent() {
   // When current task changes, sync pre-existing mechanics and station
   useEffect(() => {
     const timer = setTimeout(() => {
+      setEditingAssignment(false);
+      setConfirmingReassign(false);
       if (currentTask) {
         if (currentTask.station) setStationBay(currentTask.station);
         if (currentTask.mechanicIds && currentTask.mechanicIds.length > 0) {
@@ -166,7 +170,7 @@ function AssignMechanicContent() {
       const c = customers.find((item) => item.id === t.customerId) ?? t.customer;
       const hasMechanic = Boolean(t.mechanicId || (t.mechanics && t.mechanics.length > 0));
 
-      const matchesUnassigned = !unassignedOnly || !hasMechanic;
+      const matchesView = queueView === "assigned" ? hasMechanic : !hasMechanic;
       const matchesSearch =
         !q ||
         t.id.toLowerCase().includes(q) ||
@@ -175,9 +179,20 @@ function AssignMechanicContent() {
         (v?.model ?? "").toLowerCase().includes(q) ||
         (c?.name ?? "").toLowerCase().includes(q);
 
-      return matchesUnassigned && matchesSearch;
+      return matchesView && matchesSearch;
     });
-  }, [activeTasks, vehicles, customers, taskSearch, unassignedOnly]);
+  }, [activeTasks, vehicles, customers, taskSearch, queueView]);
+
+  const needsAssignmentCount = useMemo(
+    () => activeTasks.filter((t) => !(t.mechanicId || (t.mechanics && t.mechanics.length > 0))).length,
+    [activeTasks],
+  );
+  const assignedCount = activeTasks.length - needsAssignmentCount;
+
+  const isAssignedTask = Boolean(
+    currentTask && (currentTask.mechanicId || (currentTask.mechanics?.length ?? 0) > 0),
+  );
+  const selectionLocked = isAssignedTask && !editingAssignment;
 
   const toggleSelectMechanic = (id: string) => {
     setSelectedMechanicIds((prev) =>
@@ -201,16 +216,17 @@ function AssignMechanicContent() {
     }
   };
 
-  const handleConfirmAssignment = async () => {
-    if (!currentTask) {
-      toast.error("Please select a task card");
-      return;
-    }
-    if (selectedMechanicIds.length === 0) {
-      toast.error("Please select at least one certified technician");
-      return;
-    }
+  const previousMechanicNames = useMemo(() => {
+    if (!currentTask) return [] as string[];
+    return currentTask.mechanics?.length
+      ? currentTask.mechanics.map((m) => m.name)
+      : currentTask.mechanic
+        ? [currentTask.mechanic.name]
+        : [];
+  }, [currentTask]);
 
+  const performAssignment = async () => {
+    if (!currentTask) return;
     setSubmitting(true);
     try {
       await dispatch(
@@ -228,13 +244,33 @@ function AssignMechanicContent() {
         .map((m) => m.name)
         .join(", ");
 
-      toast.success(`Assigned ${assignedNames} to task #${currentTask.id}`);
+      toast.success(
+        previousMechanicNames.length > 0
+          ? `Reassigned task #${currentTask.id} to ${assignedNames}`
+          : `Assigned ${assignedNames} to task #${currentTask.id}`,
+      );
       router.push(`/advisor/tasks/${currentTask.id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Assignment dispatch failed");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleConfirmAssignment = () => {
+    if (!currentTask) {
+      toast.error("Please select a task card");
+      return;
+    }
+    if (selectedMechanicIds.length === 0) {
+      toast.error("Please select at least one certified technician");
+      return;
+    }
+    if (previousMechanicNames.length > 0 && !confirmingReassign) {
+      setConfirmingReassign(true);
+      return;
+    }
+    void performAssignment();
   };
 
   const loading = (tasksStatus === "idle" || tasksStatus === "loading") && tasks.length === 0;
@@ -309,22 +345,36 @@ function AssignMechanicContent() {
         <div className="grid grid-cols-12 items-start gap-6">
           {/* Left Column (5 cols): Tasks Queue */}
           <div className="col-span-12 lg:col-span-5 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
-                Active Workshop Tasks ({activeTasks.length})
+                {queueView === "needs" ? "Needs Assignment" : "Assigned Tasks"}
               </h2>
-              <button
-                type="button"
-                onClick={() => setUnassignedOnly((prev) => !prev)}
-                className={cn(
-                  "rounded-full px-2.5 py-0.5 text-xs font-semibold border transition-all cursor-pointer",
-                  unassignedOnly
-                    ? "bg-amber-100 text-amber-800 border-amber-300 font-bold"
-                    : "bg-white text-muted-foreground border-border hover:text-foreground",
-                )}
-              >
-                {unassignedOnly ? "Unassigned Only" : "Show All Active"}
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setQueueView("needs")}
+                  className={cn(
+                    "rounded-full px-2.5 py-0.5 text-xs font-semibold border transition-all cursor-pointer",
+                    queueView === "needs"
+                      ? "bg-amber-100 text-amber-800 border-amber-300 font-bold"
+                      : "bg-white text-muted-foreground border-border hover:text-foreground",
+                  )}
+                >
+                  Needs ({needsAssignmentCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQueueView("assigned")}
+                  className={cn(
+                    "rounded-full px-2.5 py-0.5 text-xs font-semibold border transition-all cursor-pointer",
+                    queueView === "assigned"
+                      ? "bg-blue-100 text-[#0052cc] border-blue-300 font-bold"
+                      : "bg-white text-muted-foreground border-border hover:text-foreground",
+                  )}
+                >
+                  Assigned ({assignedCount})
+                </button>
+              </div>
             </div>
 
             {/* Task Search */}
@@ -539,9 +589,13 @@ function AssignMechanicContent() {
                         return (
                           <div
                             key={m.id}
-                            onClick={() => toggleSelectMechanic(m.id)}
+                            onClick={() => {
+                              if (selectionLocked) return;
+                              toggleSelectMechanic(m.id);
+                            }}
                             className={cn(
-                              "flex items-center justify-between rounded-xl border p-3 text-xs transition-all cursor-pointer",
+                              "flex items-center justify-between rounded-xl border p-3 text-xs transition-all",
+                              selectionLocked ? "cursor-not-allowed opacity-60" : "cursor-pointer",
                               isSelected
                                 ? "border-[#0052cc] bg-blue-50/50 shadow-xs ring-1 ring-[#0052cc]/30"
                                 : "border-border bg-white hover:border-slate-300 hover:bg-slate-50/50",
@@ -594,25 +648,77 @@ function AssignMechanicContent() {
                     </div>
 
                     {/* Dispatch Action */}
-                    <div className="mt-5 border-t border-border pt-4 flex items-center justify-between">
-                      <div className="text-xs text-muted-foreground">
-                        {selectedMechanicIds.length === 0 ? (
-                          <span className="text-amber-700 font-semibold">Please select at least 1 technician</span>
+                    <div className="mt-5 border-t border-border pt-4 flex flex-col gap-3">
+                      {confirmingReassign && previousMechanicNames.length > 0 && (
+                        <div className="flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs">
+                          <p className="font-bold text-amber-900">
+                            Confirm reassignment for #{currentTask.id}
+                          </p>
+                          <p className="text-amber-800">
+                            Currently assigned to <strong>{previousMechanicNames.join(", ")}</strong>. Recorded
+                            progress, notes and parts are kept, but the new mechanic takes over the task.
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              onClick={() => void performAssignment()}
+                              disabled={submitting}
+                              className="h-8 gap-1.5 bg-amber-600 text-xs font-bold text-white hover:bg-amber-700"
+                            >
+                              <UserCheck className="size-3.5" />
+                              {submitting ? "Reassigning..." : "Confirm reassignment"}
+                            </Button>
+                            <Button
+                              onClick={() => setConfirmingReassign(false)}
+                              disabled={submitting}
+                              className="h-8 border border-border bg-white text-xs font-semibold text-foreground hover:bg-muted"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-muted-foreground">
+                          {selectionLocked ? (
+                            <span>
+                              Assigned to{" "}
+                              <strong className="text-foreground">
+                                {previousMechanicNames.join(", ") || "—"}
+                              </strong>
+                            </span>
+                          ) : selectedMechanicIds.length === 0 ? (
+                            <span className="text-amber-700 font-semibold">Please select at least 1 technician</span>
+                          ) : (
+                            <span>
+                              Selected: <strong className="text-foreground">{selectedMechanicIds.length} technician(s)</strong>
+                            </span>
+                          )}
+                        </div>
+
+                        {selectionLocked ? (
+                          <Button
+                            onClick={() => setEditingAssignment(true)}
+                            className="gap-2 border border-[#0052cc]/30 bg-white text-xs font-bold text-[#0052cc] hover:bg-blue-50 h-10 px-5"
+                          >
+                            <UserCheck className="size-4" />
+                            Change mechanic
+                          </Button>
                         ) : (
-                          <span>
-                            Selected: <strong className="text-foreground">{selectedMechanicIds.length} technician(s)</strong>
-                          </span>
+                          <Button
+                            onClick={handleConfirmAssignment}
+                            disabled={submitting || selectedMechanicIds.length === 0}
+                            className="gap-2 bg-[#0052cc] text-xs font-bold text-white shadow-xs hover:bg-[#0047b3] disabled:opacity-50 h-10 px-5"
+                          >
+                            <UserCheck className="size-4" />
+                            {submitting
+                              ? "Saving..."
+                              : isAssignedTask
+                                ? `Confirm Reassignment to #${currentTask.id}`
+                                : `Assign & Dispatch to Task #${currentTask.id}`}
+                          </Button>
                         )}
                       </div>
-
-                      <Button
-                        onClick={handleConfirmAssignment}
-                        disabled={submitting || selectedMechanicIds.length === 0}
-                        className="gap-2 bg-[#0052cc] text-xs font-bold text-white shadow-xs hover:bg-[#0047b3] disabled:opacity-50 h-10 px-5"
-                      >
-                        <UserCheck className="size-4" />
-                        {submitting ? "Assigning..." : `Assign & Dispatch to Task #${currentTask.id}`}
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
