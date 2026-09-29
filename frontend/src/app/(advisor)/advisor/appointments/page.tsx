@@ -217,11 +217,10 @@ export default function AdvisorAppointmentsPage() {
             date: rescheduleDate,
             time: rescheduleTime,
             notes: rescheduleNotes.trim(),
-            status: "confirmed",
           },
         }),
       ).unwrap();
-      toast.success("Appointment rescheduled and confirmed");
+      toast.success("Appointment rescheduled");
       setRescheduleAppointment(null);
       dispatch(fetchAppointments());
     } catch (err) {
