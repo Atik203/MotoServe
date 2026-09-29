@@ -2,7 +2,7 @@ import { prisma } from "../../lib/prisma.js";
 import { ApiError } from "../../middleware/error.js";
 import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
-import type { Estimate, TaskCard, Prisma } from "../../generated/prisma/client.js";
+import type { TaskCard, Prisma } from "../../generated/prisma/client.js";
 import { createWithSequentialId } from "../../lib/ids.js";
 import type { AssignMechanicBody, CreateCustomerBody, CreateEstimateBody, CreateTaskCardBody } from "./advisor.types.js";
 
@@ -156,7 +156,13 @@ export async function assignMechanic(id: string, body: AssignMechanicBody) {
   });
 }
 
-export async function createEstimate(advisorId: string, role: string, body: CreateEstimateBody) {
+export type EstimateWithItems = Prisma.EstimateGetPayload<{ include: { items: true } }>;
+
+export async function createEstimate(
+  advisorId: string,
+  role: string,
+  body: CreateEstimateBody,
+): Promise<EstimateWithItems> {
   const targetId = body.taskId;
   const task = await prisma.taskCard.findUnique({ where: { id: targetId }, select: { customerId: true, status: true, advisorId: true } });
   if (!task) throw new ApiError(404, "Task not found");
@@ -171,7 +177,7 @@ export async function createEstimate(advisorId: string, role: string, body: Crea
     });
   }
   const total = body.items.reduce((sum, i) => sum + i.amount, 0);
-  return createWithSequentialId<Estimate>(prisma.estimate, "ES-", 3300, (id) => ({
+  return createWithSequentialId<EstimateWithItems>(prisma.estimate, "ES-", 3300, (id) => ({
     data: {
       id,
       taskCardId: targetId,

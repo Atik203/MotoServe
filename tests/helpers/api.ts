@@ -53,10 +53,14 @@ export interface ApiSession {
 }
 
 export async function apiAs(playwright: Playwright, role: Role): Promise<ApiSession> {
+  return loginUser(playwright, ACCOUNTS[role].email, ACCOUNTS[role].password);
+}
+
+export async function loginUser(playwright: Playwright, email: string, password: string): Promise<ApiSession> {
   const ctx = await newApiContext(playwright);
-  const res = await ctx.post("/auth/login", { data: ACCOUNTS[role] });
+  const res = await ctx.post("/auth/login", { data: { email, password } });
   if (!res.ok()) {
-    throw new Error(`Login failed for ${role}: ${res.status()} ${await res.text()}`);
+    throw new Error(`Login failed for ${email}: ${res.status()} ${await res.text()}`);
   }
   const body = (await res.json()) as ApiSession["user"] & { token: string };
   return {
@@ -80,4 +84,113 @@ export async function firstService(session: ApiSession): Promise<{ id: string; n
   const active = services.filter((s) => s.active);
   if (!active.length) throw new Error("No active services available in the test database");
   return active[0];
+}
+
+export async function customerWithVehicle(session: ApiSession): Promise<{ customerId: string; vehicleId: string; regNo: string }> {
+  const [customersRes, vehiclesRes] = await Promise.all([
+    session.ctx.get("/customers", { headers: session.headers }),
+    session.ctx.get("/vehicles", { headers: session.headers }),
+  ]);
+  const customers = (await customersRes.json()) as { id: string }[];
+  const vehicles = (await vehiclesRes.json()) as { id: string; ownerId: string; regNo: string }[];
+  for (const vehicle of vehicles) {
+    if (customers.some((c) => c.id === vehicle.ownerId)) {
+      return { customerId: vehicle.ownerId, vehicleId: vehicle.id, regNo: vehicle.regNo };
+    }
+  }
+  throw new Error("No owner with a vehicle found in the test database");
+}
+
+export async function activeMechanics(session: ApiSession): Promise<{ id: string; name: string }[]> {
+  const res = await session.ctx.get("/employees", { headers: session.headers });
+  const employees = (await res.json()) as { id: string; name: string; role: string; status: string }[];
+  return employees
+    .filter((e) => e.role === "mechanic" && e.status === "active")
+    .map((e) => ({ id: e.id, name: e.name }));
+}
+
+export interface CreatedTask {
+  id: string;
+  vehicleId: string;
+  customerId: string;
+}
+
+export async function createWalkInTask(
+  session: ApiSession,
+  options: { priority?: string; mechanicIds?: string[]; issues?: string; mileage?: number } = {},
+): Promise<CreatedTask> {
+  const { customerId, vehicleId } = await customerWithVehicle(session);
+  const service = await firstService(session);
+  const res = await session.ctx.post("/tasks", {
+    headers: session.headers,
+    data: {
+      vehicleId,
+      customerId,
+      issues: options.issues ?? "e2e walk-in task",
+      priority: options.priority ?? "medium",
+      station: "Main Bay / Station 01",
+      mileage: options.mileage ?? 25000,
+      serviceIds: [service.id],
+      mechanicIds: options.mechanicIds,
+    },
+  });
+  if (res.status() !== 201) {
+    throw new Error(`createWalkInTask failed: ${res.status()} ${await res.text()}`);
+  }
+  const { id } = (await res.json()) as { id: string };
+  return { id, vehicleId, customerId };
+}
+
+export async function advanceTask(session: ApiSession, taskId: string, status: string): Promise<void> {
+  const res = await session.ctx.patch(`/tasks/${taskId}/status`, {
+    headers: session.headers,
+    data: { status },
+  });
+  if (!res.ok()) throw new Error(`advanceTask(${status}) failed: ${res.status()} ${await res.text()}`);
+}
+
+export async function completeTask(session: ApiSession, taskId: string): Promise<void> {
+  await advanceTask(session, taskId, "completed");
+}
+
+export async function createTaskForOwner(
+  advisor: ApiSession,
+  ownerId: string,
+  options: { priority?: string; mechanicIds?: string[]; issues?: string } = {},
+): Promise<CreatedTask> {
+  const res = await advisor.ctx.get("/vehicles", { headers: advisor.headers });
+  const vehicles = (await res.json()) as { id: string; ownerId: string }[];
+  const vehicle = vehicles.find((v) => v.ownerId === ownerId);
+  if (!vehicle) throw new Error(`Owner ${ownerId} has no vehicle in the test database`);
+  const service = await firstService(advisor);
+
+  const created = await advisor.ctx.post("/tasks", {
+    headers: advisor.headers,
+    data: {
+      vehicleId: vehicle.id,
+      customerId: ownerId,
+      issues: options.issues ?? "e2e owner task",
+      priority: options.priority ?? "medium",
+      station: "Main Bay / Station 01",
+      mileage: 25000,
+      serviceIds: [service.id],
+      mechanicIds: options.mechanicIds,
+    },
+  });
+  if (created.status() !== 201) {
+    throw new Error(`createTaskForOwner failed: ${created.status()} ${await created.text()}`);
+  }
+  const { id } = (await created.json()) as { id: string };
+  return { id, vehicleId: vehicle.id, customerId: ownerId };
+}
+
+export async function invoiceForTask(session: ApiSession, taskId: string) {
+  const res = await session.ctx.get("/invoices", { headers: session.headers });
+  const invoices = (await res.json()) as {
+    id: string;
+    taskId: string;
+    status: string;
+    total: number;
+  }[];
+  return invoices.find((i) => i.taskId === taskId) ?? null;
 }

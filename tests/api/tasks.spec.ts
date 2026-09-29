@@ -1,20 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { apiAs, firstService, firstVehicle, type ApiSession } from "../helpers/api";
-
-async function customerWithVehicle(session: ApiSession): Promise<{ customerId: string; vehicleId: string }> {
-  const [customersRes, vehiclesRes] = await Promise.all([
-    session.ctx.get("/customers", { headers: session.headers }),
-    session.ctx.get("/vehicles", { headers: session.headers }),
-  ]);
-  const customers = (await customersRes.json()) as { id: string }[];
-  const vehicles = (await vehiclesRes.json()) as { id: string; ownerId: string }[];
-  for (const vehicle of vehicles) {
-    if (customers.some((c) => c.id === vehicle.ownerId)) {
-      return { customerId: vehicle.ownerId, vehicleId: vehicle.id };
-    }
-  }
-  throw new Error("No owner with a vehicle found in the test database");
-}
+import { apiAs, customerWithVehicle, firstService, firstVehicle } from "../helpers/api";
 
 function dateFromNow(daysAhead: number): string {
   const d = new Date();
