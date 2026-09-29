@@ -35,7 +35,7 @@ export async function createPartRequestController(req: Request, res: Response): 
   if (!mechanicId) throw new Error("Unauthorized");
   const request = await createPartRequest(mechanicId, req.body.body as CreatePartRequestBody);
   await logAudit(req.user?.name ?? "mechanic", `Requested part: ${request.partName} x${request.qty}`);
-  res.status(201).json({ ...request, status: request.status.toLowerCase() });
+  res.status(201).json({ ...request, status: request.status.toLowerCase(), kind: request.kind.toLowerCase() });
 }
 
 export async function listPartRequestsController(req: Request, res: Response): Promise<void> {
@@ -44,12 +44,24 @@ export async function listPartRequestsController(req: Request, res: Response): P
 
   if (req.user?.role === "MECHANIC") {
     const requests = await listPartRequests(userId);
-    res.json(requests.map((request) => ({ ...request, status: request.status.toLowerCase() })));
+    res.json(
+      requests.map((request) => ({
+        ...request,
+        status: request.status.toLowerCase(),
+        kind: request.kind.toLowerCase(),
+      })),
+    );
     return;
   }
 
   const requests = await listTeamPartRequests();
-  res.json(requests.map((request) => ({ ...request, status: request.status.toLowerCase() })));
+  res.json(
+    requests.map((request) => ({
+      ...request,
+      status: request.status.toLowerCase(),
+      kind: request.kind.toLowerCase(),
+    })),
+  );
 }
 
 export async function reviewPartRequestController(req: Request, res: Response): Promise<void> {
@@ -59,12 +71,17 @@ export async function reviewPartRequestController(req: Request, res: Response): 
     req.body.body as ReviewPartRequestBody,
     reviewer,
   );
-  const { request, issued } = result;
+  const { request, issued, restocked } = result;
   const verb =
     request.status === "APPROVED" ? "Approved" : request.status === "REJECTED" ? "Rejected" : "Fulfilled";
+  const detail = issued
+    ? " (stock issued, added to task parts)"
+    : restocked
+      ? ` (stock +${restocked.qty} — now ${restocked.stock})`
+      : "";
   await logAudit(
     reviewer,
-    `${verb} part request ${request.partName} x${request.qty}${request.taskCardId ? ` for ${request.taskCardId}` : ""}${issued ? " (stock issued, added to task parts)" : ""}`,
+    `${verb} part request ${request.partName} x${request.qty}${request.taskCardId ? ` for ${request.taskCardId}` : ""}${detail}`,
   );
-  res.json({ ...request, status: request.status.toLowerCase() });
+  res.json({ ...request, status: request.status.toLowerCase(), kind: request.kind.toLowerCase() });
 }
