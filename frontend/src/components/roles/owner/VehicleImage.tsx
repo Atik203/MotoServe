@@ -7,7 +7,7 @@ import { useFileUrl } from "@/hooks/useFileUrl";
 import { cn } from "@/lib/utils";
 
 interface VehicleImageProps {
-  src: string;
+  src?: string | null;
   alt: string;
   fill?: boolean;
   width?: number;
