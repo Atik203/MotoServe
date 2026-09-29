@@ -36,6 +36,7 @@ export const createPartRequestSchema = z.object({
     taskCardId: z.string().optional(),
     partId: z.string().optional(),
     notes: z.string().optional(),
+    kind: z.enum(["issue", "restock"]).optional(),
   }),
 });
 

@@ -43,13 +43,15 @@ export function PartRequestsPanel({
   const decidedRequests = requests.filter((r) => r.status === "fulfilled" || r.status === "rejected");
   const list = (showDecided ? decidedRequests : openRequests).slice(0, limit);
 
-  const act = async (id: string, status: ReviewAction, partName: string) => {
+  const act = async (id: string, status: ReviewAction, partName: string, kind?: "issue" | "restock") => {
     setBusyId(id);
     try {
       await dispatch(reviewPartRequest({ id, status })).unwrap();
       toast.success(
         status === "fulfilled"
-          ? `${partName} issued — stock updated and added to the task parts`
+          ? kind === "restock"
+            ? `${partName} received — catalog stock increased`
+            : `${partName} issued — stock reduced and added to the task parts`
           : `Part request ${status}`,
       );
     } catch (err) {
@@ -160,15 +162,27 @@ export function PartRequestsPanel({
                       </p>
                     )}
                   </div>
-                  <span
-                    className={cn(
-                      "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium capitalize",
-                      meta.className,
-                    )}
-                  >
-                    <Icon className="size-3" />
-                    {meta.label}
-                  </span>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
+                        req.kind === "restock"
+                          ? "bg-[rgba(147,51,234,0.1)] text-[#9333ea]"
+                          : "bg-[rgba(0,82,204,0.08)] text-primary",
+                      )}
+                    >
+                      {req.kind === "restock" ? "Restock" : "Issue"}
+                    </span>
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium capitalize",
+                        meta.className,
+                      )}
+                    >
+                      <Icon className="size-3" />
+                      {meta.label}
+                    </span>
+                  </div>
                 </div>
 
                 {(req.status === "pending" || req.status === "approved") && (
@@ -176,7 +190,7 @@ export function PartRequestsPanel({
                     {req.status === "pending" && (
                       <Button
                         size="sm"
-                        onClick={() => void act(req.id, "approved", req.partName)}
+                        onClick={() => void act(req.id, "approved", req.partName, req.kind)}
                         disabled={isBusy}
                         className="h-7 gap-1 rounded-lg bg-[#2e7d32] px-2.5 text-[11px] font-bold text-white hover:bg-[#1b5e20]"
                       >
@@ -186,7 +200,7 @@ export function PartRequestsPanel({
                     )}
                     <Button
                       size="sm"
-                      onClick={() => void act(req.id, "fulfilled", req.partName)}
+                      onClick={() => void act(req.id, "fulfilled", req.partName, req.kind)}
                       disabled={isBusy}
                       className="h-7 gap-1 rounded-lg bg-[#0052cc] px-2.5 text-[11px] font-bold text-white hover:bg-[#0047b3]"
                     >
@@ -195,7 +209,7 @@ export function PartRequestsPanel({
                     </Button>
                     <Button
                       size="sm"
-                      onClick={() => void act(req.id, "rejected", req.partName)}
+                      onClick={() => void act(req.id, "rejected", req.partName, req.kind)}
                       disabled={isBusy}
                       className="h-7 gap-1 rounded-lg border border-border bg-white px-2.5 text-[11px] font-semibold text-[#ba1a1a] hover:bg-red-50"
                     >
@@ -211,8 +225,8 @@ export function PartRequestsPanel({
       )}
 
       <p className="text-[11px] text-muted-foreground">
-        Fulfilling a request issues the part from stock and adds it to the task&apos;s parts, so it is
-        billed through the normal invoice flow.
+        <strong>Issue</strong> requests take the part out of stock and add it to the task&apos;s parts (billed on
+        the invoice). <strong>Restock</strong> requests top the catalog back up when the delivery arrives.
       </p>
     </section>
   );

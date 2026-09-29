@@ -21,7 +21,7 @@ export const fetchPartRequests = createAsyncThunk("partRequests/fetch", async ()
 
 export const submitPartRequest = createAsyncThunk(
   "partRequests/submit",
-  async (body: { partName: string; qty: number; taskCardId?: string; partId?: string; notes?: string }) => {
+  async (body: { partName: string; qty: number; taskCardId?: string; partId?: string; notes?: string; kind?: "issue" | "restock" }) => {
     const data = await api.post<PartRequest>("/parts/request", body);
     return { ...data, status: data.status.toLowerCase() as PartRequest["status"] };
   },
