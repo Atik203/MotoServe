@@ -1,37 +1,56 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Camera, Loader2 } from "lucide-react";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { Camera, ImageOff, Loader2 } from "lucide-react";
+import { useAppDispatch } from "@/store/hooks";
 import { uploadDocument } from "@/store/slices/authSlice";
-import { fetchFileUrl } from "@/store/slices/filesSlice";
 import { fetchTask, addTaskPhoto } from "@/store/slices/tasksSlice";
+import { useFileUrl } from "@/hooks/useFileUrl";
 
 interface RepairPhotosProps {
   taskId: string;
   photos: string[];
 }
 
+function PhotoTile({ photo, index }: { photo: string; index: number }) {
+  const src = useFileUrl(photo);
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <div className="group relative aspect-square overflow-hidden rounded border border-border bg-secondary">
+      {src && !failed ? (
+        <Image
+          src={src}
+          alt={`Repair photo ${index + 1}`}
+          fill
+          unoptimized
+          className="object-cover"
+          onError={() => setFailed(true)}
+        />
+      ) : src ? (
+        <div className="flex h-full flex-col items-center justify-center gap-1 text-muted-foreground">
+          <ImageOff className="size-4" />
+          <span className="text-[10px] font-medium">Unavailable</span>
+        </div>
+      ) : (
+        <div className="flex h-full items-center justify-center">
+          <Loader2 className="size-4 animate-spin text-muted-foreground" />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function RepairPhotos({ taskId, photos }: RepairPhotosProps) {
   const dispatch = useAppDispatch();
-  const urls = useAppSelector((s) => s.files.urls);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const targetId = taskId;
-
-  useEffect(() => {
-    for (const key of photos) {
-      if (key.startsWith("MotoServe/") && !urls[key]) {
-        void dispatch(fetchFileUrl(key)).catch(() => {});
-      }
-    }
-  }, [photos, urls, dispatch]);
 
   const handlePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file || !targetId) return;
+    if (!file || !taskId) return;
     if (!file.type.startsWith("image/")) {
       toast.error("Only image files are allowed");
       return;
@@ -50,9 +69,8 @@ export function RepairPhotos({ taskId, photos }: RepairPhotosProps) {
         body: file,
       });
       if (!put.ok) throw new Error("Upload to storage failed");
-      await dispatch(addTaskPhoto({ id: targetId, key: res.key })).unwrap();
-      dispatch(fetchFileUrl(res.key));
-      await dispatch(fetchTask(targetId));
+      await dispatch(addTaskPhoto({ id: taskId, key: res.key })).unwrap();
+      await dispatch(fetchTask(taskId));
       toast.success("Photo uploaded");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
@@ -78,21 +96,9 @@ export function RepairPhotos({ taskId, photos }: RepairPhotosProps) {
       />
 
       <div className="grid grid-cols-2 gap-2">
-        {photos.map((key, i) => {
-          const isS3Key = key.startsWith("MotoServe/");
-          const src = isS3Key ? urls[key] : key;
-          return (
-            <div key={key} className="group relative aspect-square overflow-hidden rounded border border-border bg-secondary">
-              {src ? (
-                <Image src={src} alt={`Repair photo ${i + 1}`} fill className="object-cover" />
-              ) : (
-                <div className="flex h-full items-center justify-center">
-                  <Loader2 className="size-4 animate-spin text-muted-foreground" />
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {photos.map((key, i) => (
+          <PhotoTile key={key} photo={key} index={i} />
+        ))}
 
         <button
           type="button"

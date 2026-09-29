@@ -92,6 +92,9 @@ export interface TaskServiceLine {
   id: string;
   name: string;
   price: number;
+  durationMins?: number;
+  laborRate?: number;
+  category?: string;
 }
 
 export interface TaskProgressStep {
@@ -147,6 +150,7 @@ export interface TaskCard {
   keysReceived?: boolean | null;
   accessories?: string | null;
   ownerArchivedAt?: string | null;
+  estimates?: { id: string; items: { id?: string; description?: string; category?: string; amount?: number }[] }[];
   createdAt: string;
   updatedAt?: string;
 }
@@ -178,6 +182,10 @@ export interface PartRequest {
   qty: number;
   notes: string | null;
   status: PartRequestStatus;
+  reviewNote?: string | null;
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+  mechanic?: { id: string; name: string; avatar?: string | null } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -214,6 +222,9 @@ export interface EstimateItem {
   id: string;
   description: string;
   category: "service" | "parts" | "labor";
+  serviceId?: string | null;
+  qty?: number;
+  rate?: number | null;
   amount: number;
 }
 
@@ -228,6 +239,11 @@ export interface Estimate {
   summary: string;
   internalNotes?: string | null;
   items: EstimateItem[];
+  servicesTotal?: number;
+  laborTotal?: number;
+  partsTotal?: number;
+  subtotal?: number;
+  tax?: number;
   total: number;
   taskCard?: {
     id: string;
@@ -332,6 +348,7 @@ export interface ReportsData {
   revenueByMonth: { month: string; revenue: number }[];
   tasksByStatus: { status: string; count: number }[];
   workloadByMechanic: {
+    id: string;
     mechanic: string;
     role: string;
     active: number;

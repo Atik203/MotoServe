@@ -70,7 +70,12 @@ const estimatesSlice = createSlice({
         }
       })
       .addCase(createEstimate.fulfilled, (state, action) => {
-        state.items.unshift(action.payload);
+        const idx = state.items.findIndex((e) => e.id === action.payload.id);
+        if (idx >= 0) {
+          state.items[idx] = action.payload;
+        } else {
+          state.items.unshift(action.payload);
+        }
       })
       .addCase(decideEstimate.fulfilled, (state, action) => {
         const estimate = state.items.find((e) => e.id === action.payload.id);

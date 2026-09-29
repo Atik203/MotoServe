@@ -15,14 +15,22 @@ const initialState: PartRequestsState = {
 };
 
 export const fetchPartRequests = createAsyncThunk("partRequests/fetch", async () => {
-  const data = await api.get<PartRequest[]>("/mechanic/parts/requests");
+  const data = await api.get<PartRequest[]>("/parts/requests");
   return data.map((r) => ({ ...r, status: r.status.toLowerCase() as PartRequest["status"] }));
 });
 
 export const submitPartRequest = createAsyncThunk(
   "partRequests/submit",
   async (body: { partName: string; qty: number; taskCardId?: string; partId?: string; notes?: string }) => {
-    const data = await api.post<PartRequest>("/mechanic/parts/request", body);
+    const data = await api.post<PartRequest>("/parts/request", body);
+    return { ...data, status: data.status.toLowerCase() as PartRequest["status"] };
+  },
+);
+
+export const reviewPartRequest = createAsyncThunk(
+  "partRequests/review",
+  async ({ id, status, reviewNote }: { id: string; status: "approved" | "rejected" | "fulfilled"; reviewNote?: string }) => {
+    const data = await api.patch<PartRequest>(`/parts/requests/${id}`, { status, reviewNote });
     return { ...data, status: data.status.toLowerCase() as PartRequest["status"] };
   },
 );
@@ -46,6 +54,10 @@ const partRequestsSlice = createSlice({
       })
       .addCase(submitPartRequest.fulfilled, (state, action) => {
         state.items.unshift(action.payload);
+      })
+      .addCase(reviewPartRequest.fulfilled, (state, action) => {
+        const idx = state.items.findIndex((r) => r.id === action.payload.id);
+        if (idx >= 0) state.items[idx] = action.payload;
       });
   },
 });

@@ -11,3 +11,8 @@ export type CreatePartRequestBody = {
   partId?: string;
   notes?: string;
 };
+
+export type ReviewPartRequestBody = {
+  status: "approved" | "rejected" | "fulfilled";
+  reviewNote?: string;
+};

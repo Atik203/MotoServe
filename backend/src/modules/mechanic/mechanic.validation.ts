@@ -38,3 +38,10 @@ export const createPartRequestSchema = z.object({
     notes: z.string().optional(),
   }),
 });
+
+export const reviewPartRequestSchema = z.object({
+  body: z.object({
+    status: z.enum(["approved", "rejected", "fulfilled"]),
+    reviewNote: z.string().optional(),
+  }),
+});

@@ -205,7 +205,7 @@ export default function WorkloadReportsPage() {
     return Array.from(new Set(services.map((s) => s.name).filter(Boolean))).sort();
   })();
 
-  const availableMechanics = employees.filter((e) => e.role === "mechanic").map((e) => e.name).sort();
+  const availableMechanics = [...new Set(employees.filter((e) => e.role === "mechanic").map((e) => e.name))].sort();
 
   // Active filters helper
   const isFilterActive =
@@ -508,6 +508,7 @@ export default function WorkloadReportsPage() {
         const mRating = rated.length > 0 ? (rated.reduce((s, r) => s + r.score, 0) / rated.length).toFixed(1) : "5.0";
 
         return {
+          id: m.id,
           mechanic: m.name,
           role: m.specialization ?? "General Service Tech",
           active,
@@ -589,6 +590,7 @@ export default function WorkloadReportsPage() {
       serviceDistribution: serviceDistribution.length > 0 ? serviceDistribution : reports.serviceDistribution,
       revenueByMonth: lineData.map((d) => ({ month: d.month, revenue: d.revenue })),
       workloadByMechanic: ranking.map((m) => ({
+        id: m.id,
         mechanic: m.mechanic,
         role: m.role,
         active: m.active,
@@ -1268,7 +1270,7 @@ export default function WorkloadReportsPage() {
                 </thead>
                 <tbody>
                   {ranking.map((m, i) => (
-                    <tr key={m.mechanic} className="border-b border-[#e2e8f0] last:border-0">
+                    <tr key={m.id} className="border-b border-[#e2e8f0] last:border-0">
                       <td className="py-3.5">
                         <div className="flex items-center gap-3">
                           <span className="flex size-9 items-center justify-center rounded-lg bg-[rgba(0,68,146,0.2)] text-xs font-bold text-[#004492]">
