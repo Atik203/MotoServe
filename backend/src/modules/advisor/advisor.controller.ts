@@ -36,6 +36,10 @@ export async function createEstimateController(req: Request, res: Response): Pro
   if (!req.user) throw new ApiError(401, "Authentication required");
   const estimate = await createEstimate(req.user.userId, req.user.role, req.body.body as CreateEstimateBody);
   await logAudit(req.user.name, `Sent estimate ${estimate.id}`);
-  res.status(201).json(estimate);
+  res.status(201).json({
+    ...estimate,
+    status: estimate.status.toLowerCase(),
+    items: estimate.items.map((item) => ({ ...item, category: item.category.toLowerCase() })),
+  });
 }
 
