@@ -20,6 +20,12 @@ frontend/build/
 .env.test.local
 .env.production.local
 
+# e2e/playwright test env (contains TEST_DATABASE_URL)
+.env.test
+test-results/
+playwright-report/
+blob-report/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
