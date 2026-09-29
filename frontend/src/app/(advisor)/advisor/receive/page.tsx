@@ -115,11 +115,7 @@ function ReceiveVehicleContent() {
     dispatch(fetchStations());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (!stationBay && stations.length > 0) {
-      setStationBay(stations[0].name);
-    }
-  }, [stations, stationBay]);
+  const stationBayValue = stationBay || stations[0]?.name || "";
 
   // If appointment query parameter exists, open intake modal pre-filled
   useEffect(() => {
@@ -244,7 +240,7 @@ function ReceiveVehicleContent() {
           vehicleId: selectedVehicleId,
           customerId: selectedCustomerId,
           appointmentId: selectedAppointmentId || undefined,
-          station: stationBay,
+          station: stationBayValue,
           priority,
           mileage: parseInt(intakeMileage, 10) || undefined,
           fuelLevel: fuelMap[fuelLevel] ?? 50,
@@ -547,7 +543,7 @@ function ReceiveVehicleContent() {
                         <div className="flex items-center gap-3">
                           <div className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-slate-100 bg-[#eef1f4]">
                             <VehicleImage
-                              src={vehicle?.image || "/images/cars/car-1.png"}
+                              src={vehicle?.image}
                               alt={vehicle?.model ?? "Vehicle"}
                               fill
                               className="object-contain p-1"
@@ -694,7 +690,7 @@ function ReceiveVehicleContent() {
                     <div className="flex items-center gap-3">
                       <div className="relative size-14 shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-[#eef1f4]">
                         <VehicleImage
-                          src={vehicle?.image || "/images/cars/car-1.png"}
+                          src={vehicle?.image}
                           alt={vehicle?.model ?? "Vehicle"}
                           fill
                           className="object-contain p-1"
@@ -842,7 +838,7 @@ function ReceiveVehicleContent() {
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-xs font-semibold">Initial Station Bay</Label>
                   <select
-                    value={stationBay}
+                    value={stationBayValue}
                     onChange={(e) => setStationBay(e.target.value)}
                     className="h-9 rounded-lg border border-border bg-white px-3 text-xs"
                   >

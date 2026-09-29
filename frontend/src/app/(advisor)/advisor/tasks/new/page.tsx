@@ -143,11 +143,7 @@ function CreateTaskContent() {
     dispatch(fetchStations());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (!station && stations.length > 0) {
-      setStation(stations[0].name);
-    }
-  }, [stations, station]);
+  const stationValue = station || stations[0]?.name || "";
 
   // When url appointment is loaded, pre-populate
   useEffect(() => {
@@ -287,10 +283,10 @@ function CreateTaskContent() {
           model: newVehicleModel,
           year: parseInt(newVehicleYear, 10) || new Date().getFullYear(),
           regNo: newVehicleReg.toUpperCase(),
-          fuelType: newVehicleFuel,
-          mileage: parseInt(newVehicleMileage, 10) || 0,
-          image: "/images/cars/car-1.png",
-        }),
+              fuelType: newVehicleFuel,
+              mileage: parseInt(newVehicleMileage, 10) || 0,
+              image: "",
+            }),
       ).unwrap();
       setWalkinVehicleId(created.id);
       setNewVehicleOpen(false);
@@ -330,7 +326,7 @@ function CreateTaskContent() {
           appointmentId: mode === "appointment" ? appointmentId || undefined : undefined,
           issues: issues.trim(),
           priority,
-          station: station.trim() || stations[0]?.name || "",
+          station: stationValue,
           serviceIds,
           mileage: Number(mileage.replace(/[^0-9]/g, "")) || undefined,
           fuelLevel: fuelMap[fuelLevel] ?? 50,
@@ -554,7 +550,7 @@ function CreateTaskContent() {
                   <div className="flex items-center gap-4 rounded-xl border border-border bg-slate-50/50 p-4">
                     <div className="relative size-16 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
                       <VehicleImage
-                        src={selectedVehicle.image || "/images/cars/car-1.png"}
+                        src={selectedVehicle.image}
                         alt={selectedVehicle.model}
                         fill
                         className="object-contain p-1"
@@ -681,7 +677,7 @@ function CreateTaskContent() {
                   <div className="flex flex-col gap-1.5">
                     <Label className="text-xs font-semibold">Workshop Bay</Label>
                     <select
-                      value={station}
+                      value={stationValue}
                       onChange={(e) => setStation(e.target.value)}
                       className="h-9 rounded-md border border-border bg-white px-2.5 text-xs"
                     >
@@ -853,7 +849,7 @@ function CreateTaskContent() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Station:</span>
-                    <span className="font-semibold text-foreground">{station}</span>
+                    <span className="font-semibold text-foreground">{stationValue}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Technicians:</span>

@@ -85,7 +85,7 @@ test.describe("advisor vehicle intake", () => {
 
     await page.goto(`/advisor/receive?appointment=${appointment.id}`);
 
-    await expect(page.getByText(/already has task card/)).toBeVisible();
+    await expect(page.getByText(/already has task card/).first()).toBeVisible();
     await expect(page.getByRole("dialog")).toHaveCount(0);
   });
 });

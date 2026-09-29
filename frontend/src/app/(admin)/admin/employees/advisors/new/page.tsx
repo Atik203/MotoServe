@@ -86,11 +86,7 @@ export default function AddAdvisorPage() {
     dispatch(fetchStations());
   }, [dispatch, employees.length]);
 
-  useEffect(() => {
-    if (!form.branch && stations.length > 0) {
-      setForm((prev) => (prev.branch ? prev : { ...prev, branch: stations[0].name }));
-    }
-  }, [stations, form.branch]);
+    const branchValue = form.branch || stations[0]?.name || "";
   const [employmentType, setEmploymentType] = useState("Full Time");
   const [shift, setShift] = useState("Morning (8AM - 4PM)");
   const [password, setPassword] = useState("");
@@ -226,7 +222,7 @@ export default function AddAdvisorPage() {
           phone: form.phone.trim(),
           password,
           role: "advisor",
-          station: form.branch || undefined,
+          station: branchValue || undefined,
           avatar: avatarKey || undefined,
           nid: form.nid.trim() || undefined,
           gender: form.gender || undefined,
@@ -364,7 +360,7 @@ export default function AddAdvisorPage() {
                 </label>
                 <label className="flex flex-col gap-1">
                   <span className={fieldLabel}>Assigned Workshop Station / Bay</span>
-                  <select value={form.branch} onChange={set("branch")} className={selectCls}>
+                  <select value={branchValue} onChange={set("branch")} className={selectCls}>
                     <option value="">Select Station / Bay</option>
                     {stations.map((s) => (
                       <option key={s.id} value={s.name}>{s.name}</option>
@@ -604,7 +600,7 @@ export default function AddAdvisorPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#424753]">Branch</span>
-                    <span className="font-medium text-foreground">{form.branch || "—"}</span>
+                    <span className="font-medium text-foreground">{branchValue || "—"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#424753]">Shift</span>

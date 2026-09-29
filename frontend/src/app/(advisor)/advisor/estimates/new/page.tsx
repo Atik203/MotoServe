@@ -422,7 +422,7 @@ function SendEstimateContent() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <div className="relative size-20 shrink-0 overflow-hidden rounded-xl border border-[#e5e7eb] bg-[#f8fafc]">
                   <VehicleImage
-                    src={selectedVehicle?.image || "/images/cars/car-1.png"}
+                    src={selectedVehicle?.image}
                     alt={selectedVehicle?.model || "Vehicle"}
                     fill
                     className="object-contain p-1.5"

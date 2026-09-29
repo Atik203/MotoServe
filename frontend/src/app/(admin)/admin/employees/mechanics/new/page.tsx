@@ -94,11 +94,7 @@ export default function AddMechanicPage() {
     dispatch(fetchStations());
   }, [dispatch, employees.length]);
 
-  useEffect(() => {
-    if (!form.branch && stations.length > 0) {
-      setForm((prev) => (prev.branch ? prev : { ...prev, branch: stations[0].name }));
-    }
-  }, [stations, form.branch]);
+    const branchValue = form.branch || stations[0]?.name || "";
   const [employmentType, setEmploymentType] = useState("Full Time");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -248,7 +244,7 @@ export default function AddMechanicPage() {
           phone: form.phone.trim(),
           password,
           role: "mechanic",
-          station: form.branch || undefined,
+          station: branchValue || undefined,
           specialization: specialization || undefined,
           avatar: avatarKey || undefined,
           skills,
@@ -379,7 +375,7 @@ export default function AddMechanicPage() {
               <div className="grid grid-cols-2 gap-x-4 gap-y-4 pt-5">
                 <label className="flex flex-col gap-1">
                   <span className={fieldLabel}>Assigned Workshop Station / Bay *</span>
-                  <select value={form.branch} onChange={set("branch")} className={selectCls}>
+                  <select value={branchValue} onChange={set("branch")} className={selectCls}>
                     <option value="">Select Station / Bay</option>
                     {stations.map((b) => (
                       <option key={b.id} value={b.name}>{b.name}</option>
@@ -665,7 +661,7 @@ export default function AddMechanicPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#424753]">Assigned Bay</span>
-                    <span className="font-medium text-foreground">{form.branch || "—"}</span>
+                    <span className="font-medium text-foreground">{branchValue || "—"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#424753]">Specialization</span>
