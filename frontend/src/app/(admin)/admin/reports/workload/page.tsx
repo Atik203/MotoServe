@@ -590,6 +590,7 @@ export default function WorkloadReportsPage() {
       serviceDistribution: serviceDistribution.length > 0 ? serviceDistribution : reports.serviceDistribution,
       revenueByMonth: lineData.map((d) => ({ month: d.month, revenue: d.revenue })),
       workloadByMechanic: ranking.map((m) => ({
+        id: m.id,
         mechanic: m.mechanic,
         role: m.role,
         active: m.active,
