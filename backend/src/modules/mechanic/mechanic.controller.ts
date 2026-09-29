@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { logAudit } from "../../lib/audit.js";
-import { addTaskNote, addTaskPhoto, addPartUsed, updateTaskStatus, createPartRequest, listPartRequests } from "./mechanic.service.js";
-import type { AddTaskNoteBody, AddPartUsedBody, UpdateTaskStatusBody, CreatePartRequestBody } from "./mechanic.types.js";
+import { addTaskNote, addTaskPhoto, addPartUsed, updateTaskStatus, createPartRequest, listPartRequests, listTeamPartRequests, reviewPartRequest } from "./mechanic.service.js";
+import type { AddTaskNoteBody, AddPartUsedBody, UpdateTaskStatusBody, CreatePartRequestBody, ReviewPartRequestBody } from "./mechanic.types.js";
 
 export async function updateTaskStatusController(req: Request, res: Response): Promise<void> {
   const { status } = req.body.body as UpdateTaskStatusBody;
@@ -39,8 +39,32 @@ export async function createPartRequestController(req: Request, res: Response): 
 }
 
 export async function listPartRequestsController(req: Request, res: Response): Promise<void> {
-  const mechanicId = req.user?.userId;
-  if (!mechanicId) throw new Error("Unauthorized");
-  const requests = await listPartRequests(mechanicId);
+  const userId = req.user?.userId;
+  if (!userId) throw new Error("Unauthorized");
+
+  if (req.user?.role === "MECHANIC") {
+    const requests = await listPartRequests(userId);
+    res.json(requests.map((request) => ({ ...request, status: request.status.toLowerCase() })));
+    return;
+  }
+
+  const requests = await listTeamPartRequests();
   res.json(requests.map((request) => ({ ...request, status: request.status.toLowerCase() })));
+}
+
+export async function reviewPartRequestController(req: Request, res: Response): Promise<void> {
+  const reviewer = req.user?.name ?? "staff";
+  const result = await reviewPartRequest(
+    req.params.id as string,
+    req.body.body as ReviewPartRequestBody,
+    reviewer,
+  );
+  const { request, issued } = result;
+  const verb =
+    request.status === "APPROVED" ? "Approved" : request.status === "REJECTED" ? "Rejected" : "Fulfilled";
+  await logAudit(
+    reviewer,
+    `${verb} part request ${request.partName} x${request.qty}${request.taskCardId ? ` for ${request.taskCardId}` : ""}${issued ? " (stock issued, added to task parts)" : ""}`,
+  );
+  res.json({ ...request, status: request.status.toLowerCase() });
 }

@@ -32,6 +32,7 @@ import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { buildKpis } from "@/lib/kpis";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { PartRequestsPanel } from "@/components/roles/shared/PartRequestsPanel";
 import { DashboardLoading } from "@/components/ui/loading";
 
 const kpiIcon: Record<string, typeof Users> = {
@@ -428,6 +429,9 @@ export default function AdminDashboardPage() {
                 ))}
               </div>
             </section>
+
+            {/* Part Requests Review Queue */}
+            <PartRequestsPanel title="Part Requests to Review" className="rounded-xl border-[#e2e8f0] p-5" />
 
             {/* Quick Actions Shortcuts */}
             <section className="flex flex-col gap-3 rounded-xl border border-[#e2e8f0] bg-white p-5 shadow-[0_1px_1px_rgba(0,0,0,0.05)]">

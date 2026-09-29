@@ -75,8 +75,8 @@ export default function MechanicDashboardPage() {
     dispatch(fetchTasks());
     dispatch(fetchVehicles());
     dispatch(fetchPartRequests());
-    if (parts.length === 0) dispatch(fetchParts());
-  }, [dispatch, parts.length]);
+    dispatch(fetchParts());
+  }, [dispatch]);
 
   const vehicleById = useMemo(() => new Map(vehicles.map((v) => [v.id, v])), [vehicles]);
   const mechanicId = user?.id;

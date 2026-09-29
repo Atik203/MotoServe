@@ -27,6 +27,14 @@ export const submitPartRequest = createAsyncThunk(
   },
 );
 
+export const reviewPartRequest = createAsyncThunk(
+  "partRequests/review",
+  async ({ id, status, reviewNote }: { id: string; status: "approved" | "rejected" | "fulfilled"; reviewNote?: string }) => {
+    const data = await api.patch<PartRequest>(`/parts/requests/${id}`, { status, reviewNote });
+    return { ...data, status: data.status.toLowerCase() as PartRequest["status"] };
+  },
+);
+
 const partRequestsSlice = createSlice({
   name: "partRequests",
   initialState,
@@ -46,6 +54,10 @@ const partRequestsSlice = createSlice({
       })
       .addCase(submitPartRequest.fulfilled, (state, action) => {
         state.items.unshift(action.payload);
+      })
+      .addCase(reviewPartRequest.fulfilled, (state, action) => {
+        const idx = state.items.findIndex((r) => r.id === action.payload.id);
+        if (idx >= 0) state.items[idx] = action.payload;
       });
   },
 });

@@ -49,10 +49,10 @@ export default function PartsRequestPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (parts.length === 0) dispatch(fetchParts());
+    dispatch(fetchParts());
     dispatch(fetchTasks());
     dispatch(fetchPartRequests());
-  }, [dispatch, parts.length]);
+  }, [dispatch]);
 
   const myActiveTasks = useMemo(
     () =>
@@ -103,6 +103,7 @@ export default function PartsRequestPage() {
         }),
       ).unwrap();
       toast.success(`Request for ${selected.name} submitted`);
+      dispatch(fetchPartRequests());
       setSelected(null);
       setQty(1);
       setNotes("");
