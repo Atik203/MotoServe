@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import { DetailLoading } from "@/components/ui/loading";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { TaskPhotoGrid } from "@/components/roles/shared/TaskPhotoGrid";
 import { downloadInvoicePdf } from "@/lib/pdf";
 import {
   Table,
@@ -45,7 +46,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Invoice, InvoiceItem, TaskStatus } from "@/types";
+import type { Invoice, InvoiceItem, Rating, TaskStatus } from "@/types";
 
 function Stars({
   rating,
@@ -150,6 +151,107 @@ const statusMeta: Record<string, { label: string; badgeClass: string }> = {
   },
 };
 
+function RatingCard({
+  taskId,
+  serviceName,
+  existingRating,
+}: {
+  taskId: string;
+  serviceName: string;
+  existingRating: Rating | null;
+}) {
+  const dispatch = useAppDispatch();
+  const [editing, setEditing] = useState(!existingRating);
+  const [score, setScore] = useState(existingRating?.score ?? 5);
+  const [review, setReview] = useState(existingRating?.review ?? "");
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async () => {
+    setSubmitting(true);
+    try {
+      await dispatch(rateTask({ taskId, score, review: review.trim(), serviceName })).unwrap();
+      toast.success(existingRating ? "Review updated!" : "Thank you for rating your service!");
+      await dispatch(fetchRatings());
+      setEditing(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to submit rating");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (existingRating && !editing) {
+    return (
+      <div className="flex flex-col gap-3.5 rounded-2xl border border-border bg-white p-5 shadow-xs">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">Your Service Feedback</h3>
+          <Sparkles className="size-4 text-amber-500" />
+        </div>
+        <div className="flex items-center justify-between">
+          <Stars rating={existingRating.score} size="size-5" />
+          <span className="text-[11px] font-medium text-muted-foreground">
+            {new Date(existingRating.date).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </span>
+        </div>
+        <p className="rounded-xl border border-border bg-[#f8f9fa] p-3 text-xs leading-relaxed text-foreground">
+          {existingRating.review || "No written comment left with this rating."}
+        </p>
+        <Button
+          onClick={() => setEditing(true)}
+          className="rounded-xl border border-border bg-white text-xs font-semibold text-primary hover:bg-[#eff6ff]"
+        >
+          Edit review
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3.5 rounded-2xl border border-border bg-white p-5 shadow-xs">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
+          {existingRating ? "Update Your Feedback" : "Rate Your Experience"}
+        </h3>
+        <Sparkles className="size-4 text-amber-500" />
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-center py-1">
+          <Stars rating={score} size="size-7" onSelect={setScore} />
+        </div>
+        <Textarea
+          value={review}
+          onChange={(e) => setReview(e.target.value)}
+          placeholder="Share your experience with our technicians and service advisors..."
+          className="min-h-20 resize-none rounded-xl border-border bg-[#f8f9fa] text-xs"
+        />
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => void submit()}
+            disabled={submitting}
+            className="flex-1 rounded-xl bg-primary text-xs font-semibold text-white shadow-2xs hover:bg-primary/90 cursor-pointer"
+          >
+            {submitting ? "Submitting..." : existingRating ? "Update Rating" : "Submit Rating"}
+          </Button>
+          {existingRating && (
+            <Button
+              onClick={() => setEditing(false)}
+              disabled={submitting}
+              className="rounded-xl border border-border bg-white text-xs font-semibold text-foreground hover:bg-muted"
+            >
+              Cancel
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ServiceTrackingDetailsPage() {
   const params = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
@@ -161,10 +263,6 @@ export default function ServiceTrackingDetailsPage() {
   const estimates = useAppSelector((s) => s.estimates.items);
   const invoices = useAppSelector((s) => s.invoices.items);
   const ratings = useAppSelector((s) => s.ratings.items);
-
-  const [score, setScore] = useState(5);
-  const [review, setReview] = useState("");
-  const [submittingRating, setSubmittingRating] = useState(false);
 
   useEffect(() => {
     if (tasks.length === 0) dispatch(fetchTasks());
@@ -258,27 +356,6 @@ export default function ServiceTrackingDetailsPage() {
     : task.status === "completed" || task.status === "ready"
       ? 100
       : Math.round((currentStageIndex / (STAGES.length - 1)) * 100);
-
-  const submitRating = async () => {
-    if (!task) return;
-    setSubmittingRating(true);
-    try {
-      await dispatch(
-        rateTask({
-          taskId: task.id,
-          score,
-          review: review.trim(),
-          serviceName: task.services[0]?.name ?? "Vehicle Service",
-        }),
-      ).unwrap();
-      toast.success(existingRating ? "Review updated!" : "Thank you for rating your service!");
-      await dispatch(fetchRatings());
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to submit rating");
-    } finally {
-      setSubmittingRating(false);
-    }
-  };
 
   if ((tasksStatus === "idle" || tasksStatus === "loading") && !task) {
     return <DetailLoading label="Loading real-time service tracking..." />;
@@ -658,19 +735,12 @@ export default function ServiceTrackingDetailsPage() {
                     Inspection & Repair Photos ({(task.photos ?? []).length})
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {task.photos.map((photo, i) => (
-                      <div
-                        key={i}
-                        className="relative size-20 overflow-hidden rounded-xl border border-border bg-secondary"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={photo}
-                          alt={`Service inspection photo ${i + 1}`}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                    ))}
+                    <TaskPhotoGrid
+                      photos={task.photos}
+                      variant="strip"
+                      itemClassName="size-20 rounded-xl"
+                      altPrefix="Service inspection photo"
+                    />
                   </div>
                 </div>
               )}
@@ -916,33 +986,12 @@ export default function ServiceTrackingDetailsPage() {
 
             {/* Completed Service Review Card */}
             {task.status === "completed" && (
-              <div className="flex flex-col gap-3.5 rounded-2xl border border-border bg-white p-5 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
-                    {existingRating ? "Your Service Feedback" : "Rate Your Experience"}
-                  </h3>
-                  <Sparkles className="size-4 text-amber-500" />
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-center py-1">
-                    <Stars rating={score} size="size-7" onSelect={setScore} />
-                  </div>
-                  <Textarea
-                    value={review}
-                    onChange={(e) => setReview(e.target.value)}
-                    placeholder="Share your experience with our technicians and service advisors..."
-                    className="min-h-20 resize-none rounded-xl border-border bg-[#f8f9fa] text-xs"
-                  />
-                  <Button
-                    onClick={() => void submitRating()}
-                    disabled={submittingRating}
-                    className="rounded-xl bg-primary text-xs font-semibold text-white shadow-2xs hover:bg-primary/90 cursor-pointer"
-                  >
-                    {submittingRating ? "Submitting..." : existingRating ? "Update Rating" : "Submit Rating"}
-                  </Button>
-                </div>
-              </div>
+              <RatingCard
+                key={existingRating?.id ?? "new"}
+                taskId={task.id}
+                serviceName={task.services[0]?.name ?? "Vehicle Service"}
+                existingRating={existingRating}
+              />
             )}
           </div>
         </div>

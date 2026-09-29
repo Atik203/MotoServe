@@ -18,6 +18,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchTasks } from "@/store/slices/tasksSlice";
 import { cn } from "@/lib/utils";
 import { DetailLoading } from "@/components/ui/loading";
+import { TaskPhotoGrid } from "@/components/roles/shared/TaskPhotoGrid";
 import {
   Table,
   TableBody,
@@ -282,13 +283,7 @@ export default function MechanicHistoryDetailPage() {
             {task.photos && task.photos.length > 0 && (
               <section className="flex flex-col gap-4 rounded-[8px] border border-border bg-white p-6 shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
                 <h2 className="border-b border-border pb-3 text-sm font-semibold text-foreground">Repair Photos</h2>
-                <div className="grid grid-cols-2 gap-2">
-                  {(task.photos as string[]).map((src, i) => (
-                    <div key={i} className="aspect-square overflow-hidden rounded-[6px] border border-border bg-muted">
-                      <img src={src} alt={`Photo ${i + 1}`} className="size-full object-cover" />
-                    </div>
-                  ))}
-                </div>
+                <TaskPhotoGrid photos={task.photos as string[]} altPrefix="Photo" />
               </section>
             )}
 

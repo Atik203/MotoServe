@@ -90,7 +90,7 @@ function Avatar({
     <span className="relative inline-block shrink-0">
       {url ? (
         <span className={cn("relative block overflow-hidden rounded-full ring-1 ring-border/50", sizeClasses)}>
-          <Image src={url} alt={name} fill className="object-cover" />
+          <Image src={url} alt={name} fill unoptimized className="object-cover" />
         </span>
       ) : (
         <span

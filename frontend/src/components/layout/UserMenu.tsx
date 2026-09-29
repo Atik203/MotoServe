@@ -37,7 +37,7 @@ export function UserMenu() {
         className="relative flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-border bg-primary-soft text-xs font-bold text-primary transition-shadow hover:shadow-[0_0_0_3px_rgba(0,82,204,0.15)]"
       >
         {avatar ? (
-          <Image src={avatar} alt={user.name} fill className="object-cover" />
+          <Image src={avatar} alt={user.name} fill unoptimized className="object-cover" />
         ) : (
           userInitials(user.name)
         )}

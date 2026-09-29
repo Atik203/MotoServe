@@ -35,6 +35,7 @@ import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
 import { fetchEmployees } from "@/store/slices/employeesSlice";
 import { downloadTaskCardPdf } from "@/lib/pdf";
+import { computeTotals, DEFAULT_LABOR_RATE, TAX_RATE, formatHours, laborHours, round2 } from "@/lib/pricing";
 import { ProgressStepper } from "@/components/roles/mechanic/ProgressStepper";
 import { PriorityPill, StatusBadge } from "@/components/roles/mechanic/StatusBadge";
 import { MechanicNotes } from "@/components/roles/mechanic/MechanicNotes";
@@ -198,11 +199,17 @@ export default function AdvisorTaskDetailPage() {
     }
   };
 
-  const servicesTotal = (task.services ?? []).reduce((sum, s) => sum + (s.price ?? 0), 0);
-  const partsTotal = (task.partsUsed ?? []).reduce((sum, p) => sum + (p.subtotal ?? 0), 0);
-  const subtotal = servicesTotal + partsTotal;
-  const estimatedTax = subtotal * 0.085;
-  const grandTotal = subtotal + estimatedTax;
+  const estimateLabor = (task.estimates ?? [])
+    .flatMap((e) => e.items)
+    .filter((i) => i.category === "LABOR")
+    .reduce((sum, i) => sum + (i.amount ?? 0), 0);
+  const {
+    servicesTotal,
+    partsTotal,
+    laborTotal,
+    tax: estimatedTax,
+    total: grandTotal,
+  } = computeTotals(task.services ?? [], task.partsUsed ?? [], estimateLabor);
 
   return (
     <div className="min-h-screen bg-[#f9fafb] p-8">
@@ -263,7 +270,7 @@ export default function AdvisorTaskDetailPage() {
                   className="gap-2 rounded-lg border-[#e5e7eb] bg-white text-xs font-semibold text-[#191c1d] hover:bg-muted"
                 >
                   <Users className="size-3.5" />
-                  Assign Mechanic
+                  {assignedMechanics.length > 0 ? "Change Mechanic" : "Assign Mechanic"}
                 </Button>
               </Link>
 
@@ -476,22 +483,46 @@ export default function AdvisorTaskDetailPage() {
               </div>
 
               <div className="divide-y divide-[#f1f3f5]">
-                {(task.services ?? []).map((service, index) => (
-                  <div key={service.id || index} className="flex items-center justify-between py-3">
-                    <div className="flex items-center gap-3">
-                      <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[#eff6ff] text-xs font-bold text-primary">
-                        {index + 1}
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold text-[#191c1d]">{service.name}</p>
-                        <p className="text-xs text-[#64748b]">Standard service package</p>
+                {(task.services ?? []).map((service, index) => {
+                  const hours = laborHours(service.durationMins);
+                  const rate = service.laborRate ?? DEFAULT_LABOR_RATE;
+                  const laborAmount = round2(hours * rate);
+                  const lineTotal = round2((service.price ?? 0) + laborAmount);
+                  return (
+                    <div key={service.id || index} className="flex items-start justify-between py-3">
+                      <div className="flex items-start gap-3">
+                        <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[#eff6ff] text-xs font-bold text-primary">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <p className="text-sm font-semibold text-[#191c1d]">{service.name}</p>
+                          <p className="text-xs text-[#64748b]">
+                            {[
+                              service.category
+                                ? service.category.charAt(0).toUpperCase() + service.category.slice(1)
+                                : null,
+                              `$${(service.price ?? 0).toFixed(2)} base`,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </p>
+                          {hours > 0 && (
+                            <p className="mt-0.5 text-xs text-[#64748b]">
+                              Labor: {formatHours(hours)} × ${rate.toFixed(2)}/hr ={" "}
+                              <span className="font-semibold text-[#191c1d]">${laborAmount.toFixed(2)}</span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-mono text-sm font-bold text-[#191c1d]">
+                          ${lineTotal.toFixed(2)}
+                        </span>
+                        <p className="text-[10px] text-[#64748b]">incl. labor</p>
                       </div>
                     </div>
-                    <span className="font-mono text-sm font-bold text-[#191c1d]">
-                      ${(service.price ?? 0).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
                 {(!task.services || task.services.length === 0) && (
                   <div className="py-6 text-center text-sm text-[#64748b]">
                     No services specified on this task.
@@ -578,7 +609,7 @@ export default function AdvisorTaskDetailPage() {
                 )}
               </div>
 
-              <Link href="/advisor/chat" className="w-full">
+              <Link href={customer?.id ? `/advisor/chat?customer=${customer.id}` : "/advisor/chat"} className="w-full">
                 <Button variant="outline" className="w-full gap-2 rounded-lg border-primary/20 bg-[#eff6ff] text-xs font-semibold text-primary hover:bg-primary/10">
                   <MessageSquare className="size-3.5" />
                   Message Customer
@@ -604,7 +635,7 @@ export default function AdvisorTaskDetailPage() {
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-[#64748b]">Assigned Station / Bay</span>
                 <span className="text-sm font-semibold text-[#191c1d]">
-                  {task.station ?? "Main Workshop / Bay"}
+                  {task.station ?? assignedMechanics.find((m) => m.station)?.station ?? "Not assigned"}
                 </span>
               </div>
 
@@ -624,7 +655,7 @@ export default function AdvisorTaskDetailPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-xs font-bold text-[#191c1d]">{m.name}</p>
                         <p className="truncate text-[11px] text-[#64748b]">
-                          {m.specialization ?? "Mechanic Specialist"}
+                          {[m.specialization ?? "Technician", m.station].filter(Boolean).join(" · ")}
                         </p>
                       </div>
                     </div>
@@ -670,7 +701,11 @@ export default function AdvisorTaskDetailPage() {
                   <span className="font-semibold text-[#191c1d]">${partsTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex items-center justify-between text-[#64748b]">
-                  <span>Estimated Tax (8.5%):</span>
+                  <span>Workshop Labor:</span>
+                  <span className="font-semibold text-[#191c1d]">${laborTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between text-[#64748b]">
+                  <span>Estimated Tax ({(TAX_RATE * 100).toFixed(1)}%):</span>
                   <span className="font-semibold text-[#191c1d]">${estimatedTax.toFixed(2)}</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between border-t border-[#f1f3f5] pt-2 text-sm font-bold text-[#191c1d]">

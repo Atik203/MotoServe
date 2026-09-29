@@ -27,9 +27,19 @@ export async function createCustomerController(req: Request, res: Response): Pro
 }
 
 export async function assignMechanicController(req: Request, res: Response): Promise<void> {
-  const task = await assignMechanic(req.params.id as string, req.body.body as AssignMechanicBody);
-  await logAudit(req.user?.name ?? "advisor", `Assigned mechanic to ${task.id}`);
-  res.json(task);
+  const result = await assignMechanic(req.params.id as string, req.body.body as AssignMechanicBody);
+  const actor = req.user?.name ?? "advisor";
+  if (result.assigned.length === 0) {
+    await logAudit(actor, `Cleared mechanic assignment on ${result.task.id}`);
+  } else if (result.reassigned) {
+    await logAudit(
+      actor,
+      `Reassigned ${result.task.id} from ${result.previous.join(", ")} to ${result.assigned.join(", ")}`,
+    );
+  } else {
+    await logAudit(actor, `Assigned ${result.assigned.join(", ")} to ${result.task.id}`);
+  }
+  res.json(result.task);
 }
 
 export async function createEstimateController(req: Request, res: Response): Promise<void> {
