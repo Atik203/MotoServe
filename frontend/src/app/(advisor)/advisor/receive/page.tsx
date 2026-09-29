@@ -127,6 +127,11 @@ function ReceiveVehicleContent() {
       if (urlAppointmentId && appointments.length > 0) {
         const appt = appointments.find((a) => a.id === urlAppointmentId);
         if (appt) {
+          const existing = tasks.find((t) => t.appointmentId === appt.id);
+          if (existing) {
+            toast.error(`Appointment #${appt.id} already has task card #${existing.id}`);
+            return;
+          }
           setSelectedAppointmentId(appt.id);
           setSelectedVehicleId(appt.vehicleId);
           setSelectedCustomerId(appt.ownerId);
@@ -138,7 +143,7 @@ function ReceiveVehicleContent() {
       }
     }, 0);
     return () => clearTimeout(timer);
-  }, [urlAppointmentId, appointments, vehicles]);
+  }, [urlAppointmentId, appointments, vehicles, tasks]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -222,6 +227,13 @@ function ReceiveVehicleContent() {
     if (!selectedCustomerId) {
       toast.error("Please select a customer account");
       return;
+    }
+    if (selectedAppointmentId) {
+      const existing = tasks.find((t) => t.appointmentId === selectedAppointmentId);
+      if (existing) {
+        toast.error(`This appointment already has task card #${existing.id}`);
+        return;
+      }
     }
 
     setIntakeBusy(true);
@@ -516,11 +528,13 @@ function ReceiveVehicleContent() {
                           <span
                             className={cn(
                               "block font-sans text-[10px] font-bold uppercase mt-0.5",
-                              task.priority === "high"
-                                ? "text-rose-600"
-                                : task.priority === "medium"
-                                  ? "text-amber-600"
-                                  : "text-slate-500",
+                              task.priority === "urgent"
+                                ? "text-rose-700"
+                                : task.priority === "high"
+                                  ? "text-rose-600"
+                                  : task.priority === "medium"
+                                    ? "text-amber-600"
+                                    : "text-slate-500",
                             )}
                           >
                             {task.priority}
@@ -838,6 +852,11 @@ function ReceiveVehicleContent() {
                       </option>
                     ))}
                   </select>
+                  {stations.length === 0 && (
+                    <p className="text-[11px] font-medium text-amber-600">
+                      No workshop bays configured — add them in the admin portal.
+                    </p>
+                  )}
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-xs font-semibold">Priority</Label>
