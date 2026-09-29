@@ -34,7 +34,7 @@ import { fetchTasks } from "@/store/slices/tasksSlice";
 import { fetchVehicles } from "@/store/slices/vehiclesSlice";
 import { fetchCustomers } from "@/store/slices/customersSlice";
 import { fetchEstimates, createEstimate } from "@/store/slices/estimatesSlice";
-import { computeAutoLabor, TAX_RATE } from "@/lib/pricing";
+import { DEFAULT_LABOR_RATE, TAX_RATE, laborHours } from "@/lib/pricing";
 import { fetchServices } from "@/store/slices/servicesSlice";
 import { FormLoading } from "@/components/ui/loading";
 import { VehicleImage } from "@/components/roles/owner/VehicleImage";
@@ -48,6 +48,7 @@ interface LineItem {
   qty: number;
   unitPrice: number;
   laborRate: number;
+  serviceId?: string;
 }
 
 const CATEGORY_STYLES: Record<
@@ -145,9 +146,10 @@ function SendEstimateContent() {
             id: it.id || nextId(),
             name: it.description,
             category: (it.category?.toLowerCase() as LineItem["category"]) || "service",
-            qty: 1,
-            unitPrice: it.category?.toLowerCase() === "labor" ? 0 : it.amount,
-            laborRate: it.category?.toLowerCase() === "labor" ? it.amount : 0,
+            qty: it.qty ?? 1,
+            unitPrice: it.category?.toLowerCase() === "labor" ? 0 : it.rate ?? it.amount,
+            laborRate: it.category?.toLowerCase() === "labor" ? it.rate ?? it.amount : 0,
+            serviceId: it.serviceId ?? undefined,
           }))
         );
         if (existingEstimate.summary) setCustomerMessage(existingEstimate.summary);
@@ -166,19 +168,20 @@ function SendEstimateContent() {
             qty: 1,
             unitPrice: srv.price ?? 59.99,
             laborRate: 0,
+            serviceId: srv.id,
           });
-        });
-      }
-
-      const autoLabor = computeAutoLabor(selectedTask.services ?? []);
-      if (autoLabor > 0) {
-        initial.push({
-          id: nextId(),
-          name: "Workshop Labor",
-          category: "labor",
-          qty: 1,
-          unitPrice: 0,
-          laborRate: Number(autoLabor.toFixed(2)),
+          const hours = laborHours(srv.durationMins);
+          if (hours > 0) {
+            initial.push({
+              id: nextId(),
+              name: `Labor — ${srv.name}`,
+              category: "labor",
+              qty: hours,
+              unitPrice: 0,
+              laborRate: srv.laborRate ?? DEFAULT_LABOR_RATE,
+              serviceId: srv.id,
+            });
+          }
         });
       }
 
@@ -346,16 +349,24 @@ function SendEstimateContent() {
       for (const srv of selectedTask.services ?? []) {
         if (known.has(srv.name.trim().toLowerCase())) continue;
         known.add(srv.name.trim().toLowerCase());
-        next.push({ id: nextId(), name: srv.name, category: "service", qty: 1, unitPrice: srv.price ?? 59.99, laborRate: 0 });
+        next.push({ id: nextId(), name: srv.name, category: "service", qty: 1, unitPrice: srv.price ?? 59.99, laborRate: 0, serviceId: srv.id });
+        const hours = laborHours(srv.durationMins);
+        if (hours > 0) {
+          next.push({
+            id: nextId(),
+            name: `Labor — ${srv.name}`,
+            category: "labor",
+            qty: hours,
+            unitPrice: 0,
+            laborRate: srv.laborRate ?? DEFAULT_LABOR_RATE,
+            serviceId: srv.id,
+          });
+        }
       }
       for (const pu of selectedTask.partsUsed ?? []) {
         if (known.has(pu.name.trim().toLowerCase())) continue;
         known.add(pu.name.trim().toLowerCase());
         next.push({ id: nextId(), name: pu.name, category: "parts", qty: pu.qty || 1, unitPrice: pu.unitPrice || pu.subtotal || 35.0, laborRate: 0 });
-      }
-      const autoLabor = computeAutoLabor(selectedTask.services ?? []);
-      if (!next.some((n) => n.category === "labor") && autoLabor > 0) {
-        next.push({ id: nextId(), name: "Workshop Labor", category: "labor", qty: 1, unitPrice: 0, laborRate: Number(autoLabor.toFixed(2)) });
       }
       return next;
     });
@@ -384,6 +395,9 @@ function SendEstimateContent() {
           items: computedRows.map((r) => ({
             description: r.name,
             category: r.category,
+            serviceId: r.serviceId,
+            qty: r.qty,
+            rate: r.category === "labor" ? r.laborRate : r.unitPrice,
             amount: Number(r.subtotal.toFixed(2)),
           })),
         })
@@ -884,9 +898,9 @@ function SendEstimateContent() {
 
                   <div className="h-px w-full bg-[#f1f3f5]" />
 
-                  <div className="flex items-center justify-between text-[#64748b]">
-                    <span>Pre-Tax Subtotal:</span>
-                    <span className="font-mono font-bold text-[#191c1d]">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-[#191c1d]">Estimate Price (pre-tax):</span>
+                    <span className="font-mono text-lg font-bold text-primary">
                       ${netSubtotal.toFixed(2)}
                     </span>
                   </div>

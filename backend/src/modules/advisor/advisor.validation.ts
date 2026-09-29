@@ -42,8 +42,10 @@ export const assignMechanicSchema = z.object({
   body: z.object({
     mechanicId: z.string().optional(),
     mechanicIds: z.array(z.string()).optional(),
-    station: z.string().optional(),
-    notes: z.string().optional(),
+    station: z.string().nullish(),
+    notes: z.string().nullish(),
+    unassign: z.boolean().optional(),
+    force: z.boolean().optional(),
   }),
 });
 
@@ -57,6 +59,9 @@ export const createEstimateSchema = z.object({
         z.object({
           description: z.string().min(1),
           category: z.enum(["service", "parts", "labor"]),
+          serviceId: z.string().optional(),
+          qty: z.number().positive().optional(),
+          rate: z.number().nonnegative().optional(),
           amount: z.number().nonnegative(),
         }),
       )

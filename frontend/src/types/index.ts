@@ -218,6 +218,9 @@ export interface EstimateItem {
   id: string;
   description: string;
   category: "service" | "parts" | "labor";
+  serviceId?: string | null;
+  qty?: number;
+  rate?: number | null;
   amount: number;
 }
 
@@ -232,6 +235,11 @@ export interface Estimate {
   summary: string;
   internalNotes?: string | null;
   items: EstimateItem[];
+  servicesTotal?: number;
+  laborTotal?: number;
+  partsTotal?: number;
+  subtotal?: number;
+  tax?: number;
   total: number;
   taskCard?: {
     id: string;

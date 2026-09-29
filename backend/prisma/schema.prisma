@@ -274,6 +274,11 @@ model Estimate {
   status        EstimateStatus  @default(PENDING)
   summary       String
   internalNotes String?
+  servicesTotal Float           @default(0)
+  laborTotal    Float           @default(0)
+  partsTotal    Float           @default(0)
+  subtotal      Float           @default(0)
+  tax           Float           @default(0)
   total         Float
 
   items EstimateItem[]
@@ -285,6 +290,9 @@ model EstimateItem {
   estimate    Estimate            @relation(fields: [estimateId], references: [id], onDelete: Cascade)
   description String
   category    EstimateItemCategory
+  serviceId   String?
+  qty         Float               @default(1)
+  rate        Float?
   amount      Float
 }
 
