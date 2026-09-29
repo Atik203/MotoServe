@@ -7,9 +7,16 @@
     "dev": "concurrently -k -n api,web -c blue,green \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
     "dev:frontend": "npm run dev --prefix frontend",
     "dev:backend": "npm run dev --prefix backend",
-    "typecheck": "npm run typecheck --prefix frontend && npm run typecheck --prefix backend"
+    "typecheck": "npm run typecheck --prefix frontend && npm run typecheck --prefix backend",
+    "test": "playwright test",
+    "test:api": "playwright test tests/api",
+    "test:e2e": "playwright test tests/e2e",
+    "test:ui": "playwright test --ui",
+    "test:setup": "node tests/setup-db.mjs",
+    "test:install": "playwright install chromium"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "concurrently": "^10.0.5"
   }
 }
