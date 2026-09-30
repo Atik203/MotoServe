@@ -24,7 +24,7 @@ import {
   X,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { deleteEmployee, fetchEmployees, updateEmployee } from "@/store/slices/employeesSlice";
+import { deleteEmployee, fetchDeletionImpact, fetchEmployees, updateEmployee, type DeletionImpact } from "@/store/slices/employeesSlice";
 import { fetchFileUrl } from "@/store/slices/filesSlice";
 import { fetchStations } from "@/store/slices/stationsSlice";
 import { useFileUrl } from "@/hooks/useFileUrl";
@@ -93,6 +93,8 @@ export default function EmployeeManagementPage() {
   const [page, setPage] = useState(1);
   const [dialog, setDialog] = useState<{ mode: "view" | "edit"; employee: Employee } | null>(null);
   const [deleting, setDeleting] = useState<Employee | null>(null);
+  const [deletionImpact, setDeletionImpact] = useState<DeletionImpact | null>(null);
+  const [replacementAdvisorId, setReplacementAdvisorId] = useState("");
   const [saving, setSaving] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
@@ -206,12 +208,30 @@ export default function EmployeeManagementPage() {
     }
   };
 
+  const openDelete = async (employee: Employee) => {
+    setDeleting(employee);
+    setDeletionImpact(null);
+    setReplacementAdvisorId("");
+    try {
+      const impact = await dispatch(fetchDeletionImpact(employee.id)).unwrap();
+      setDeletionImpact(impact);
+    } catch {
+      setDeletionImpact(null);
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleting) return;
     setSaving(true);
     try {
-      await dispatch(deleteEmployee(deleting.id)).unwrap();
-      toast.success(`${deleting.name} deactivated`);
+      const res = await dispatch(
+        deleteEmployee({ id: deleting.id, replacementAdvisorId: replacementAdvisorId || undefined }),
+      ).unwrap();
+      const detail =
+        res.result.role === "mechanic"
+          ? `${res.result.unassignedTasks} job card(s) unassigned`
+          : `${res.result.reassignedTasks} job card(s) and ${res.result.reassignedChats} chat(s) reassigned${res.result.replacementName ? ` to ${res.result.replacementName}` : ""}`;
+      toast.success(`${res.result.name} deleted — ${detail}`);
       setDeleting(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Delete failed");
@@ -474,10 +494,10 @@ export default function EmployeeManagementPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setDeleting(employee)}
+                        onClick={() => void openDelete(employee)}
                         className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-rose-50 hover:text-rose-600"
-                        aria-label={`Deactivate ${employee.name}`}
-                        title="Deactivate employee"
+                        aria-label={`Delete ${employee.name}`}
+                        title="Delete employee permanently"
                       >
                         <Trash2 className="size-4" />
                       </button>
@@ -549,22 +569,97 @@ export default function EmployeeManagementPage() {
         onSave={handleSave}
       />
 
-      {/* Deactivate Confirmation Dialog */}
+      {/* Delete Confirmation Dialog */}
       <Dialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
         <DialogContent className="max-w-md rounded-xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-foreground">Deactivate {deleting?.name}?</DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-foreground">
+              Delete {deleting?.name}?
+            </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              The employee account will be set to inactive and will no longer be assigned to workshop stations or tasks.
-              This can be undone at any time by toggling their status back to active.
+              This permanently deletes the account and their uploaded files. This cannot be undone.
             </DialogDescription>
           </DialogHeader>
+
+          <div className="flex flex-col gap-3 text-xs">
+            {deletionImpact ? (
+              <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-[#f8f9fa] p-3">
+                <p className="font-semibold text-foreground">What happens:</p>
+                {deletionImpact.role === "mechanic" ? (
+                  <>
+                    <p className="text-muted-foreground">
+                      • Unassign them from{" "}
+                      <strong className="text-foreground">{deletionImpact.tasks}</strong> job card(s) — repair and
+                      invoice history is kept
+                    </p>
+                    {deletionImpact.partRequests > 0 && (
+                      <p className="text-muted-foreground">
+                        • Remove <strong className="text-foreground">{deletionImpact.partRequests}</strong> part
+                        request(s)
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-muted-foreground">
+                      • Reassign <strong className="text-foreground">{deletionImpact.tasks}</strong> job card(s) and{" "}
+                      <strong className="text-foreground">{deletionImpact.chats}</strong> chat thread(s) to another
+                      advisor
+                    </p>
+                    {deletionImpact.invoices > 0 && (
+                      <p className="text-muted-foreground">
+                        • Keep <strong className="text-foreground">{deletionImpact.invoices}</strong> invoice(s)
+                        intact under the new advisor
+                      </p>
+                    )}
+                  </>
+                )}
+                <p className="text-muted-foreground">• Delete their login, profile and uploaded documents</p>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Checking what is linked to this account…</p>
+            )}
+
+            {deleting?.role === "advisor" &&
+              deletionImpact &&
+              deletionImpact.tasks + deletionImpact.chats > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-semibold text-foreground">Reassign their work to *</Label>
+                  <select
+                    value={replacementAdvisorId}
+                    onChange={(e) => setReplacementAdvisorId(e.target.value)}
+                    className="h-9 rounded-lg border border-border bg-white px-3 text-xs text-foreground"
+                  >
+                    <option value="">Select an advisor…</option>
+                    {advisors
+                      .filter((a) => a.id !== deleting.id && a.status === "active")
+                      .map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
+          </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleting(null)} className="rounded-lg text-xs">
               Cancel
             </Button>
-            <Button variant="destructive" onClick={() => void handleDelete()} disabled={saving} className="rounded-lg text-xs">
-              {saving ? "Deactivating..." : "Deactivate Employee"}
+            <Button
+              variant="destructive"
+              onClick={() => void handleDelete()}
+              disabled={
+                saving ||
+                !deletionImpact ||
+                (deleting?.role === "advisor" &&
+                  deletionImpact.tasks + deletionImpact.chats > 0 &&
+                  !replacementAdvisorId)
+              }
+              className="rounded-lg text-xs"
+            >
+              {saving ? "Deleting..." : "Delete employee"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -681,16 +776,16 @@ function EmployeeDialog({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-semibold text-foreground">Status</Label>
+              <Label className="text-xs font-semibold text-foreground">Account status (suspend / reactivate)</Label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as "active" | "inactive")}
                 disabled={mode === "view"}
                 className="h-9 w-full rounded-md border border-[#e2e8f0] bg-white px-3 text-xs text-foreground outline-none focus:border-primary disabled:bg-[#f8f9fa]"
               >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+              <option value="active">Active — can be assigned work</option>
+              <option value="inactive">Suspended — blocked from new work (history kept)</option>
+            </select>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label className="text-xs font-semibold text-foreground">Workshop Station</Label>
