@@ -52,9 +52,38 @@ export const updateEmployee = createAsyncThunk(
   },
 );
 
-export const deleteEmployee = createAsyncThunk("employees/delete", async (id: string) => {
-  return await api.delete<{ ok: boolean }>(`/employees/${id}`);
+export interface DeletionImpact {
+  role: string;
+  tasks: number;
+  chats: number;
+  partRequests: number;
+  invoices: number;
+}
+
+export interface DeleteEmployeeResult {
+  ok: boolean;
+  name: string;
+  role: string;
+  unassignedTasks: number;
+  reassignedTasks: number;
+  reassignedChats: number;
+  removedPartRequests: number;
+  replacementName: string | null;
+  filesDeleted: number;
+}
+
+export const fetchDeletionImpact = createAsyncThunk("employees/deletionImpact", async (id: string) => {
+  return await api.get<DeletionImpact>(`/employees/${id}/deletion-impact`);
 });
+
+export const deleteEmployee = createAsyncThunk(
+  "employees/delete",
+  async ({ id, replacementAdvisorId }: { id: string; replacementAdvisorId?: string }) => {
+    const qs = replacementAdvisorId ? `?replacementAdvisorId=${encodeURIComponent(replacementAdvisorId)}` : "";
+    const result = await api.delete<DeleteEmployeeResult>(`/employees/${id}${qs}`);
+    return { id, result };
+  },
+);
 
 const employeesSlice = createSlice({
   name: "employees",
@@ -81,9 +110,7 @@ const employeesSlice = createSlice({
         if (idx !== -1) state.items[idx] = action.payload;
       })
       .addCase(deleteEmployee.fulfilled, (state, action) => {
-        const meta = action.meta.arg as string;
-        const employee = state.items.find((e) => e.id === meta);
-        if (employee) employee.status = "inactive";
+        state.items = state.items.filter((e) => e.id !== action.payload.id);
       });
   },
 });

@@ -630,7 +630,8 @@ export default function CustomerManagementPage() {
             <DialogTitle className="text-base font-bold text-foreground pt-3">Delete customer account?</DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
               This permanently removes <span className="font-semibold text-foreground">{deleteTarget?.name}</span> and all
-              associated vehicles, jobs, invoices, appointments, and chat history. This action cannot be undone.
+              associated vehicles, jobs, invoices, appointments, part requests, uploaded documents and chat history.
+              This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
