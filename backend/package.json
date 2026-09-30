@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "node api.js && tsx watch src/index.ts",
     "build": "tsc",
     "build:api": "tsc -p tsconfig.build.json && node -e \"require('fs').writeFileSync('dist-api/package.json', JSON.stringify({ type: 'module' }))\"",
-    "start": "node dist/index.js",
+    "start": "node api.js && node dist/index.js",
     "typecheck": "tsc --noEmit",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
