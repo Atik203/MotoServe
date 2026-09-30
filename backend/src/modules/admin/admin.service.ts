@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma.js";
 import { ApiError } from "../../middleware/error.js";
 import { findUserByEmail } from "../shared/shared.service.js";
+import { deleteObjects } from "../../lib/s3.js";
 import type { Prisma } from "../../generated/prisma/client.js";
 import type { CreateEmployeeBody, CreateServiceBody, ReportDto, UpdateEmployeeBody } from "./admin.types.js";
 
@@ -29,13 +30,42 @@ export function verifyCustomerStatus(id: string, decision: "approved" | "rejecte
   });
 }
 
+function collectUserFileKeys(user: { avatar: string | null; documents: Prisma.JsonValue }) {
+  const keys: (string | null)[] = [user.avatar];
+  if (Array.isArray(user.documents)) {
+    for (const doc of user.documents as { key?: string }[]) {
+      keys.push(doc?.key ?? null);
+    }
+  }
+  return keys;
+}
+
 export async function deleteCustomer(id: string, requesterId: string) {
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) throw new ApiError(404, "Customer not found");
   if (user.role !== "OWNER") throw new ApiError(400, "Only owner (customer) accounts can be deleted");
   if (user.id === requesterId) throw new ApiError(400, "You cannot delete your own account");
 
+  const [tasks, vehicles] = await Promise.all([
+    prisma.taskCard.findMany({ where: { customerId: id }, select: { id: true, photos: true } }),
+    prisma.vehicle.findMany({ where: { ownerId: id }, select: { image: true, photos: true } }),
+  ]);
+
+  const fileKeys = collectUserFileKeys(user);
+  for (const vehicle of vehicles) {
+    fileKeys.push(vehicle.image);
+    if (Array.isArray(vehicle.photos)) {
+      for (const photo of vehicle.photos as string[]) fileKeys.push(photo);
+    }
+  }
+  for (const task of tasks) {
+    if (Array.isArray(task.photos)) {
+      for (const photo of task.photos as string[]) fileKeys.push(photo);
+    }
+  }
+
   await prisma.$transaction([
+    prisma.partRequest.deleteMany({ where: { taskCardId: { in: tasks.map((t) => t.id) } } }),
     prisma.chatThread.deleteMany({ where: { ownerId: id } }),
     prisma.rating.deleteMany({ where: { customerId: id } }),
     prisma.taskCard.deleteMany({ where: { customerId: id } }),
@@ -44,7 +74,8 @@ export async function deleteCustomer(id: string, requesterId: string) {
     prisma.user.delete({ where: { id } }),
   ]);
 
-  return user;
+  const files = await deleteObjects(fileKeys);
+  return { user, vehicles: vehicles.length, tasks: tasks.length, filesDeleted: files.deleted };
 }
 
 const employeeSelect = {
@@ -98,8 +129,125 @@ export function updateEmployee(id: string, data: UpdateEmployeeBody) {
   });
 }
 
-export function deactivateEmployee(id: string) {
-  return prisma.user.update({ where: { id }, data: { status: "INACTIVE" }, select: employeeSelect });
+export async function getEmployeeDeletionImpact(id: string) {
+  const user = await prisma.user.findUnique({ where: { id }, select: { id: true, role: true } });
+  if (!user) throw new ApiError(404, "Employee not found");
+
+  const isAdvisor = user.role === "ADVISOR";
+  const [tasks, chats, partRequests, invoices] = await Promise.all([
+    isAdvisor
+      ? prisma.taskCard.count({ where: { advisorId: id } })
+      : prisma.taskCard.count({ where: { OR: [{ mechanicId: id }, { mechanicIds: { has: id } }] } }),
+    isAdvisor ? prisma.chatThread.count({ where: { advisorId: id } }) : Promise.resolve(0),
+    isAdvisor ? Promise.resolve(0) : prisma.partRequest.count({ where: { mechanicId: id } }),
+    isAdvisor
+      ? prisma.invoice.count({ where: { task: { advisorId: id } } })
+      : prisma.invoice.count({ where: { task: { OR: [{ mechanicId: id }, { mechanicIds: { has: id } }] } } }),
+  ]);
+
+  return { role: user.role.toLowerCase(), tasks, chats, partRequests, invoices };
+}
+
+export interface DeleteEmployeeResult {
+  name: string;
+  role: string;
+  unassignedTasks: number;
+  reassignedTasks: number;
+  reassignedChats: number;
+  removedPartRequests: number;
+  replacementName: string | null;
+  filesDeleted: number;
+}
+
+export async function deleteEmployee(
+  id: string,
+  requesterId: string,
+  replacementAdvisorId?: string,
+): Promise<DeleteEmployeeResult> {
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) throw new ApiError(404, "Employee not found");
+  if (user.role === "ADMIN") throw new ApiError(400, "Administrator accounts cannot be deleted");
+  if (user.role !== "ADVISOR" && user.role !== "MECHANIC") {
+    throw new ApiError(400, "Only advisor and mechanic accounts can be deleted");
+  }
+  if (user.id === requesterId) throw new ApiError(400, "You cannot delete your own account");
+
+  const fileKeys = collectUserFileKeys(user);
+
+  if (user.role === "MECHANIC") {
+    const [assignedTasks, partRequests] = await Promise.all([
+      prisma.taskCard.count({ where: { OR: [{ mechanicId: id }, { mechanicIds: { has: id } }] } }),
+      prisma.partRequest.count({ where: { mechanicId: id } }),
+    ]);
+
+    await prisma.$transaction([
+      prisma.partRequest.deleteMany({ where: { mechanicId: id } }),
+      prisma.taskCard.updateMany({ where: { mechanicId: id }, data: { mechanicId: null } }),
+      prisma.$executeRaw`UPDATE "TaskCard" SET "mechanicIds" = array_remove("mechanicIds", ${id}) WHERE ${id} = ANY("mechanicIds")`,
+      prisma.$executeRaw`DELETE FROM "_TaskAssignedMechanics" WHERE "B" = ${id}`,
+      prisma.user.delete({ where: { id } }),
+    ]);
+
+    const files = await deleteObjects(fileKeys);
+    return {
+      name: user.name,
+      role: "mechanic",
+      unassignedTasks: assignedTasks,
+      reassignedTasks: 0,
+      reassignedChats: 0,
+      removedPartRequests: partRequests,
+      replacementName: null,
+      filesDeleted: files.deleted,
+    };
+  }
+
+  const [tasks, chats] = await Promise.all([
+    prisma.taskCard.count({ where: { advisorId: id } }),
+    prisma.chatThread.count({ where: { advisorId: id } }),
+  ]);
+
+  let replacementName: string | null = null;
+
+  if (tasks > 0 || chats > 0) {
+    if (!replacementAdvisorId) {
+      throw new ApiError(
+        409,
+        `This advisor still owns ${tasks} job card(s) and ${chats} chat thread(s). Choose an advisor to take them over.`,
+      );
+    }
+    if (replacementAdvisorId === id) {
+      throw new ApiError(400, "Replacement advisor must be a different account");
+    }
+    const replacement = await prisma.user.findUnique({ where: { id: replacementAdvisorId } });
+    if (!replacement || replacement.role !== "ADVISOR") {
+      throw new ApiError(400, "Replacement must be an advisor account");
+    }
+    if (replacement.status !== "ACTIVE") {
+      throw new ApiError(400, "Replacement advisor must be active");
+    }
+    replacementName = replacement.name;
+
+    await prisma.$transaction([
+      prisma.taskCard.updateMany({ where: { advisorId: id }, data: { advisorId: replacement.id } }),
+      prisma.estimate.updateMany({ where: { advisorId: id }, data: { advisorId: replacement.id } }),
+      prisma.chatThread.updateMany({ where: { advisorId: id }, data: { advisorId: replacement.id } }),
+      prisma.user.delete({ where: { id } }),
+    ]);
+  } else {
+    await prisma.user.delete({ where: { id } });
+  }
+
+  const files = await deleteObjects(fileKeys);
+  return {
+    name: user.name,
+    role: "advisor",
+    unassignedTasks: 0,
+    reassignedTasks: tasks,
+    reassignedChats: chats,
+    removedPartRequests: 0,
+    replacementName,
+    filesDeleted: files.deleted,
+  };
 }
 
 export interface ReportFilterOptions {
