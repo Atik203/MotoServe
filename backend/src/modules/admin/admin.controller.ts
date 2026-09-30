@@ -4,9 +4,10 @@ import { logAudit } from "../../lib/audit.js";
 import {
   createEmployee,
   createService,
-  deactivateEmployee,
   deleteCustomer,
+  deleteEmployee,
   deleteService,
+  getEmployeeDeletionImpact,
   getReportData,
   updateEmployee,
   updateService,
@@ -42,8 +43,11 @@ export async function verifyOwner(req: Request, res: Response): Promise<void> {
 }
 
 export async function deleteCustomerController(req: Request, res: Response): Promise<void> {
-  const user = await deleteCustomer(req.params.id as string, req.user?.userId ?? "");
-  await logAudit(req.user?.name ?? "admin", `Deleted customer account "${user.name}"`);
+  const result = await deleteCustomer(req.params.id as string, req.user?.userId ?? "");
+  await logAudit(
+    req.user?.name ?? "admin",
+    `Deleted customer account "${result.user.name}" (${result.vehicles} vehicle(s), ${result.tasks} job card(s), ${result.filesDeleted} file(s) removed)`,
+  );
   res.json({ ok: true });
 }
 
@@ -59,10 +63,23 @@ export async function updateEmployeeController(req: Request, res: Response): Pro
   res.json({ ...employee, role: employee.role.toLowerCase(), status: employee.status.toLowerCase() });
 }
 
+export async function getEmployeeDeletionImpactController(req: Request, res: Response): Promise<void> {
+  res.json(await getEmployeeDeletionImpact(req.params.id as string));
+}
+
 export async function deleteEmployeeController(req: Request, res: Response): Promise<void> {
-  const employee = await deactivateEmployee(req.params.id as string);
-  await logAudit(req.user?.name ?? "admin", `Deactivated ${employee.role.toLowerCase()} "${employee.name}"`);
-  res.json({ ok: true });
+  const replacementAdvisorId =
+    typeof req.query.replacementAdvisorId === "string" ? req.query.replacementAdvisorId : undefined;
+  const result = await deleteEmployee(req.params.id as string, req.user?.userId ?? "", replacementAdvisorId);
+  const detail =
+    result.role === "mechanic"
+      ? `unassigned ${result.unassignedTasks} job card(s), removed ${result.removedPartRequests} part request(s)`
+      : `reassigned ${result.reassignedTasks} job card(s) and ${result.reassignedChats} chat(s)${result.replacementName ? ` to ${result.replacementName}` : ""}`;
+  await logAudit(
+    req.user?.name ?? "admin",
+    `Deleted ${result.role} "${result.name}" (${detail}, ${result.filesDeleted} file(s) removed)`,
+  );
+  res.json({ ok: true, ...result });
 }
 
 export async function getReports(req: Request, res: Response): Promise<void> {

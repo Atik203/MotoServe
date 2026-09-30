@@ -1,4 +1,4 @@
-import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const BUCKET = process.env.AWS_BUCKET_NAME ?? "scholar-flow-uploads";
@@ -32,6 +32,31 @@ export function presignGet(key: string, expiresIn = 900) {
 
 export async function putObject(key: string, body: Buffer, contentType: string) {
   await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: body, ContentType: contentType }));
+}
+
+export async function deleteObjects(keys: (string | null | undefined)[]) {
+  const targets = [...new Set(keys.filter((k): k is string => typeof k === "string" && k.startsWith(ROOT_PREFIX)))];
+  const failed: string[] = [];
+
+  for (let i = 0; i < targets.length; i += 1000) {
+    const batch = targets.slice(i, i + 1000);
+    try {
+      const result = await s3.send(
+        new DeleteObjectsCommand({
+          Bucket: BUCKET,
+          Delete: { Objects: batch.map((Key) => ({ Key })), Quiet: true },
+        }),
+      );
+      for (const err of result.Errors ?? []) {
+        if (err.Key) failed.push(err.Key);
+      }
+    } catch (err) {
+      console.warn(`S3 cleanup failed for ${batch.length} object(s):`, err instanceof Error ? err.message : err);
+      failed.push(...batch);
+    }
+  }
+
+  return { deleted: targets.length - failed.length, failed };
 }
 
 export { BUCKET };

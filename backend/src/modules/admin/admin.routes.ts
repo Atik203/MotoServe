@@ -7,6 +7,7 @@ import {
   deleteCustomerController,
   deleteEmployeeController,
   deleteServiceController,
+  getEmployeeDeletionImpactController,
   getReports,
   updateEmployeeController,
   updateServiceController,
@@ -29,6 +30,13 @@ router.delete("/services/:id", requireAuth, requireRole("admin"), deleteServiceC
 router.post("/employees", requireAuth, requireRole("admin"), validate(createEmployeeSchema), createEmployeeController);
 router.patch("/employees/:id", requireAuth, requireRole("admin"), validate(updateEmployeeSchema), updateEmployeeController);
 router.delete("/employees/:id", requireAuth, requireRole("admin"), deleteEmployeeController);
+
+router.get(
+  "/employees/:id/deletion-impact",
+  requireAuth,
+  requireRole("admin"),
+  getEmployeeDeletionImpactController,
+);
 
 router.patch("/customers/:id/verify", requireAuth, requireRole("admin"), validate(verifyOwnerSchema), verifyOwner);
 router.delete("/customers/:id", requireAuth, requireRole("admin"), deleteCustomerController);
