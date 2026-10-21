@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "node api.js && tsx watch src/index.ts",
-    "build": "tsc",
-    "build:api": "tsc -p tsconfig.build.json && node -e \"require('fs').writeFileSync('dist-api/package.json', JSON.stringify({ type: 'module' }))\"",
+    "build": "node api.js && tsc",
+    "build:api": "node api.js && tsc -p tsconfig.build.json && node -e \"require('fs').writeFileSync('dist-api/package.json', JSON.stringify({ type: 'module' }))\"",
     "start": "node api.js && node dist/index.js",
     "typecheck": "tsc --noEmit",
     "postinstall": "prisma generate",
