@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "npm run db:generate --prefix backend",
+    "build": "node api.js && npm run db:generate --prefix backend",
     "dev": "node api.js && concurrently -k -n api,web -c blue,green \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
     "dev:frontend": "node api.js && npm run dev --prefix frontend",
     "dev:backend": "node api.js && npm run dev --prefix backend",
